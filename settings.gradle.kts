@@ -1,1 +1,1 @@
-rootProject.name = "MinestomPvP"
+rootProject.name = "pvp"
