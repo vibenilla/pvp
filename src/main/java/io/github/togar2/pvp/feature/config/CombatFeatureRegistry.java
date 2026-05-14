@@ -14,8 +14,14 @@ import java.util.List;
 public class CombatFeatureRegistry {
     private static final EventNode<Event> initNode = EventNode.all("combat-feature-init");
     private static final List<DefinedFeature<?>> features = new ArrayList<>();
+    private static boolean attached = false;
 
     public static void init(DefinedFeature<?> feature) {
+        if (!attached) {
+            MinecraftServer.getGlobalEventHandler().addChild(initNode);
+            attached = true;
+        }
+
         if (!features.contains(feature)) {
             features.add(feature);
             if (feature.playerInit() != null) {
@@ -28,9 +34,5 @@ public class CombatFeatureRegistry {
                 initNode.addListener(PlayerRespawnEvent.class, event -> feature.playerInit().init(event.getPlayer(), false));
             }
         }
-    }
-
-    public static void init() {
-        MinecraftServer.getGlobalEventHandler().addChild(initNode);
     }
 }

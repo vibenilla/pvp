@@ -2,7 +2,6 @@ package io.github.togar2.pvp;
 
 import io.github.togar2.pvp.enchantment.CombatEnchantments;
 import io.github.togar2.pvp.feature.CombatFeatures;
-import io.github.togar2.pvp.feature.config.CombatFeatureRegistry;
 import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.player.CombatPlayerImpl;
 import io.github.togar2.pvp.potion.effect.CombatPotionEffects;
@@ -78,8 +77,6 @@ public class MinestomPvP {
 		CombatEnchantments.registerAll();
 		CombatPotionEffects.registerAll();
 		CombatPotionTypes.registerAll();
-
-		CombatFeatureRegistry.init();
 
 		CombatPlayer.init(MinecraftServer.getGlobalEventHandler());
 
