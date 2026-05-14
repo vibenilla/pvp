@@ -44,7 +44,7 @@ public class VanillaItemCooldownFeature implements ItemCooldownFeature, Registra
 		node.addListener(PlayerTickEvent.class, event -> {
 			Player player = event.getPlayer();
 			Map<String, Long> cooldown = player.getTag(COOLDOWN_END);
-			if (cooldown.isEmpty()) return;
+			if (cooldown == null || cooldown.isEmpty()) return;
 			long time = System.currentTimeMillis();
 
 			Iterator<Map.Entry<String, Long>> iterator = cooldown.entrySet().iterator();
@@ -67,6 +67,7 @@ public class VanillaItemCooldownFeature implements ItemCooldownFeature, Registra
 	@Override
 	public boolean hasCooldown(Player player, String cooldownGroup) {
 		Map<String, Long> cooldown = player.getTag(COOLDOWN_END);
+		if (cooldown == null) return false;
 		return cooldown.containsKey(cooldownGroup) && cooldown.get(cooldownGroup) > System.currentTimeMillis();
 	}
 
