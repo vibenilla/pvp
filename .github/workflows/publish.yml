@@ -28,13 +28,11 @@ jobs:
       - name: Build
         run: ./gradlew build
 
-      - name: Publish to Maven Central
-        run: ./gradlew publishToMavenCentral --no-configuration-cache
+      - name: Publish to Skylite Maven
+        run: ./gradlew publishAllPublicationsToSkyliteRepository --no-configuration-cache
         env:
-          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_skyliteUsername: ${{ secrets.SKYLITE_USERNAME }}
+          ORG_GRADLE_PROJECT_skylitePassword: ${{ secrets.SKYLITE_PASSWORD }}
 
       - name: Upload JARs to Release
         run: |
