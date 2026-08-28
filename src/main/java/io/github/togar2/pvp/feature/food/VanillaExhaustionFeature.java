@@ -65,7 +65,8 @@ public class VanillaExhaustionFeature implements ExhaustionFeature, RegistrableF
 	protected void onTick(Player player) {
 		if (player.getGameMode().invulnerable()) return;
 
-		float exhaustion = player.getTag(EXHAUSTION);
+		Float exhaustion = player.getTag(EXHAUSTION);
+		if (exhaustion == null) return;
 		if (exhaustion > 4) {
 			player.setTag(EXHAUSTION, exhaustion - 4);
 			if (player.getFoodSaturation() > 0) {
@@ -107,8 +108,11 @@ public class VanillaExhaustionFeature implements ExhaustionFeature, RegistrableF
 	public void addExhaustion(Player player, float exhaustion) {
 		if (player.getGameMode().invulnerable()) return;
 		PlayerExhaustEvent playerExhaustEvent = new PlayerExhaustEvent(player, exhaustion);
+		Float playerExhaustion = player.getTag(EXHAUSTION);
+		if (playerExhaustion == null) playerExhaustion = 0f;
+		Float finalPlayerExhaustion = playerExhaustion;
 		EventDispatcher.callCancellable(playerExhaustEvent, () -> player.setTag(EXHAUSTION,
-				Math.min(player.getTag(EXHAUSTION) + playerExhaustEvent.getAmount(), 40)));
+				Math.min(finalPlayerExhaustion + playerExhaustEvent.getAmount(), 40)));
 	}
 
 	@Override

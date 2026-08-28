@@ -61,7 +61,10 @@ public class VanillaRegenerationFeature implements RegenerationFeature, Registra
 
 		int food = player.getFood();
 		float health = player.getHealth();
-		int starvationTicks = player.getTag(STARVATION_TICKS);
+		Integer starvationTicks = player.getTag(STARVATION_TICKS);
+		if (starvationTicks == null) {
+			starvationTicks = 0;
+		}
 
 		if (this.version.modern() && player.getFoodSaturation() > 0 && health > 0
 				&& health < player.getAttributeValue(Attribute.MAX_HEALTH) && food >= 20) {

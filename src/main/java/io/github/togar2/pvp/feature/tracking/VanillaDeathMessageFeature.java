@@ -52,9 +52,23 @@ public class VanillaDeathMessageFeature implements TrackingFeature, RegistrableF
 
 	@Override
 	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(PlayerSpawnEvent.class, event -> event.getPlayer().getTag(COMBAT_MANAGER).reset());
+		node.addListener(PlayerSpawnEvent.class, event -> {
+			CombatManager cbmgr = event.getPlayer().getTag(COMBAT_MANAGER);
+			if (cbmgr == null) {
+				initPlayer(event.getPlayer(), true);
+				cbmgr = event.getPlayer().getTag(COMBAT_MANAGER);
+			}
+			cbmgr.reset();
+		});
 
-		node.addListener(PlayerTickEvent.class, event -> event.getPlayer().getTag(COMBAT_MANAGER).tick());
+		node.addListener(PlayerTickEvent.class, event -> {
+			CombatManager cbmgr = event.getPlayer().getTag(COMBAT_MANAGER);
+			if (cbmgr == null) {
+				initPlayer(event.getPlayer(), true);
+				cbmgr = event.getPlayer().getTag(COMBAT_MANAGER);
+			}
+			cbmgr.tick();
+		});
 
 		node.addListener(PlayerDeathEvent.class, event -> {
 			Component message = this.getDeathMessage(event.getPlayer());
@@ -66,7 +80,12 @@ public class VanillaDeathMessageFeature implements TrackingFeature, RegistrableF
 	@Override
 	public void recordDamage(Player player, @Nullable Entity attacker, Damage damage) {
 		int id = attacker == null ? -1 : attacker.getEntityId();
-		player.getTag(COMBAT_MANAGER).recordDamage(id, damage, this.fallFeature, this.playerStateFeature);
+		CombatManager cbmgr = player.getTag(COMBAT_MANAGER);
+		if (cbmgr == null) {
+			initPlayer(player, true);
+			cbmgr = player.getTag(COMBAT_MANAGER);
+		}
+		cbmgr.recordDamage(id, damage, this.fallFeature, this.playerStateFeature);
 	}
 
 	@Override
