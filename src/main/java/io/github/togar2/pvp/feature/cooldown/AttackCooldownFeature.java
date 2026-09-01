@@ -1,7 +1,9 @@
 package io.github.togar2.pvp.feature.cooldown;
 
 import io.github.togar2.pvp.feature.CombatFeature;
+import net.minestom.server.component.DataComponents;
 import net.minestom.server.entity.Player;
+import net.minestom.server.item.ItemStack;
 
 /**
  * Combat feature used to manage a players attack cooldown.
@@ -40,4 +42,11 @@ public interface AttackCooldownFeature extends CombatFeature {
 	double getAttackCooldownProgress(Player player);
 
 	double getAttackCooldownProgress(Player player, double adjustTicks);
+
+	default boolean cannotAttackWith(Player player, ItemStack stack, double toleranceTicks) {
+		float requiredCharge = stack.get(DataComponents.MINIMUM_ATTACK_CHARGE, 0.0F);
+		if (requiredCharge <= 0.0F) return false;
+
+		return this.getAttackCooldownProgress(player, toleranceTicks) < requiredCharge;
+	}
 }

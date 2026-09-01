@@ -16,7 +16,6 @@ import io.github.togar2.pvp.utils.FluidUtil;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
-import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
@@ -167,7 +166,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 			ItemStack stack = player.getItemInMainHand();
 			Tool tool = Tool.fromMaterial(stack.material());
 			if (tool == null || !tool.isSpear()) return;
-			if (this.cannotAttackWithItem(player, stack)) return;
+			if (this.attackCooldownFeature.cannotAttackWith(player, stack, STAB_CHARGE_TOLERANCE_TICKS)) return;
 
 			this.performPiercingAttack(player, tool);
 		});
@@ -232,13 +231,6 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 			player.removeTag(SPEAR_USE_START);
             this.recentStabs.remove(player.getUuid());
 		});
-	}
-
-	private boolean cannotAttackWithItem(Player player, ItemStack stack) {
-		float requiredCharge = stack.get(DataComponents.MINIMUM_ATTACK_CHARGE, 0.0F);
-		if (requiredCharge <= 0.0F) return false;
-
-		return this.attackCooldownFeature.getAttackCooldownProgress(player, STAB_CHARGE_TOLERANCE_TICKS) < requiredCharge;
 	}
 
 	private void performPiercingAttack(Player attacker, Tool tool) {

@@ -29,6 +29,7 @@ import net.minestom.server.entity.*;
 import net.minestom.server.entity.attribute.Attribute;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.damage.DamageType;
+import net.minestom.server.item.ItemStack;
 import net.minestom.server.event.EventDispatcher;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.event.entity.EntityAttackEvent;
@@ -59,6 +60,7 @@ public class VanillaAttackFeature implements AttackFeature, RegistrableFeature {
 	);
 
 	private static final double ATTACK_RANGE_MARGIN = 3.0;
+	private static final double ATTACK_CHARGE_TOLERANCE_TICKS = 5.0;
 	private static final Tag<Boolean> SPRINT_ATTACK_RESET = Tag.Boolean("sprintAttackReset");
 
 	private final FeatureConfiguration configuration;
@@ -97,6 +99,10 @@ public class VanillaAttackFeature implements AttackFeature, RegistrableFeature {
 		node.addListener(PlayerPacketEvent.class, this::handleSprintAction);
 		node.addListener(EntityAttackEvent.class, event -> {
 			if (event.getEntity() instanceof Player player && player.getGameMode() != GameMode.SPECTATOR && !player.isDead()) {
+				ItemStack mainHand = player.getItemInMainHand();
+				if (mainHand.has(DataComponents.PIERCING_WEAPON)) return;
+				if (this.cooldownFeature.cannotAttackWith(player, mainHand, ATTACK_CHARGE_TOLERANCE_TICKS)) return;
+
 				Entity target = event.getTarget();
 				var maxDistanceSquared = Math.pow(player.getAttributeValue(Attribute.ENTITY_INTERACTION_RANGE) + ATTACK_RANGE_MARGIN, 2);
 				var eyePosition = player.getPosition().add(0.0, player.getEyeHeight(), 0.0);
