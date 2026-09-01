@@ -101,6 +101,10 @@ public class VanillaFoodFeature implements FoodFeature, RegistrableFeature {
 	protected void onFinishEating(Player player, ItemStack stack, PlayerHand hand) {
 		this.eat(player, stack);
 
+		if (stack.has(DataComponents.USE_COOLDOWN)) {
+			this.itemCooldownFeature.setCooldown(player, stack);
+		}
+
 		Food food = stack.get(DataComponents.FOOD);
 		Consumable consumable = stack.get(DataComponents.CONSUMABLE);
 		if (consumable == null) return;

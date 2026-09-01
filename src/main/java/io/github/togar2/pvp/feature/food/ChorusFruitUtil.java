@@ -48,8 +48,6 @@ public class ChorusFruitUtil {
 		ThreadLocalRandom random = ThreadLocalRandom.current();
 		Instance instance = entity.getInstance();
 		assert instance != null;
-		float radius = diameter / 2.0f;
-
 		Pos prevPosition = entity.getPosition();
 		double prevX = prevPosition.x();
 		double prevY = prevPosition.y();
@@ -63,11 +61,11 @@ public class ChorusFruitUtil {
 
 		// Max 16 tries
 		for (int i = 0; i < 16; i++) {
-			double x = prevX + (random.nextDouble() - 0.5) * radius;
-			double y = Math.clamp(prevY + (random.nextInt(16) - 8),
+			double x = prevX + (random.nextDouble() - 0.5) * diameter;
+			double y = Math.clamp(prevY + (random.nextDouble() - 0.5) * diameter,
 					dimensionType.minY(), dimensionType.minY()
 							+ dimensionType.logicalHeight() - 1);
-			double z = prevZ + (random.nextDouble() - 0.5) * radius;
+			double z = prevZ + (random.nextDouble() - 0.5) * diameter;
 
 			if (entity.getVehicle() != null) {
 				entity.getVehicle().removePassenger(entity);
