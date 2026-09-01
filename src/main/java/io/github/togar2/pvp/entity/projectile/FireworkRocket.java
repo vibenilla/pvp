@@ -29,6 +29,10 @@ import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class FireworkRocket extends CustomEntityProjectile {
+    private static final double HORIZONTAL_ACCELERATION = 1.15;
+    private static final double VERTICAL_ACCELERATION = 0.04;
+
+    private final boolean shotAtAngle;
     private int life;
     private int lifetime;
     private ItemStack itemStack;
@@ -50,12 +54,13 @@ public final class FireworkRocket extends CustomEntityProjectile {
         }
 
         var random = ThreadLocalRandom.current();
+        this.shotAtAngle = shotAtAngle;
         this.lifetime = 10 * flightCount + random.nextInt(6) + random.nextInt(7);
         this.setVelocity(new Vec(
-                random.nextDouble(-0.002297, 0.002297),
+                0.002297 * (random.nextDouble() - random.nextDouble()),
                 0.05,
-                random.nextDouble(-0.002297, 0.002297)
-        ));
+                0.002297 * (random.nextDouble() - random.nextDouble())
+        ).mul(ServerFlag.SERVER_TICKS_PER_SECOND));
 
         var meta = (FireworkRocketMeta) this.getEntityMeta();
         meta.setShooter(null);
@@ -98,6 +103,17 @@ public final class FireworkRocket extends CustomEntityProjectile {
                 && !this.attachedToEntity.isRemoved()
                 && !this.attachedToEntity.isDead()) {
             return;
+        }
+
+        if (!this.shotAtAngle) {
+            var previousResult = this.getPreviousPhysicsResult();
+            var horizontalCollision = previousResult != null
+                    && (previousResult.collisionX() || previousResult.collisionZ());
+            var horizontalAcceleration = horizontalCollision ? 1.0 : HORIZONTAL_ACCELERATION;
+
+            this.velocity = this.velocity
+                    .mul(horizontalAcceleration, 1.0, horizontalAcceleration)
+                    .add(0.0, VERTICAL_ACCELERATION * ServerFlag.SERVER_TICKS_PER_SECOND, 0.0);
         }
 
         super.movementTick();

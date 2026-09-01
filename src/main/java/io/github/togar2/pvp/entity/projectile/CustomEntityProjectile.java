@@ -186,6 +186,10 @@ public class CustomEntityProjectile extends Entity {
 		return this.collisionDirection != null;
 	}
 
+	protected @Nullable PhysicsResult getPreviousPhysicsResult() {
+		return this.previousPhysicsResult;
+	}
+
 	private boolean shouldUnstuck() {
 		Point collidedPoint = this.position.add(this.collisionDirection.mul(0.003)); // Move slightly inside the collided block
 		Point collidedBlockVec = collidedPoint.asBlockVec();
