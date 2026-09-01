@@ -84,9 +84,9 @@ public class VanillaSweepingFeature implements SweepingFeature {
 
 		// Loop and check for colliding entities
 		List<LivingEntity> affectedEntities = new ArrayList<>();
-		BoundingBox boundingBox = target.getBoundingBox().expand(1.0, 0.25, 1.0);
+		BoundingBox boundingBox = target.getBoundingBox().growSymmetrically(1.0, 0.25, 1.0);
 		assert target.getInstance() != null;
-		for (Entity nearbyEntity : target.getInstance().getNearbyEntities(target.getPosition(), 2)) {
+		for (Entity nearbyEntity : target.getInstance().getNearbyEntities(target.getPosition(), 3)) {
 			if (nearbyEntity instanceof Player) continue;
 
 			var affectedEntity = this.applySweepingToEntity(attacker, target, sweepingDamage, cooldownProgress,
