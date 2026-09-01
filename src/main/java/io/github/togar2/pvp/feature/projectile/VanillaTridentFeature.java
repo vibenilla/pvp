@@ -12,6 +12,7 @@ import io.github.togar2.pvp.feature.food.ExhaustionFeature;
 import io.github.togar2.pvp.feature.item.ItemDamageFeature;
 import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.utils.FluidUtil;
+import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
@@ -42,10 +43,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class VanillaTridentFeature implements TridentFeature, RegistrableFeature {
 	public static final DefinedFeature<VanillaTridentFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.TRIDENT, VanillaTridentFeature::new,
-			FeatureType.ITEM_DAMAGE, FeatureType.ENCHANTMENT, FeatureType.ATTACK_COOLDOWN, FeatureType.EXHAUSTION
+			FeatureType.ITEM_DAMAGE, FeatureType.ENCHANTMENT, FeatureType.ATTACK_COOLDOWN, FeatureType.EXHAUSTION,
+			FeatureType.PLAYER_STATE
 	);
 
 	private final FeatureConfiguration configuration;
+
+	private PlayerStateFeature playerStateFeature;
 
 	private ItemDamageFeature itemDamageFeature;
 	private EnchantmentFeature enchantmentFeature;
@@ -63,6 +67,7 @@ public class VanillaTridentFeature implements TridentFeature, RegistrableFeature
 
 	@Override
 	public void initDependencies() {
+		this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
 		this.itemDamageFeature = this.configuration.get(FeatureType.ITEM_DAMAGE);
 		this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
 		this.attackCooldownFeature = this.configuration.get(FeatureType.ATTACK_COOLDOWN);
@@ -114,7 +119,7 @@ public class VanillaTridentFeature implements TridentFeature, RegistrableFeature
 				trident.shootFromRotation(position.pitch(), position.yaw(), 0, 2.5, 1.0);
 				trident.setInstance(Objects.requireNonNull(player.getInstance()), position.withView(trident.getPosition()));
 
-				Vec playerVel = player.getVelocity();
+				Vec playerVel = this.playerStateFeature.getKnownMovement(player);
 				trident.setVelocity(trident.getVelocity().add(playerVel.x(),
 						player.isOnGround() ? 0.0 : playerVel.y(), playerVel.z()));
 

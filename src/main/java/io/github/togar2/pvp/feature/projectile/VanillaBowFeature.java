@@ -10,6 +10,7 @@ import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.effect.EffectFeature;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.feature.item.ItemDamageFeature;
+import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
@@ -36,10 +37,13 @@ import java.util.concurrent.ThreadLocalRandom;
 public class VanillaBowFeature implements BowFeature, RegistrableFeature {
 	public static final DefinedFeature<VanillaBowFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.BOW, VanillaBowFeature::new,
-			FeatureType.ITEM_DAMAGE, FeatureType.EFFECT, FeatureType.ENCHANTMENT, FeatureType.PROJECTILE_ITEM
+			FeatureType.ITEM_DAMAGE, FeatureType.EFFECT, FeatureType.ENCHANTMENT, FeatureType.PROJECTILE_ITEM,
+			FeatureType.PLAYER_STATE
 	);
 
 	private final FeatureConfiguration configuration;
+
+	private PlayerStateFeature playerStateFeature;
 
 	private ItemDamageFeature itemDamageFeature;
 	private EffectFeature effectFeature;
@@ -52,6 +56,7 @@ public class VanillaBowFeature implements BowFeature, RegistrableFeature {
 
 	@Override
 	public void initDependencies() {
+		this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
 		this.itemDamageFeature = this.configuration.get(FeatureType.ITEM_DAMAGE);
 		this.effectFeature = this.configuration.get(FeatureType.EFFECT);
 		this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
@@ -132,7 +137,7 @@ public class VanillaBowFeature implements BowFeature, RegistrableFeature {
 			// Arrow shooting
 			Pos position = player.getPosition().add(0D, player.getEyeHeight() - 0.1, 0D);
 			arrow.shootFromRotation(position.pitch(), position.yaw(), 0 , power * 3, 1.0);
-			Vec playerVel = player.getVelocity();
+			Vec playerVel = this.playerStateFeature.getKnownMovement(player);
 			arrow.setVelocity(arrow.getVelocity().add(playerVel.x(),
 					player.isOnGround() ? 0.0D : playerVel.y(), playerVel.z()));
 			arrow.setInstance(Objects.requireNonNull(player.getInstance()), position.withView(arrow.getPosition()));

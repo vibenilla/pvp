@@ -7,6 +7,7 @@ import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.cooldown.ItemCooldownFeature;
 import io.github.togar2.pvp.feature.fall.FallFeature;
+import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.coordinate.Pos;
@@ -30,10 +31,12 @@ import java.util.concurrent.ThreadLocalRandom;
 public class VanillaMiscProjectileFeature implements MiscProjectileFeature, RegistrableFeature {
 	public static final DefinedFeature<VanillaMiscProjectileFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.MISC_PROJECTILE, VanillaMiscProjectileFeature::new,
-			FeatureType.ITEM_COOLDOWN, FeatureType.FALL
+			FeatureType.ITEM_COOLDOWN, FeatureType.FALL, FeatureType.PLAYER_STATE
 	);
 
 	private final FeatureConfiguration configuration;
+
+	private PlayerStateFeature playerStateFeature;
 
 	private ItemCooldownFeature itemCooldownFeature;
 	private FallFeature fallFeature;
@@ -44,6 +47,7 @@ public class VanillaMiscProjectileFeature implements MiscProjectileFeature, Regi
 
 	@Override
 	public void initDependencies() {
+		this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
 		this.itemCooldownFeature = this.configuration.get(FeatureType.ITEM_COOLDOWN);
 		this.fallFeature = this.configuration.get(FeatureType.FALL);
 	}
@@ -111,7 +115,7 @@ public class VanillaMiscProjectileFeature implements MiscProjectileFeature, Regi
 			Pos position = player.getPosition().add(0, player.getEyeHeight() - 0.1D, 0);
 			projectile.shootFromRotation(position.pitch(), position.yaw(), 0, 1.5, 1.0);
 
-			Vec playerVel = player.getVelocity();
+			Vec playerVel = this.playerStateFeature.getKnownMovement(player);
 			projectile.setVelocity(projectile.getVelocity().add(playerVel.x(),
 					player.isOnGround() ? 0.0D : playerVel.y(), playerVel.z()));
 			projectile.setInstance(Objects.requireNonNull(player.getInstance()), position.withView(projectile.getPosition()))

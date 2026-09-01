@@ -5,6 +5,9 @@ import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import net.kyori.adventure.key.Key;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.ServerFlag;
+import net.minestom.server.coordinate.Vec;
+import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.Player;
@@ -27,6 +30,8 @@ public class VanillaPlayerStateFeature implements PlayerStateFeature, Registrabl
 	);
 
 	public static final Tag<Block> LAST_CLIMBED_BLOCK = Tag.Transient("lastClimbedBlock");
+	public static final Tag<Vec> MOVEMENT_THIS_TICK = Tag.Transient("movementThisTick");
+	public static final Tag<Vec> KNOWN_MOVEMENT = Tag.Transient("knownMovement");
 
 	@Override
 	public void init(EventNode<EntityInstanceEvent> node) {
@@ -37,6 +42,10 @@ public class VanillaPlayerStateFeature implements PlayerStateFeature, Registrabl
 				// Due to multithreading this can be triggered before the death message is computed
 				player.scheduleNextTick(p -> p.removeTag(LAST_CLIMBED_BLOCK));
 			}
+
+			Vec movedThisTick = player.getTag(MOVEMENT_THIS_TICK);
+			player.setTag(KNOWN_MOVEMENT, movedThisTick == null ? Vec.ZERO : movedThisTick);
+			player.removeTag(MOVEMENT_THIS_TICK);
 		});
 
 		node.addListener(PlayerMoveEvent.class, event -> {
@@ -44,7 +53,19 @@ public class VanillaPlayerStateFeature implements PlayerStateFeature, Registrabl
 			if (this.isClimbing(player)) {
 				player.setTag(LAST_CLIMBED_BLOCK, player.getInstance().getBlock(player.getPosition()));
 			}
+
+			Vec delta = event.getNewPosition().asVec().sub(player.getPosition().asVec());
+			Vec movedThisTick = player.getTag(MOVEMENT_THIS_TICK);
+			player.setTag(MOVEMENT_THIS_TICK, movedThisTick == null ? delta : movedThisTick.add(delta));
 		});
+	}
+
+	@Override
+	public Vec getKnownMovement(Entity entity) {
+		Vec knownMovement = entity.getTag(KNOWN_MOVEMENT);
+		if (knownMovement == null) return entity.getVelocity();
+
+		return knownMovement.mul(ServerFlag.SERVER_TICKS_PER_SECOND);
 	}
 
 	@Override
