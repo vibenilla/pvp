@@ -259,24 +259,23 @@ public class CustomEntityProjectile extends Entity {
 							return e != this && this.canHit(e);
 						}, physicsResult);
 
-				if (!entityResult.isEmpty()) {
+				for (EntityCollisionResult collided : entityResult.stream().sorted().toList()) {
 					Vec prevVelocity = this.velocity;
-					EntityCollisionResult collided = entityResult.stream().findFirst().orElse(null);
 
 					var event = new ProjectileCollideWithEntityEvent(this, collided.collisionPoint().asPos(), collided.entity());
 					EventDispatcher.call(event);
-					if (!event.isCancelled()) {
-						this.refreshPosition(this.position.withCoord(collided.collisionPoint()), this.noClip, this.isStuck());
+					if (event.isCancelled()) continue;
 
-						if (this.onHit(collided.entity())) {
-							// Don't remove now because rest of Entity#tick might throw errors
-                            this.scheduler().scheduleNextProcess(this::remove);
-							// Prevent hitting blocks
-							return;
-						} else {
-							// If velocity has been changed because of bounce, prevent projectile from moving further
-							if (this.velocity != prevVelocity) newPosition = this.position.add(this.velocity.div(ServerFlag.SERVER_TICKS_PER_SECOND));
-						}
+					this.refreshPosition(this.position.withCoord(collided.collisionPoint()), this.noClip, this.isStuck());
+
+					if (this.onHit(collided.entity())) {
+                        this.scheduler().scheduleNextProcess(this::remove);
+						return;
+					}
+
+					if (this.velocity != prevVelocity) {
+						newPosition = this.position.add(this.velocity.div(ServerFlag.SERVER_TICKS_PER_SECOND));
+						break;
 					}
 				}
 			}
