@@ -162,8 +162,10 @@ public class FairKnockbackFeature extends VanillaKnockbackFeature {
 	 * @return the compensated vertical velocity
 	 */
 	protected static double getCompensatedVerticalVelocity(Aerodynamics aerodynamics, double velocity, int ticks) {
+		double gravity = aerodynamics.gravity() * ServerFlag.SERVER_TICKS_PER_SECOND;
+
 		for (int i = 0; i < ticks; i++) {
-			velocity -= aerodynamics.gravity();
+			velocity -= gravity;
 			velocity *= aerodynamics.verticalAirResistance();
 		}
 
