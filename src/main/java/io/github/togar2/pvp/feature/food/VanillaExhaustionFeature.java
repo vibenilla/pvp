@@ -83,8 +83,7 @@ public class VanillaExhaustionFeature implements ExhaustionFeature, RegistrableF
 		double yDiff = event.getNewPosition().y() - player.getPosition().y();
 		double zDiff = event.getNewPosition().z() - player.getPosition().z();
 
-		// Check if movement was a jump
-		if (yDiff > 0.0D && player.isOnGround()) {
+		if (yDiff > 0.0D && player.isOnGround() && !event.isOnGround()) {
 			if (player.isSprinting()) {
                 this.addExhaustion(player, this.version.legacy() ? 0.8f : 0.2f);
 			} else {
