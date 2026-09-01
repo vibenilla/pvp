@@ -1,5 +1,6 @@
 package io.github.togar2.pvp.feature.attributes;
 
+import io.github.togar2.pvp.enchantment.EnchantmentAttributes;
 import io.github.togar2.pvp.enums.ArmorMaterial;
 import io.github.togar2.pvp.enums.Tool;
 import io.github.togar2.pvp.feature.FeatureType;
@@ -58,8 +59,10 @@ public class VanillaEquipmentFeature implements EquipmentFeature, RegistrableFea
 		node.addListener(EntityEquipEvent.class, this::onEquip);
 		node.addListener(PlayerChangeHeldSlotEvent.class, event -> {
 			LivingEntity entity = event.getPlayer();
+			ItemStack oldItem = entity.getEquipment(EquipmentSlot.MAIN_HAND);
 			ItemStack newItem = event.getPlayer().getInventory().getItemStack(event.getNewSlot());
-			Tool.updateEquipmentAttributes(entity, entity.getEquipment(EquipmentSlot.MAIN_HAND), newItem, EquipmentSlot.MAIN_HAND, this.version);
+			Tool.updateEquipmentAttributes(entity, oldItem, newItem, EquipmentSlot.MAIN_HAND, this.version);
+			EnchantmentAttributes.updateEquipmentAttributes(entity, oldItem, newItem, EquipmentSlot.MAIN_HAND);
 		});
 	}
 
@@ -178,6 +181,7 @@ public class VanillaEquipmentFeature implements EquipmentFeature, RegistrableFea
 		} else if (slot.isHand()) {
 			Tool.updateEquipmentAttributes(entity, entity.getEquipment(slot), event.getEquippedItem(), slot, this.version);
 		}
+		EnchantmentAttributes.updateEquipmentAttributes(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);
 
 		this.playEquipSound(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);
 	}

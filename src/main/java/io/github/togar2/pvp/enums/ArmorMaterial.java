@@ -11,7 +11,6 @@ import net.minestom.server.entity.attribute.AttributeModifier;
 import net.minestom.server.entity.attribute.AttributeOperation;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
-import net.minestom.server.item.enchant.Enchantment;
 import net.minestom.server.sound.SoundEvent;
 
 import java.util.HashMap;
@@ -77,7 +76,6 @@ public enum ArmorMaterial {
 		ArmorMaterial newMaterial = fromMaterial(newStack.material());
 
 		Key modifierId = getModifierId(slot);
-		Key blastProtectionModifierId = getBlastProtectionModifierId(slot);
 
 		// Remove attributes from previous armor
 		if (oldMaterial != null && hasDefaultAttributes(oldStack)) {
@@ -87,7 +85,6 @@ public enum ArmorMaterial {
 				entity.getAttribute(Attribute.KNOCKBACK_RESISTANCE).removeModifier(modifierId);
 			}
 		}
-		entity.getAttribute(Attribute.EXPLOSION_KNOCKBACK_RESISTANCE).removeModifier(blastProtectionModifierId);
 
 		// Add attributes from new armor
 		if (newMaterial != null && hasDefaultAttributes(newStack)) {
@@ -98,12 +95,6 @@ public enum ArmorMaterial {
 					entity.getAttribute(Attribute.KNOCKBACK_RESISTANCE).addModifier(new AttributeModifier(modifierId, newMaterial.getKnockbackResistance(), AttributeOperation.ADD_VALUE));
 				}
 			}
-		}
-		var blastProtectionLevel = newStack.get(DataComponents.ENCHANTMENTS).level(Enchantment.BLAST_PROTECTION);
-		if (blastProtectionLevel > 0 && slot == getRequiredSlot(newStack.material())) {
-			entity.getAttribute(Attribute.EXPLOSION_KNOCKBACK_RESISTANCE).addModifier(new AttributeModifier(
-					blastProtectionModifierId, blastProtectionLevel * 0.15, AttributeOperation.ADD_VALUE
-			));
 		}
 	}
 
@@ -126,10 +117,6 @@ public enum ArmorMaterial {
 
 	public static Key getModifierId(EquipmentSlot slot) {
 		return ModifierId.ARMOR_MODIFIERS[slot.ordinal() - 2];
-	}
-
-	public static Key getBlastProtectionModifierId(EquipmentSlot slot) {
-		return ModifierId.BLAST_PROTECTION_MODIFIERS[slot.ordinal() - 2];
 	}
 
 	static {

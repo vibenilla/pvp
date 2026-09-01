@@ -12,11 +12,4 @@ public class ModifierId {
 			Key.key("minecraft:armor.chestplate"),
 			Key.key("minecraft:armor.helmet"),
 	};
-
-	public static final Key[] BLAST_PROTECTION_MODIFIERS = new Key[]{
-			Key.key("minecraft:enchantment.blast_protection.boots"),
-			Key.key("minecraft:enchantment.blast_protection.leggings"),
-			Key.key("minecraft:enchantment.blast_protection.chestplate"),
-			Key.key("minecraft:enchantment.blast_protection.helmet"),
-	};
 }
