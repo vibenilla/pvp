@@ -19,7 +19,7 @@ public final class EntityCollision {
 	                                                         BoundingBox boundingBox, Point point, Vec entityVelocity,
 	                                                         double extendRadius, Function<Entity, Boolean> entityFilter,
 	                                                         @Nullable PhysicsResult physicsResult) {
-		var minimumResult = physicsResult != null ? physicsResult.sweepResult().result() : Double.MAX_VALUE;
+		var minimumResult = physicsResult != null ? physicsResult.collisionFraction() : Double.MAX_VALUE;
 		var result = new ArrayList<EntityCollisionResult>();
 
 		var maxDistance = Math.pow(boundingBox.height() * boundingBox.height()
@@ -37,15 +37,13 @@ public final class EntityCollision {
 						return;
 					}
 
-					var sweepResult = new SweepResult(minimumResult, 0, 0, 0, null, 0, 0, 0, 0, 0, 0);
-					var intersected = BlockCollision.intersectShapeSwept(entity.getBoundingBox(), point,
-							entityVelocity, entity.getPosition(), boundingBox, sweepResult);
+					var percentage = RayUtil.intersectionPercentage(boundingBox, point, entityVelocity,
+							entity.getBoundingBox(), entity.getPosition(), minimumResult);
 
-					if (intersected && sweepResult.result() < 1) {
-						var collisionPoint = point.asPos().add(entityVelocity.mul(sweepResult.result()));
-						var direction = new Vec(sweepResult.collidedPositionX,
-								sweepResult.collidedPositionY, sweepResult.collidedPositionZ);
-						result.add(new EntityCollisionResult(collisionPoint, entity, direction, sweepResult.result()));
+					if (percentage < 1) {
+						var collisionPoint = point.asPos().add(entityVelocity.mul(percentage));
+						var direction = new Vec(collisionPoint.x(), collisionPoint.y(), collisionPoint.z());
+						result.add(new EntityCollisionResult(collisionPoint, entity, direction, percentage));
 					}
 				});
 

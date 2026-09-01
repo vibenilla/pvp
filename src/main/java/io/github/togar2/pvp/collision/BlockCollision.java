@@ -3,9 +3,11 @@ package io.github.togar2.pvp.collision;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.collision.Shape;
 import net.minestom.server.collision.ShapeImpl;
+import net.minestom.server.coordinate.BlockVec;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
+import net.minestom.server.instance.WorldBorder;
 import net.minestom.server.instance.block.Block;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,17 +30,26 @@ public final class BlockCollision {
 	                                          Block.Getter blockGetter,
 	                                          @Nullable PhysicsResult lastPhysicsResult,
 	                                          boolean singleCollision) {
+		return handlePhysics(boundingBox, velocity, entityPosition, blockGetter,
+				lastPhysicsResult, singleCollision, null);
+	}
+
+	public static PhysicsResult handlePhysics(BoundingBox boundingBox, Vec velocity, Pos entityPosition,
+	                                          Block.Getter blockGetter,
+	                                          @Nullable PhysicsResult lastPhysicsResult,
+	                                          boolean singleCollision,
+	                                          @Nullable WorldBorder worldBorder) {
 		if (velocity.isZero()) {
 			return new PhysicsResult(entityPosition, Vec.ZERO, false, false, false, false,
 					velocity, NO_COLLISION_POINTS, NO_COLLISION_SHAPES, NO_COLLISION_SHAPE_POSITIONS,
-					false, SweepResult.NO_COLLISION);
+					false, Double.MAX_VALUE);
 		}
 
 		final var cachedResult = cachedPhysics(velocity, entityPosition, blockGetter, lastPhysicsResult);
 
 		if (cachedResult != null) return cachedResult;
 
-		return stepPhysics(boundingBox, velocity, entityPosition, blockGetter, singleCollision);
+		return stepPhysics(boundingBox, velocity, entityPosition, blockGetter, singleCollision, worldBorder);
 	}
 
 	/**
@@ -47,11 +58,11 @@ public final class BlockCollision {
 	public static PhysicsResult blocklessCollision(Pos entityPosition, Vec entityVelocity) {
 		return new PhysicsResult(entityPosition.add(entityVelocity), entityVelocity, false,
 				false, false, false, entityVelocity, NO_COLLISION_POINTS, NO_COLLISION_SHAPES,
-				NO_COLLISION_SHAPE_POSITIONS, false, SweepResult.NO_COLLISION);
+				NO_COLLISION_SHAPE_POSITIONS, false, Double.MAX_VALUE);
 	}
 
-	static boolean intersectShapeSwept(Shape shape, Point rayStart, Point rayDirection, Point shapePosition,
-	                                   BoundingBox movingBoundingBox, SweepResult finalResult) {
+	private static boolean intersectShapeSwept(Shape shape, Point rayStart, Point rayDirection, Point shapePosition,
+	                                           BoundingBox movingBoundingBox, SweepResult finalResult) {
 		var hitBlock = false;
 
 		for (var blockSection : boundingBoxes(shape)) {
@@ -63,6 +74,9 @@ public final class BlockCollision {
 				finalResult.collidedShapeX = shapePosition.x();
 				finalResult.collidedShapeY = shapePosition.y();
 				finalResult.collidedShapeZ = shapePosition.z();
+				finalResult.collidedBlockX = shapePosition.blockX();
+				finalResult.collidedBlockY = shapePosition.blockY();
+				finalResult.collidedBlockZ = shapePosition.blockZ();
 				finalResult.collidedShape = shape;
 				hitBlock = true;
 			}
@@ -81,47 +95,80 @@ public final class BlockCollision {
 	private static @Nullable PhysicsResult cachedPhysics(Vec velocity, Pos entityPosition,
 	                                                     Block.Getter blockGetter,
 	                                                     @Nullable PhysicsResult lastPhysicsResult) {
-		if (lastPhysicsResult != null && lastPhysicsResult.collisionShapes()[1] instanceof ShapeImpl shape) {
-			var currentBlock = blockGetter.getBlock(lastPhysicsResult.collisionShapePositions()[1],
-					Block.Getter.Condition.TYPE);
-			var lastBlockBoxes = shape.boundingBoxes();
-			var currentBlockBoxes = boundingBoxes(currentBlock.collisionShape());
-
-			if (lastPhysicsResult.collisionY()
-					&& velocity.y() == lastPhysicsResult.originalDelta().y()
-					&& currentBlockBoxes.equals(lastBlockBoxes)
-					&& velocity.x() == 0 && velocity.z() == 0
-					&& entityPosition.samePoint(lastPhysicsResult.newPosition())
-					&& !lastBlockBoxes.isEmpty()) {
-				if (lastPhysicsResult.cached()) return lastPhysicsResult;
-
-				return new PhysicsResult(lastPhysicsResult.newPosition(), lastPhysicsResult.newVelocity(),
-						lastPhysicsResult.isOnGround(), lastPhysicsResult.collisionX(), lastPhysicsResult.collisionY(),
-						lastPhysicsResult.collisionZ(), lastPhysicsResult.originalDelta(), lastPhysicsResult.collisionPoints(),
-						lastPhysicsResult.collisionShapes(), lastPhysicsResult.collisionShapePositions(),
-						lastPhysicsResult.hasCollision(), lastPhysicsResult.sweepResult(), true);
-			}
+		if (lastPhysicsResult == null
+				|| !lastPhysicsResult.collisionY()
+				|| velocity.x() != 0 || velocity.z() != 0
+				|| !velocity.samePoint(lastPhysicsResult.originalDelta())
+				|| !entityPosition.samePoint(lastPhysicsResult.newPosition())) {
+			return null;
 		}
 
-		return null;
+		if (!(lastPhysicsResult.collisionShapes()[1] instanceof ShapeImpl lastShape)) return null;
+
+		final var blockPosition = lastPhysicsResult.collisionShapePositions()[1];
+		assert blockPosition != null;
+
+		final var lastBlockBoxes = lastShape.boundingBoxes();
+
+		if (lastBlockBoxes.isEmpty()) return null;
+
+		final var currentShape = blockGetter.getBlock(blockPosition, Block.Getter.Condition.TYPE).collisionShape();
+
+		return currentShape instanceof ShapeImpl shape && shape.boundingBoxes().equals(lastBlockBoxes)
+				? lastPhysicsResult : null;
 	}
 
 	private static PhysicsResult stepPhysics(BoundingBox boundingBox, Vec velocity, Pos entityPosition,
-	                                         Block.Getter blockGetter, boolean singleCollision) {
+	                                         Block.Getter blockGetter, boolean singleCollision,
+	                                         @Nullable WorldBorder worldBorder) {
 		final var finalResult = new SweepResult(1 - Point.EPSILON, 0, 0, 0, null, 0, 0, 0, 0, 0, 0);
 
 		var collidedPoints = NO_COLLISION_POINTS;
 		var collisionShapes = NO_COLLISION_SHAPES;
 		var collisionShapePositions = NO_COLLISION_SHAPE_POSITIONS;
 
+		double borderMinX = 0, borderMaxX = 0, borderMinZ = 0, borderMaxZ = 0;
+		var sweepBorder = false;
+
+		if (worldBorder != null) {
+			final var radius = worldBorder.diameter() / 2;
+			final var wallMinX = Math.floor(worldBorder.centerX() - radius);
+			final var wallMaxX = Math.ceil(worldBorder.centerX() + radius);
+			final var wallMinZ = Math.floor(worldBorder.centerZ() - radius);
+			final var wallMaxZ = Math.ceil(worldBorder.centerZ() + radius);
+			borderMinX = wallMinX - boundingBox.minX();
+			borderMaxX = wallMaxX - boundingBox.maxX();
+			borderMinZ = wallMinZ - boundingBox.minZ();
+			borderMaxZ = wallMaxZ - boundingBox.maxZ();
+
+			final var margin = Math.max(Math.max(boundingBox.width(), boundingBox.depth()), 1);
+			final var targetX = entityPosition.x() + velocity.x();
+			final var targetZ = entityPosition.z() + velocity.z();
+			sweepBorder = (targetX < borderMinX || targetX > borderMaxX || targetZ < borderMinZ || targetZ > borderMaxZ)
+					&& entityPosition.x() >= wallMinX - margin && entityPosition.x() < wallMaxX + margin
+					&& entityPosition.z() >= wallMinZ - margin && entityPosition.z() < wallMaxZ + margin;
+		}
+
 		var position = entityPosition;
 		var remaining = velocity;
+		var foundX = false;
+		var foundY = false;
+		var foundZ = false;
 
 		while (true) {
+			if (sweepBorder) {
+				sweepWorldBorderAxis(position.x(), remaining.x(), borderMinX, borderMaxX, 0,
+						position, remaining, finalResult);
+				sweepWorldBorderAxis(position.z(), remaining.z(), borderMinZ, borderMaxZ, 2,
+						position, remaining, finalResult);
+			}
+
 			sweepBlocks(boundingBox, remaining, position, blockGetter, finalResult);
-			var deltaX = finalResult.result * remaining.x();
-			var deltaY = finalResult.result * remaining.y();
-			var deltaZ = finalResult.result * remaining.z();
+
+			final var result = finalResult.result;
+			var deltaX = result * remaining.x();
+			var deltaY = result * remaining.y();
+			var deltaZ = result * remaining.z();
 
 			if (Math.abs(deltaX) < Point.EPSILON) deltaX = 0;
 			if (Math.abs(deltaY) < Point.EPSILON) deltaY = 0;
@@ -136,18 +183,27 @@ public final class BlockCollision {
 			else if (finalResult.normalZ != 0) axis = 2;
 			else break;
 
-			if (collisionShapes == NO_COLLISION_SHAPES) {
-				collidedPoints = new Point[3];
-				collisionShapes = new Shape[3];
-				collisionShapePositions = new Point[3];
-			}
+			if (axis == 0) foundX = true;
+			else if (axis == 1) foundY = true;
+			else foundZ = true;
 
-			collisionShapes[axis] = finalResult.collidedShape;
-			collisionShapePositions[axis] = new Vec(finalResult.collidedShapeX, finalResult.collidedShapeY, finalResult.collidedShapeZ);
+			if (collidedPoints == NO_COLLISION_POINTS) collidedPoints = new Point[3];
+
 			collidedPoints[axis] = new Vec(finalResult.collidedPositionX, finalResult.collidedPositionY, finalResult.collidedPositionZ);
 
-			if (singleCollision || (collisionShapes[0] != null && collisionShapes[1] != null && collisionShapes[2] != null))
-				break;
+			final var collidedShape = finalResult.collidedShape;
+
+			if (collidedShape != null) {
+				if (collisionShapes == NO_COLLISION_SHAPES) {
+					collisionShapes = new Shape[3];
+					collisionShapePositions = new Point[3];
+				}
+
+				collisionShapes[axis] = collidedShape;
+				collisionShapePositions[axis] = new BlockVec(finalResult.collidedBlockX, finalResult.collidedBlockY, finalResult.collidedBlockZ);
+			}
+
+			if (singleCollision || (foundX && foundY && foundZ)) break;
 
 			remaining = new Vec(
 					axis == 0 ? 0 : remaining.x() - deltaX,
@@ -162,9 +218,6 @@ public final class BlockCollision {
 			finalResult.result = 1 - Point.EPSILON;
 		}
 
-		final var foundX = collisionShapes[0] != null;
-		final var foundY = collisionShapes[1] != null;
-		final var foundZ = collisionShapes[2] != null;
 		final var anyCollision = foundX || foundY || foundZ;
 		final var allCollision = foundX && foundY && foundZ;
 
@@ -182,7 +235,39 @@ public final class BlockCollision {
 				foundY && velocity.y() < 0,
 				foundX, foundY, foundZ,
 				velocity, collidedPoints, collisionShapes, collisionShapePositions,
-				anyCollision, finalResult);
+				anyCollision, finalResult.result);
+	}
+
+	private static void sweepWorldBorderAxis(double position, double velocity,
+	                                         double minimum, double maximum, int axis,
+	                                         Pos entityPosition, Vec entityVelocity,
+	                                         SweepResult finalResult) {
+		final double percentage;
+
+		if (velocity > 0) {
+			if (position > maximum || position + velocity <= maximum) return;
+
+			percentage = (maximum - position) / velocity;
+		} else if (velocity < 0) {
+			if (position < minimum || position + velocity >= minimum) return;
+
+			percentage = (minimum - position) / velocity;
+		} else {
+			return;
+		}
+
+		final var acceptedPercentage = percentage * 0.99999;
+
+		if (!(acceptedPercentage <= finalResult.result)) return;
+
+		finalResult.result = acceptedPercentage;
+		finalResult.normalX = axis == 0 ? 1 : 0;
+		finalResult.normalY = 0;
+		finalResult.normalZ = axis == 2 ? 1 : 0;
+		finalResult.collidedPositionX = entityPosition.x() + entityVelocity.x() * acceptedPercentage;
+		finalResult.collidedPositionY = entityPosition.y() + entityVelocity.y() * acceptedPercentage;
+		finalResult.collidedPositionZ = entityPosition.z() + entityVelocity.z() * acceptedPercentage;
+		finalResult.collidedShape = null;
 	}
 
 	private static void sweepBlocks(BoundingBox boundingBox, Vec velocity, Pos entityPosition,
@@ -231,11 +316,11 @@ public final class BlockCollision {
 		final var currentShort = currentShape.relativeEnd().y() < 0.5;
 
 		if (currentShort && shouldCheckLower(entityVelocity, entityPosition, blockX, blockY, blockZ)) {
-			final var belowPosition = new Vec(blockX, blockY - 1, blockZ);
+			final var belowPosition = new BlockVec(blockX, blockY - 1, blockZ);
 			final var belowBlock = blockGetter.getBlock(belowPosition, Block.Getter.Condition.TYPE);
 			final var belowShape = belowBlock.collisionShape();
 
-			final var currentPosition = new Vec(blockX, blockY, blockZ);
+			final var currentPosition = new BlockVec(blockX, blockY, blockZ);
 
 			if (belowShape.relativeEnd().y() > 1) {
 				final var belowHit = intersectShapeSwept(belowShape, entityPosition, entityVelocity,
@@ -251,9 +336,9 @@ public final class BlockCollision {
 		}
 
 		if (currentCollidable && intersectShapeSwept(currentShape, entityPosition, entityVelocity,
-				new Vec(blockX, blockY, blockZ), boundingBox, finalResult)) {
+				new BlockVec(blockX, blockY, blockZ), boundingBox, finalResult)) {
 			if (currentShort) {
-				final var belowPosition = new Vec(blockX, blockY - 1, blockZ);
+				final var belowPosition = new BlockVec(blockX, blockY - 1, blockZ);
 				final var belowBlock = blockGetter.getBlock(belowPosition, Block.Getter.Condition.TYPE);
 				final var belowShape = belowBlock.collisionShape();
 

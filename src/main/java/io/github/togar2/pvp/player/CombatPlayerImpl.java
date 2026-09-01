@@ -188,12 +188,15 @@ public class CombatPlayerImpl extends Player implements CombatPlayer {
 					!newPosition.samePoint(position), this.isFlying(), onGround, this.hasNoGravity());
 		}
 
-		var stillCached = physicsResult.cached() && newVelocity.samePoint(physicsResult.newVelocity())
-				&& newPosition.samePoint(physicsResult.newPosition());
+		if (physicsResult == previousPhysicsResult && newVelocity.samePoint(physicsResult.newVelocity())
+				&& newPosition.samePoint(physicsResult.newPosition())) {
+			return new MovementResult(physicsResult, this.collectStuckSpeedMultiplier(blockGetter, newPosition));
+		}
+
 		var newPhysicsResult = new PhysicsResult(newPosition, newVelocity, physicsResult.isOnGround(),
 				physicsResult.collisionX(), physicsResult.collisionY(), physicsResult.collisionZ(),
 				physicsResult.originalDelta(), physicsResult.collisionPoints(), physicsResult.collisionShapes(),
-				physicsResult.collisionShapePositions(), physicsResult.hasCollision(), physicsResult.sweepResult(), stillCached);
+				physicsResult.collisionShapePositions(), physicsResult.hasCollision(), physicsResult.collisionFraction());
 
 		return new MovementResult(newPhysicsResult, this.collectStuckSpeedMultiplier(blockGetter, newPosition));
 	}

@@ -89,8 +89,7 @@ public final class EntityCollisionParityTest {
 
 	private PhysicsResult pvpResult(Pos position, Vec velocity, double sweepLimit) {
 		return new PhysicsResult(position, velocity, false, false, false, false,
-				velocity, new Point[3], new net.minestom.server.collision.Shape[3], new Point[3], false,
-				new SweepResult(sweepLimit, 0, 0, 0, null, 0, 0, 0, 0, 0, 0));
+				velocity, new Point[3], new net.minestom.server.collision.Shape[3], new Point[3], false, sweepLimit);
 	}
 
 	private boolean matches(List<EntityCollisionResult> expected, List<EntityCollisionResult> actual) {

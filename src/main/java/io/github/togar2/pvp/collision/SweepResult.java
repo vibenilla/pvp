@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * own.
  */
 public final class SweepResult {
+	@Deprecated(forRemoval = true)
 	public static final SweepResult NO_COLLISION =
 			new SweepResult(Double.MAX_VALUE, 0.0, 0.0, 0.0, null, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 
@@ -18,6 +19,7 @@ public final class SweepResult {
 	double normalX, normalY, normalZ;
 	double collidedPositionX, collidedPositionY, collidedPositionZ;
 	double collidedShapeX, collidedShapeY, collidedShapeZ;
+	int collidedBlockX, collidedBlockY, collidedBlockZ;
 	@Nullable Shape collidedShape;
 
 	public SweepResult(double result, double normalX, double normalY, double normalZ,
