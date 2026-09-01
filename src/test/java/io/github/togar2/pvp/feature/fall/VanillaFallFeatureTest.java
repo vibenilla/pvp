@@ -9,6 +9,7 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.network.packet.client.play.ClientPlayerPositionPacket;
 import net.minestom.server.network.packet.client.play.ClientTeleportConfirmPacket;
+import net.minestom.server.network.packet.server.play.EntitySoundEffectPacket;
 import net.minestom.server.network.packet.server.play.EntityStatusPacket;
 import net.minestom.server.instance.block.Block;
 import net.minestom.testing.Env;
@@ -200,6 +201,29 @@ public final class VanillaFallFeatureTest {
 
             assertEquals(16.0F, player.getHealth());
             assertFalse(player.hasTag(VanillaFallFeature.CURRENT_IMPULSE_IMPACT_Y));
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void damagingFallPlaysTheLandingBlockSound(Env env) {
+        var node = this.addFallFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var faller = env.createPlayer(instance, new Pos(8.0, 47.0, 8.0));
+            faller.setGameMode(GameMode.SURVIVAL);
+            this.confirmTeleport(faller);
+            var viewerConnection = env.createConnection();
+            viewerConnection.connect(instance, new Pos(10.0, 40.0, 8.0));
+            var expectedSound = instance.getBlock(8, 39, 8).blockSoundType().fallSound().key();
+
+            var sounds = viewerConnection.trackIncoming(EntitySoundEffectPacket.class);
+            this.move(faller, new Pos(8.0, 44.0, 8.0), false);
+            this.move(faller, new Pos(8.0, 40.0, 8.0), true);
+
+            assertTrue(sounds.collect().stream().anyMatch(packet -> packet.soundEvent().key().equals(expectedSound)));
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }

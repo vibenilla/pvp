@@ -312,8 +312,10 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
             this.playFallSound(entity, damage);
 			var damaged = entity.damage(damageType, damage);
 
-			if (damaged && block.compare(Block.HONEY_BLOCK)) {
-				this.playHoneyBlockFallSound(entity);
+			if (damaged) {
+				this.playBlockFallSound(entity, block);
+
+				if (block.compare(Block.HONEY_BLOCK)) this.playHoneyBlockFallSound(entity);
 			}
 		}
 	}
@@ -399,6 +401,19 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 				1.0f, 1.0f
 		), entity);
 		entity.triggerStatus((byte) 54);
+	}
+
+	private void playBlockFallSound(LivingEntity entity, Block block) {
+		if (block.isAir()) return;
+
+		var soundType = block.blockSoundType();
+		if (soundType == null) return;
+
+		entity.getViewersAsAudience().playSound(Sound.sound(
+				soundType.fallSound(),
+				entity instanceof Player ? Sound.Source.PLAYER : Sound.Source.HOSTILE,
+				soundType.volume() * 0.5f, soundType.pitch() * 0.75f
+		), entity);
 	}
 
 	private void playHoneyBlockFallSound(LivingEntity entity) {
