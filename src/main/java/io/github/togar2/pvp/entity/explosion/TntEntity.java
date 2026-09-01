@@ -15,6 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TntEntity extends Entity {
 	private final Entity causingEntity;
+	private boolean exploded;
 
 	public TntEntity(@Nullable Entity causingEntity) {
 		super(EntityType.TNT);
@@ -38,7 +39,8 @@ public class TntEntity extends Entity {
 		if (this.onGround) this.velocity = this.velocity.mul(0.7, -0.5, 0.7);
 		int newFuse = this.getFuse() - 1;
 		this.setFuse(newFuse);
-		if (newFuse <= 0) {
+		if (newFuse <= 0 && !this.exploded) {
+			this.exploded = true;
 			Instance instance = this.instance;
 			Pos position = this.position;
 			BoundingBox boundingBox = this.boundingBox;

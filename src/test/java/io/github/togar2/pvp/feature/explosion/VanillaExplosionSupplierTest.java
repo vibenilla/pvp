@@ -9,10 +9,23 @@ import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @EnvTest
 public final class VanillaExplosionSupplierTest {
+    @Test
+    public void explosionInUnloadedChunksDoesNotThrow(Env env) {
+        var featureSet = CombatFeatures.empty()
+                .add(CombatFeatures.VANILLA_EXPLOSION)
+                .build();
+
+        var instance = env.createFlatInstance();
+        instance.setExplosionSupplier(featureSet.get(FeatureType.EXPLOSION).getExplosionSupplier());
+
+        assertDoesNotThrow(() -> instance.explode(1000.0F, 40.0F, 1000.0F, 4.0F));
+    }
+
     @Test
     public void explosionEndsImpulseGraceTimeButKeepsImpactPosition(Env env) {
         var featureSet = CombatFeatures.empty()

@@ -5,6 +5,7 @@ import io.github.togar2.pvp.events.ExplosionEvent;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.player.CombatPlayer;
+import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.CollisionUtil;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.minestom.server.ServerFlag;
@@ -77,6 +78,8 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 					breakBlocks = additionalData.getBoolean("breakBlocks");
 
 				if (breakBlocks) {
+					var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
+
 					for (int x = 0; x < 16; ++x) {
 						for (int y = 0; y < 16; ++y) {
 							for (int z = 0; z < 16; ++z) {
@@ -95,7 +98,7 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 									float strengthLeft = this.getStrength() * (0.7F + random.nextFloat() * 0.6F);
 									for (; strengthLeft > 0.0F; strengthLeft -= 0.225F) {
 										Vec position = new Vec(centerX, centerY, centerZ);
-										Block block = instance.getBlock(position);
+										Block block = blockGetter.getBlock(position);
 
 										if (!block.isAir()) {
 											var explosionResistance = this.getExplosionResistance(block);
