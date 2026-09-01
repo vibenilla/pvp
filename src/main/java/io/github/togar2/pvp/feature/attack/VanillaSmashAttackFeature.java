@@ -167,8 +167,6 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 
 			this.applyWindBurstKnockback(attackerPosition, power, player);
 		}
-
-		this.fallFeature.clearCurrentImpulseContext(attacker);
 	}
 
 	private float getWindBurstPower(int windBurstLevel) {
@@ -198,6 +196,8 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 		var knockbackVector = direction.normalize().mul(knockbackFactor);
 		var nearbyVelocity = nearbyLiving.getVelocity();
 		nearbyLiving.setVelocity(nearbyVelocity.add(knockbackVector.mul(ServerFlag.SERVER_TICKS_PER_SECOND)));
+
+		this.fallFeature.resetPostImpulseGraceTime(nearbyLiving);
 	}
 
 	private void applySmashKnockback(LivingEntity attacker, LivingEntity target, boolean heavySmash) {

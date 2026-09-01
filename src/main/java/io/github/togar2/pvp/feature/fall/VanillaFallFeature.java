@@ -469,6 +469,11 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 	}
 
 	@Override
+	public void resetPostImpulseGraceTime(LivingEntity entity) {
+		entity.setTag(CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME, 0);
+	}
+
+	@Override
 	public void applyPostImpulseGraceTime(LivingEntity entity, int ticks) {
 		entity.setTag(CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME, Math.max(
 				entity.hasTag(CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME) ? entity.getTag(CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME) : 0,

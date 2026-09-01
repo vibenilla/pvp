@@ -32,6 +32,9 @@ public interface FallFeature extends CombatFeature {
 		public void clearCurrentImpulseContext(LivingEntity entity) {}
 
 		@Override
+		public void resetPostImpulseGraceTime(LivingEntity entity) {}
+
+		@Override
 		public void applyPostImpulseGraceTime(LivingEntity entity, int ticks) {}
 	};
 
@@ -46,6 +49,8 @@ public interface FallFeature extends CombatFeature {
 	void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity);
 
 	void clearCurrentImpulseContext(LivingEntity entity);
+
+	void resetPostImpulseGraceTime(LivingEntity entity);
 
 	void applyPostImpulseGraceTime(LivingEntity entity, int ticks);
 }
