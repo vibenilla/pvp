@@ -1,21 +1,12 @@
 package io.github.togar2.pvp.enums;
 
 import io.github.togar2.pvp.utils.CombatVersion;
-import io.github.togar2.pvp.utils.ModifierId;
-import net.kyori.adventure.key.Key;
-import net.minestom.server.component.DataComponents;
 import net.minestom.server.entity.EquipmentSlot;
-import net.minestom.server.entity.LivingEntity;
-import net.minestom.server.entity.attribute.Attribute;
-import net.minestom.server.entity.attribute.AttributeModifier;
-import net.minestom.server.entity.attribute.AttributeOperation;
-import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.sound.SoundEvent;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public enum ArmorMaterial {
 	LEATHER(new int[]{1, 2, 3, 1}, new int[]{1, 3, 2, 1}, SoundEvent.ITEM_ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, Material.LEATHER_BOOTS, Material.LEATHER_LEGGINGS, Material.LEATHER_CHESTPLATE, Material.LEATHER_HELMET),
@@ -70,53 +61,10 @@ public enum ArmorMaterial {
 		return this.knockbackResistance;
 	}
 
-	public static void updateEquipmentAttributes(LivingEntity entity, ItemStack oldStack, ItemStack newStack,
-	                                             EquipmentSlot slot, CombatVersion version) {
-		ArmorMaterial oldMaterial = fromMaterial(oldStack.material());
-		ArmorMaterial newMaterial = fromMaterial(newStack.material());
-
-		Key modifierId = getModifierId(slot);
-
-		// Remove attributes from previous armor
-		if (oldMaterial != null && hasDefaultAttributes(oldStack)) {
-			if (slot == getRequiredSlot(oldStack.material())) {
-				entity.getAttribute(Attribute.ARMOR).removeModifier(modifierId);
-				entity.getAttribute(Attribute.ARMOR_TOUGHNESS).removeModifier(modifierId);
-				entity.getAttribute(Attribute.KNOCKBACK_RESISTANCE).removeModifier(modifierId);
-			}
-		}
-
-		// Add attributes from new armor
-		if (newMaterial != null && hasDefaultAttributes(newStack)) {
-			if (slot == getRequiredSlot(newStack.material())) {
-				entity.getAttribute(Attribute.ARMOR).addModifier(new AttributeModifier(modifierId, newMaterial.getProtectionAmount(slot, version), AttributeOperation.ADD_VALUE));
-				entity.getAttribute(Attribute.ARMOR_TOUGHNESS).addModifier(new AttributeModifier(modifierId, newMaterial.getToughness(), AttributeOperation.ADD_VALUE));
-				if (newMaterial.getKnockbackResistance() > 0) {
-					entity.getAttribute(Attribute.KNOCKBACK_RESISTANCE).addModifier(new AttributeModifier(modifierId, newMaterial.getKnockbackResistance(), AttributeOperation.ADD_VALUE));
-				}
-			}
-		}
-	}
-
-	private static boolean hasDefaultAttributes(ItemStack stack) {
-		// When modifiers tag is not empty, default modifiers are not
-		return !stack.has(DataComponents.ATTRIBUTE_MODIFIERS)
-				|| Objects.requireNonNull(stack.get(DataComponents.ATTRIBUTE_MODIFIERS)).modifiers().isEmpty();
-	}
-
-	public static EquipmentSlot getRequiredSlot(Material material) {
-		EquipmentSlot slot = material.registry().equipmentSlot();
-		return slot == null ? EquipmentSlot.HELMET : slot;
-	}
-
 	private static final Map<Material, ArmorMaterial> MATERIAL_TO_ARMOR_MATERIAL = new HashMap<>();
 
 	public static ArmorMaterial fromMaterial(Material material) {
 		return MATERIAL_TO_ARMOR_MATERIAL.get(material);
-	}
-
-	public static Key getModifierId(EquipmentSlot slot) {
-		return ModifierId.ARMOR_MODIFIERS[slot.ordinal() - 2];
 	}
 
 	static {

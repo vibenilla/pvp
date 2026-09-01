@@ -1,13 +1,10 @@
 package io.github.togar2.pvp.feature.attributes;
 
 import io.github.togar2.pvp.enchantment.EnchantmentAttributes;
-import io.github.togar2.pvp.enums.ArmorMaterial;
-import io.github.togar2.pvp.enums.Tool;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
-import io.github.togar2.pvp.utils.CombatVersion;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.component.DataComponents;
@@ -34,23 +31,10 @@ import java.util.List;
  */
 public class VanillaEquipmentFeature implements EquipmentFeature, RegistrableFeature {
 	public static final DefinedFeature<VanillaEquipmentFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.EQUIPMENT, VanillaEquipmentFeature::new,
-			FeatureType.VERSION
+			FeatureType.EQUIPMENT, VanillaEquipmentFeature::new
 	);
 
-	private final FeatureConfiguration configuration;
-
-	//TODO this probably shouldn't work this way
-	// We probably want to store all the tools & armor separately per DataFeature
-	private CombatVersion version;
-
 	public VanillaEquipmentFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-	}
-
-	@Override
-	public void initDependencies() {
-		this.version = this.configuration.get(FeatureType.VERSION);
 	}
 
 	@Override
@@ -61,7 +45,6 @@ public class VanillaEquipmentFeature implements EquipmentFeature, RegistrableFea
 			LivingEntity entity = event.getPlayer();
 			ItemStack oldItem = entity.getEquipment(EquipmentSlot.MAIN_HAND);
 			ItemStack newItem = event.getPlayer().getInventory().getItemStack(event.getNewSlot());
-			Tool.updateEquipmentAttributes(entity, oldItem, newItem, EquipmentSlot.MAIN_HAND, this.version);
 			EnchantmentAttributes.updateEquipmentAttributes(entity, oldItem, newItem, EquipmentSlot.MAIN_HAND);
 		});
 	}
@@ -176,11 +159,6 @@ public class VanillaEquipmentFeature implements EquipmentFeature, RegistrableFea
 		if (!(event.getEntity() instanceof LivingEntity entity)) return;
 
 		EquipmentSlot slot = event.getSlot();
-		if (slot.isArmor()) {
-			ArmorMaterial.updateEquipmentAttributes(entity, entity.getEquipment(slot), event.getEquippedItem(), slot, this.version);
-		} else if (slot.isHand()) {
-			Tool.updateEquipmentAttributes(entity, entity.getEquipment(slot), event.getEquippedItem(), slot, this.version);
-		}
 		EnchantmentAttributes.updateEquipmentAttributes(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);
 
 		this.playEquipSound(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);

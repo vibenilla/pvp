@@ -1,164 +1,101 @@
 package io.github.togar2.pvp.enums;
 
-import io.github.togar2.pvp.utils.CombatVersion;
-import io.github.togar2.pvp.utils.ModifierId;
-import net.minestom.server.component.DataComponents;
-import net.minestom.server.entity.EquipmentSlot;
-import net.minestom.server.entity.LivingEntity;
-import net.minestom.server.entity.attribute.Attribute;
-import net.minestom.server.entity.attribute.AttributeModifier;
-import net.minestom.server.entity.attribute.AttributeOperation;
-import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public enum Tool {
-	WOODEN_SWORD(ToolMaterial.WOOD, 3, 4.0F, -2.4F, false, true),
-	STONE_SWORD(ToolMaterial.STONE, 3, 4.0F, -2.4F, false, true),
-	COPPER_SWORD(ToolMaterial.COPPER, 3, 3.0F, -2.4F, false, true),
-	IRON_SWORD(ToolMaterial.IRON, 3, 4.0F, -2.4F, false, true),
-	DIAMOND_SWORD(ToolMaterial.DIAMOND, 3, 4.0F, -2.4F, false, true),
-	GOLDEN_SWORD(ToolMaterial.GOLD, 3, 4.0F, -2.4F, false, true),
-	NETHERITE_SWORD(ToolMaterial.NETHERITE, 3, 4.0F, -2.4F, false, true),
+	WOODEN_SWORD(Kind.SWORD),
+	STONE_SWORD(Kind.SWORD),
+	COPPER_SWORD(Kind.SWORD),
+	IRON_SWORD(Kind.SWORD),
+	DIAMOND_SWORD(Kind.SWORD),
+	GOLDEN_SWORD(Kind.SWORD),
+	NETHERITE_SWORD(Kind.SWORD),
 
-	WOODEN_SHOVEL(ToolMaterial.WOOD, 1.5F, 1.0F, -3.0F),
-	STONE_SHOVEL(ToolMaterial.STONE, 1.5F, 1.0F, -3.0F),
-	COPPER_SHOVEL(ToolMaterial.COPPER, 1.5F, 1.5F, -3.0F),
-	IRON_SHOVEL(ToolMaterial.IRON, 1.5F, 1.0F, -3.0F),
-	DIAMOND_SHOVEL(ToolMaterial.DIAMOND, 1.5F, 1.0F, -3.0F),
-	GOLDEN_SHOVEL(ToolMaterial.GOLD, 1.5F, 1.0F, -3.0F),
-	NETHERITE_SHOVEL(ToolMaterial.NETHERITE, 1.5F, 1.0F, -3.0F),
+	WOODEN_SHOVEL(Kind.OTHER),
+	STONE_SHOVEL(Kind.OTHER),
+	COPPER_SHOVEL(Kind.OTHER),
+	IRON_SHOVEL(Kind.OTHER),
+	DIAMOND_SHOVEL(Kind.OTHER),
+	GOLDEN_SHOVEL(Kind.OTHER),
+	NETHERITE_SHOVEL(Kind.OTHER),
 
-	WOODEN_PICKAXE(ToolMaterial.WOOD, 1, 2.0F, -2.8F),
-	STONE_PICKAXE(ToolMaterial.STONE, 1, 2.0F, -2.8F),
-	COPPER_PICKAXE(ToolMaterial.COPPER, 1, 1.0F, -2.8F),
-	IRON_PICKAXE(ToolMaterial.IRON, 1, 2.0F, -2.8F),
-	DIAMOND_PICKAXE(ToolMaterial.DIAMOND, 1, 2.0F, -2.8F),
-	GOLDEN_PICKAXE(ToolMaterial.GOLD, 1, 2.0F, -2.8F),
-	NETHERITE_PICKAXE(ToolMaterial.NETHERITE, 1, 2.0F, -2.8F),
+	WOODEN_PICKAXE(Kind.OTHER),
+	STONE_PICKAXE(Kind.OTHER),
+	COPPER_PICKAXE(Kind.OTHER),
+	IRON_PICKAXE(Kind.OTHER),
+	DIAMOND_PICKAXE(Kind.OTHER),
+	GOLDEN_PICKAXE(Kind.OTHER),
+	NETHERITE_PICKAXE(Kind.OTHER),
 
-	WOODEN_AXE(ToolMaterial.WOOD, 6.0F, 3.0F, -3.2F, true, false),
-	STONE_AXE(ToolMaterial.STONE, 7.0F, 3.0F, -3.2F, true, false),
-	COPPER_AXE(ToolMaterial.COPPER, 7.0F, 7.0F, -3.2F, true, false),
-	IRON_AXE(ToolMaterial.IRON, 6.0F, 3.0F, -3.1F, true, false),
-	DIAMOND_AXE(ToolMaterial.DIAMOND, 5.0F, 3.0F, -3.0F, true, false),
-	GOLDEN_AXE(ToolMaterial.GOLD, 6.0F, 3.0F, -3.0F, true, false),
-	NETHERITE_AXE(ToolMaterial.NETHERITE, 5.0F, 3.0F, -3.0F, true, false),
+	WOODEN_AXE(Kind.AXE),
+	STONE_AXE(Kind.AXE),
+	COPPER_AXE(Kind.AXE),
+	IRON_AXE(Kind.AXE),
+	DIAMOND_AXE(Kind.AXE),
+	GOLDEN_AXE(Kind.AXE),
+	NETHERITE_AXE(Kind.AXE),
 
-	// Attack damage for hoes is negative to disable the ToolMaterial attack damage
-	WOODEN_HOE(ToolMaterial.WOOD, 0, 0, -3.0F),
-	STONE_HOE(ToolMaterial.STONE, -1, -1, -2.0F),
-	COPPER_HOE(ToolMaterial.COPPER, -1, -1, -2.0F),
-	IRON_HOE(ToolMaterial.IRON, -2, -2, -1.0F),
-	DIAMOND_HOE(ToolMaterial.DIAMOND, -3, -3, 0.0F),
-	GOLDEN_HOE(ToolMaterial.GOLD, 0, 0, -3.0F),
-	NETHERITE_HOE(ToolMaterial.NETHERITE, -4, -4, 0.0F),
+	WOODEN_HOE(Kind.OTHER),
+	STONE_HOE(Kind.OTHER),
+	COPPER_HOE(Kind.OTHER),
+	IRON_HOE(Kind.OTHER),
+	DIAMOND_HOE(Kind.OTHER),
+	GOLDEN_HOE(Kind.OTHER),
+	NETHERITE_HOE(Kind.OTHER),
 
-	// We don't know the legacy attack damage for tridents, since they didn't exist
-	// 5.0 seems to be balanced
-	TRIDENT(null, 8.0F, 5.0F, -2.9F),
+	TRIDENT(Kind.OTHER),
 
-	MACE(null, 5.0F, 5.0F, -3.4F, false, false, true),
+	MACE(Kind.MACE),
 
-	WOODEN_SPEAR(ToolMaterial.WOOD, 0.0F, 0.0F, -2.4615385F, false, false, false, true),
-	STONE_SPEAR(ToolMaterial.STONE, 0.0F, 0.0F, -2.6666667F, false, false, false, true),
-	COPPER_SPEAR(ToolMaterial.COPPER, 0.0F, 0.0F, -2.8235295F, false, false, false, true),
-	IRON_SPEAR(ToolMaterial.IRON, 0.0F, 0.0F, -2.9473684F, false, false, false, true),
-	GOLDEN_SPEAR(ToolMaterial.GOLD, 0.0F, 0.0F, -2.9473684F, false, false, false, true),
-	DIAMOND_SPEAR(ToolMaterial.DIAMOND, 0.0F, 0.0F, -3.047619F, false, false, false, true),
-	NETHERITE_SPEAR(ToolMaterial.NETHERITE, 0.0F, 0.0F, -3.1304348F, false, false, false, true);
+	WOODEN_SPEAR(Kind.SPEAR),
+	STONE_SPEAR(Kind.SPEAR),
+	COPPER_SPEAR(Kind.SPEAR),
+	IRON_SPEAR(Kind.SPEAR),
+	GOLDEN_SPEAR(Kind.SPEAR),
+	DIAMOND_SPEAR(Kind.SPEAR),
+	NETHERITE_SPEAR(Kind.SPEAR);
+
+	private static final Map<Material, Tool> BY_MATERIAL = new HashMap<>();
 
 	private final Material material;
-	private boolean isAxe = false;
-	private boolean isSword = false;
-	private boolean isMace = false;
-	private boolean isSpear = false;
+	private final Kind kind;
 
-	private final Map<Attribute, AttributeModifier> attributeModifiers = new HashMap<>();
-	private final Map<Attribute, AttributeModifier> legacyAttributeModifiers = new HashMap<>();
-
-	Tool(@Nullable ToolMaterial toolMaterial, float attackDamage, float legacyAttackDamage, float attackSpeed) {
-		float finalAttackDamage = attackDamage + (toolMaterial == null ? 0 : toolMaterial.getAttackDamage());
-		float finalLegacyAttackDamage = legacyAttackDamage + (toolMaterial == null ? 0 : toolMaterial.getAttackDamage());
+	Tool(Kind kind) {
 		this.material = Material.fromKey(this.name().toLowerCase());
-
-		this.attributeModifiers.put(Attribute.ATTACK_DAMAGE, new AttributeModifier(ModifierId.ATTACK_DAMAGE_MODIFIER_ID, finalAttackDamage, AttributeOperation.ADD_VALUE));
-		this.attributeModifiers.put(Attribute.ATTACK_SPEED, new AttributeModifier(ModifierId.ATTACK_SPEED_MODIFIER_ID, attackSpeed, AttributeOperation.ADD_VALUE));
-
-		this.legacyAttributeModifiers.put(Attribute.ATTACK_DAMAGE, new AttributeModifier(ModifierId.ATTACK_DAMAGE_MODIFIER_ID, finalLegacyAttackDamage, AttributeOperation.ADD_VALUE));
-	}
-
-	Tool(@Nullable ToolMaterial toolMaterial, float attackDamage, float legacyAttackDamage, float attackSpeed, boolean isAxe, boolean isSword) {
-		this(toolMaterial, attackDamage, legacyAttackDamage, attackSpeed);
-		this.isAxe = isAxe;
-		this.isSword = isSword;
-	}
-
-	Tool(@Nullable ToolMaterial toolMaterial, float attackDamage, float legacyAttackDamage, float attackSpeed,
-	     boolean isAxe, boolean isSword, boolean isMace) {
-		this(toolMaterial, attackDamage, legacyAttackDamage, attackSpeed, isAxe, isSword);
-		this.isMace = isMace;
-	}
-
-	Tool(@Nullable ToolMaterial toolMaterial, float attackDamage, float legacyAttackDamage, float attackSpeed,
-	     boolean isAxe, boolean isSword, boolean isMace, boolean isSpear) {
-		this(toolMaterial, attackDamage, legacyAttackDamage, attackSpeed, isAxe, isSword, isMace);
-		this.isSpear = isSpear;
-	}
-
-	public static void updateEquipmentAttributes(LivingEntity entity, ItemStack oldStack, ItemStack newStack,
-	                                             EquipmentSlot slot, CombatVersion version) {
-		if (slot != EquipmentSlot.MAIN_HAND) return;
-
-		Tool oldTool = fromMaterial(oldStack.material());
-		Tool newTool = fromMaterial(newStack.material());
-
-		// Remove attributes from previous tool
-		if (oldTool != null && hasDefaultAttributes(oldStack)) {
-			entity.getAttribute(Attribute.ATTACK_DAMAGE).removeModifier(ModifierId.ATTACK_DAMAGE_MODIFIER_ID);
-			entity.getAttribute(Attribute.ATTACK_SPEED).removeModifier(ModifierId.ATTACK_SPEED_MODIFIER_ID);
-		}
-
-		// Add attributes from new tool
-		if (newTool != null && hasDefaultAttributes(newStack)) {
-			(version.legacy() ? newTool.legacyAttributeModifiers : newTool.attributeModifiers).forEach((attribute, modifier) ->
-					entity.getAttribute(attribute).addModifier(modifier));
-		}
-	}
-
-	private static boolean hasDefaultAttributes(ItemStack stack) {
-		// When modifiers tag is not empty, default modifiers are not
-		return !stack.has(DataComponents.ATTRIBUTE_MODIFIERS)
-				|| Objects.requireNonNull(stack.get(DataComponents.ATTRIBUTE_MODIFIERS)).modifiers().isEmpty();
+		this.kind = kind;
 	}
 
 	public boolean isAxe() {
-		return this.isAxe;
+		return this.kind == Kind.AXE;
 	}
 
 	public boolean isSword() {
-		return this.isSword;
+		return this.kind == Kind.SWORD;
 	}
 
 	public boolean isMace() {
-		return this.isMace;
+		return this.kind == Kind.MACE;
 	}
 
 	public boolean isSpear() {
-		return this.isSpear;
+		return this.kind == Kind.SPEAR;
 	}
 
-	public static Tool fromMaterial(Material material) {
-		for (Tool tool : values()) {
-			if (tool.material == material) {
-				return tool;
-			}
-		}
+	public static @Nullable Tool fromMaterial(Material material) {
+		return BY_MATERIAL.get(material);
+	}
 
-		return null;
+	private enum Kind {
+		SWORD, AXE, MACE, SPEAR, OTHER
+	}
+
+	static {
+		for (Tool tool : values()) {
+			BY_MATERIAL.put(tool.material, tool);
+		}
 	}
 }

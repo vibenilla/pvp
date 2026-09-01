@@ -13,6 +13,7 @@ import net.minestom.server.entity.attribute.Attribute;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
+import net.minestom.server.item.component.AttributeList;
 import net.minestom.server.item.component.EnchantmentList;
 import net.minestom.server.item.enchant.Enchantment;
 import net.minestom.server.network.packet.client.play.ClientClickWindowPacket;
@@ -105,6 +106,27 @@ public final class VanillaEquipmentFeatureTest {
 
             assertEquals(0.0, player.getAttributeValue(Attribute.WATER_MOVEMENT_EFFICIENCY), 1.0E-5);
             assertEquals(0.0, player.getAttributeValue(Attribute.EXPLOSION_KNOCKBACK_RESISTANCE), 1.0E-5);
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void itemAttributeModifiersComeFromTheItemOnly(Env env) {
+        var node = this.addEquipmentFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(0.0, 40.0, 0.0));
+
+            player.setItemInMainHand(ItemStack.of(Material.DIAMOND_SWORD));
+            assertEquals(7.0, player.getAttributeValue(Attribute.ATTACK_DAMAGE), 1.0E-5);
+
+            player.setItemInMainHand(ItemStack.of(Material.DIAMOND_SWORD).with(DataComponents.ATTRIBUTE_MODIFIERS, AttributeList.EMPTY));
+            assertEquals(1.0, player.getAttributeValue(Attribute.ATTACK_DAMAGE), 1.0E-5);
+
+            player.setItemInMainHand(ItemStack.AIR);
+            assertEquals(1.0, player.getAttributeValue(Attribute.ATTACK_DAMAGE), 1.0E-5);
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }
