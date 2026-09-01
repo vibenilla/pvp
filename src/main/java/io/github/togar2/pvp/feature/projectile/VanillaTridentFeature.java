@@ -107,7 +107,8 @@ public class VanillaTridentFeature implements TridentFeature, RegistrableFeature
 				this.applyRiptide(player, riptideStrength, soundEvent);
 				event.setRiptideSpinAttack(true);
 			} else {
-				ThrownTrident trident = new ThrownTrident(player, stack, this.enchantmentFeature);
+				ItemStack thrownStack = player.getItemInHand(event.getHand());
+				ThrownTrident trident = new ThrownTrident(player, thrownStack, this.enchantmentFeature);
 
 				Pos position = player.getPosition().add(0, player.getEyeHeight() - 0.1, 0);
 				trident.shootFromRotation(position.pitch(), position.yaw(), 0, 2.5, 1.0);
@@ -121,7 +122,7 @@ public class VanillaTridentFeature implements TridentFeature, RegistrableFeature
 						soundEvent, Sound.Source.PLAYER,
 						1.0f, 1.0f
 				), trident);
-				if (player.getGameMode() != GameMode.CREATIVE) player.setItemInHand(event.getHand(), stack.consume(1));
+				if (player.getGameMode() != GameMode.CREATIVE) player.setItemInHand(event.getHand(), thrownStack.consume(1));
 			}
 		});
 
