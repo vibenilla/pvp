@@ -49,7 +49,7 @@ public class VanillaSpectateFeature implements SpectateFeature, RegistrableFeatu
 		// This is to make sure other players don't see the player standing still while spectating
 		// And when the player stops spectating,
 		// they are at the entities position instead of their position before spectating
-		player.teleport(spectating.getPosition());
+		player.refreshPosition(spectating.getPosition());
 
 		if (player.getEntityMeta().isSneaking() || spectating.isRemoved()
 				|| (spectating instanceof LivingEntity livingSpectating && livingSpectating.isDead())) {
