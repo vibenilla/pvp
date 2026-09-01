@@ -153,6 +153,31 @@ public final class VanillaFallFeatureTest {
         }
     }
 
+    @Test
+    public void impulseGraceTimeCountsServerTicks(Env env) {
+        var node = this.addFallFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(0.0, 40.0, 0.0));
+            player.setGameMode(GameMode.SURVIVAL);
+
+            var fallFeature = CombatFeatures.empty()
+                    .add(CombatFeatures.VANILLA_FALL)
+                    .build()
+                    .get(FeatureType.FALL);
+            fallFeature.setIgnoreFallDamageFromCurrentImpulse(player);
+
+            for (var tick = 0; tick < 39; tick++) env.tick();
+            assertEquals(1, player.getTag(VanillaFallFeature.CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME));
+
+            env.tick();
+            assertEquals(0, player.getTag(VanillaFallFeature.CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME));
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
     private EventNode<?> addFallFeature() {
         var node = CombatFeatures.empty()
                 .add(CombatFeatures.VANILLA_FALL)

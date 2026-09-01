@@ -91,7 +91,10 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 			}
 		});
 
-		node.addListener(PlayerTickEvent.class, event -> this.updateFallFlying(event.getPlayer()));
+		node.addListener(PlayerTickEvent.class, event -> {
+			this.updateFallFlying(event.getPlayer());
+			this.tickCurrentImpulseContext(event.getPlayer());
+		});
 
 		// For living non-player entities, handle fall damage every tick
 		node.addListener(EntityTickEvent.class, event -> {
@@ -100,6 +103,7 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 
 			Pos previousPosition = livingEntity.getPreviousPosition();
             this.handleFallDamage(livingEntity, previousPosition, livingEntity.getPosition(), livingEntity.isOnGround());
+			this.tickCurrentImpulseContext(livingEntity);
 		});
 
 		// For players, handle fall damage on move event
@@ -205,7 +209,6 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 	public void handleFallDamage(LivingEntity entity, Pos currPos, Pos newPos, boolean onGround) {
 		double dy = newPos.y() - currPos.y();
 		double fallDistance = this.getFallDistance(entity);
-		this.tickCurrentImpulseContext(entity);
 
 		if (this.shouldResetFallDistanceAlongMovement(entity, currPos, newPos, fallDistance)) {
 			fallDistance = 0.0;
