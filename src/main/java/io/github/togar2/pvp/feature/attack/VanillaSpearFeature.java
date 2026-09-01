@@ -352,7 +352,8 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 			if (!dealsDismount && !dealsKnockback && !dealsDamage) continue;
 
 			float baseMobDamage = (float) attacker.getAttribute(Attribute.ATTACK_DAMAGE).getBaseValue();
-			float damageDealt = baseMobDamage + (float) Math.floor(relativeSpeed * properties.damageMultiplier());
+			float damageDealt = baseMobDamage + (float) Math.floor(relativeSpeed * properties.damageMultiplier())
+					+ this.enchantmentFeature.getAttackDamage(weapon, EntityGroup.ofEntity(target));
 
 			boolean stabAffected = this.applyStabAttack(attacker, target, weapon, damageDealt, dealsDamage, dealsKnockback, dealsDismount);
 			if (stabAffected) {
