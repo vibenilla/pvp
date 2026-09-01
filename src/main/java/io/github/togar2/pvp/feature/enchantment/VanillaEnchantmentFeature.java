@@ -181,7 +181,7 @@ public class VanillaEnchantmentFeature implements EnchantmentFeature, Registrabl
 
 		return this.modifyConditionalValue(
 				weapon, EffectComponent.KNOCKBACK, baseKnockback
-		);
+		) / 2.0;
 	}
 
 	@Override
