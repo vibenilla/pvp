@@ -9,9 +9,10 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.entity.attribute.Attribute;
 import net.minestom.server.event.EventListener;
 import net.minestom.server.event.EventNode;
-import net.minestom.server.event.player.PlayerChangeHeldSlotEvent;
 import net.minestom.server.event.player.PlayerHandAnimationEvent;
+import net.minestom.server.event.player.PlayerTickEvent;
 import net.minestom.server.event.trait.EntityInstanceEvent;
+import net.minestom.server.item.Material;
 import net.minestom.server.tag.Tag;
 
 /**
@@ -24,6 +25,7 @@ public class VanillaAttackCooldownFeature implements AttackCooldownFeature, Regi
 	);
 
 	public static final Tag<Long> LAST_ATTACKED_TICKS = Tag.Long("lastAttackedTicks");
+	public static final Tag<Material> LAST_MAIN_HAND_MATERIAL = Tag.Transient("lastMainHandMaterial");
 
 	private final FeatureConfiguration configuration;
 	private CombatVersion version;
@@ -42,12 +44,17 @@ public class VanillaAttackCooldownFeature implements AttackCooldownFeature, Regi
 		node.addListener(EventListener.builder(PlayerHandAnimationEvent.class).handler(event ->
                 this.resetCooldownProgress(event.getPlayer())).build());
 
-		node.addListener(EventListener.builder(PlayerChangeHeldSlotEvent.class).handler(event -> {
-			if (!event.getPlayer().getItemInMainHand()
-					.isSimilar(event.getPlayer().getInventory().getItemStack(event.getNewSlot()))) {
-                this.resetCooldownProgress(event.getPlayer());
+		node.addListener(PlayerTickEvent.class, event -> {
+			var player = event.getPlayer();
+			var material = player.getItemInMainHand().material();
+			var lastMaterial = player.getTag(LAST_MAIN_HAND_MATERIAL);
+
+			if (lastMaterial != null && lastMaterial != material) {
+				this.resetCooldownProgress(player);
 			}
-		}).build());
+
+			player.setTag(LAST_MAIN_HAND_MATERIAL, material);
+		});
 	}
 
 	@Override
