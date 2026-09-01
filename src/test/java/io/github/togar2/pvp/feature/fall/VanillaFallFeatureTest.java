@@ -16,6 +16,7 @@ import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnvTest
@@ -173,6 +174,32 @@ public final class VanillaFallFeatureTest {
 
             env.tick();
             assertEquals(0, player.getTag(VanillaFallFeature.CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME));
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void fallDamageEndsImpulseContext(Env env) {
+        var node = this.addFallFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(0.0, 47.0, 0.0));
+            player.setGameMode(GameMode.SURVIVAL);
+            this.confirmTeleport(player);
+
+            var fallFeature = CombatFeatures.empty()
+                    .add(CombatFeatures.VANILLA_FALL)
+                    .build()
+                    .get(FeatureType.FALL);
+            fallFeature.setIgnoreFallDamageFromCurrentImpulse(player, 60.0);
+
+            this.move(player, new Pos(0.0, 44.0, 0.0), false);
+            this.move(player, new Pos(0.0, 40.0, 0.0), true);
+
+            assertEquals(16.0F, player.getHealth());
+            assertFalse(player.hasTag(VanillaFallFeature.CURRENT_IMPULSE_IMPACT_Y));
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }

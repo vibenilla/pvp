@@ -308,6 +308,7 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 
 		int damage = this.getFallDamage(entity, effectiveFallDistance, damageModifier);
 		if (damage > 0) {
+			this.resetCurrentImpulseContext(entity);
             this.playFallSound(entity, damage);
 			var damaged = entity.damage(damageType, damage);
 
