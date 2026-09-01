@@ -87,7 +87,6 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	static {
 		// Values from Items.java: spear(material, attackDuration, damageMultiplier, delay,
 		//   dismountTime, dismountThreshold, knockbackTime, knockbackThreshold, damageTime, damageThreshold)
-		// Times are in seconds and converted to ticks via × 20
 		SPEAR_PROPERTIES.put(Tool.WOODEN_SPEAR, new SpearProperties(
 				0.7F, (int) (0.75F * 20),
 				(int) (5.0F * 20), 14.0F,
