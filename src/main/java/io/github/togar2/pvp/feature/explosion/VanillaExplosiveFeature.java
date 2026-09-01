@@ -114,7 +114,7 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
 			this.installExplosionSupplier(instance);
 
 			Point above = event.getPosition().add(0, 1, 0);
-			if (!instance.getBlock(above).isAir()) return;
+			if (!instance.getBlock(above).air()) return;
 
 			Point spawnPosition = above.add(0.5, 0, 0.5);
 			BoundingBox checkIntersect = new BoundingBox(1, 2, 1);
@@ -351,12 +351,12 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
     }
 
     private boolean canPlaceFireAt(Instance instance, Point position) {
-        if (!instance.getBlock(position).isAir()) return false;
+        if (!instance.getBlock(position).air()) return false;
 
         var belowBlock = instance.getBlock(position.add(0, -1, 0));
         if (this.isSoulFireBase(belowBlock)) return true;
 
-        return belowBlock.isSolid() || this.hasFlammableNeighbor(instance, position);
+        return belowBlock.solid() || this.hasFlammableNeighbor(instance, position);
     }
 
     private Block createFireBlock(Instance instance, Point position) {
@@ -364,7 +364,7 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
         if (this.isSoulFireBase(belowBlock)) return Block.SOUL_FIRE;
 
         var fire = Block.FIRE.withProperty("age", "0");
-        if (belowBlock.isSolid() || this.isFlammable(belowBlock)) return fire;
+        if (belowBlock.solid() || this.isFlammable(belowBlock)) return fire;
 
         return fire
                 .withProperty("north", String.valueOf(this.isFlammable(instance.getBlock(position.add(0, 0, -1)))))

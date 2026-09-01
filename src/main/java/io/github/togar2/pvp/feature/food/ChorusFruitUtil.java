@@ -22,10 +22,10 @@ public class ChorusFruitUtil {
 		if (lowestY == 0) lowestY++;
 		while (lowestY > MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType()).minY()) {
 			Block block = instance.getBlock(to.blockX(), lowestY - 1, to.blockZ());
-			if (!block.isAir() && !block.isLiquid()) {
+			if (!block.air() && !block.liquid()) {
 				Block above = instance.getBlock(to.blockX(), lowestY, to.blockZ());
 				Block above2 = instance.getBlock(to.blockX(), lowestY + 1, to.blockZ());
-				if (above.isAir() && above2.isAir()) {
+				if (above.air() && above2.air()) {
 					success = true;
 					break;
 				} else {

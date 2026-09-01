@@ -100,7 +100,7 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 										Vec position = new Vec(centerX, centerY, centerZ);
 										Block block = blockGetter.getBlock(position);
 
-										if (!block.isAir()) {
+										if (!block.air()) {
 											var explosionResistance = this.getExplosionResistance(block);
 											strengthLeft -= (explosionResistance + 0.3F) * 0.3F;
 
@@ -288,8 +288,8 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 						for (Point point : blocks) {
 							var belowBlock = instance.getBlock(point.sub(0, 1, 0));
 							if (random.nextInt(3) != 0
-									|| !instance.getBlock(point).isAir()
-									|| !belowBlock.isSolid())
+									|| !instance.getBlock(point).air()
+									|| !belowBlock.solid())
 								continue;
 
 							instance.setBlock(point, this.getFireBlock(belowBlock));
@@ -345,9 +345,9 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 			}
 
 			private float getExplosionResistance(Block block) {
-				var explosionResistance = block.registry().explosionResistance();
+				var explosionResistance = block.explosionResistance();
 
-				if (block.isLiquid()) {
+				if (block.liquid()) {
 					explosionResistance = Math.max(explosionResistance, LIQUID_EXPLOSION_RESISTANCE);
 				}
 

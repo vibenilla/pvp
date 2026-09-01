@@ -235,10 +235,10 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 				for (var blockZ = minZ; blockZ <= maxZ; blockZ++) {
 					var block = instance.getBlock(blockX, blockY, blockZ);
 
-					if (block.isAir() || !block.isSolid()) continue;
+					if (block.air() || !block.solid()) continue;
 
 					var blockPosition = new Vec(blockX, blockY, blockZ);
-					if (block.registry().collisionShape().intersectBox(eyePosition.sub(blockPosition), checkBox)) {
+					if (block.collisionShape().intersectBox(eyePosition.sub(blockPosition), checkBox)) {
 						entity.damage(DamageType.IN_WALL, 1.0F);
 						return;
 					}
@@ -792,7 +792,7 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 	}
 
 	private boolean isFireImmune(LivingEntity entity) {
-		return entity.getEntityType().registry().fireImmune();
+		return entity.getEntityType().fireImmune();
 	}
 
 	private boolean isBerryBushImmune(LivingEntity entity) {

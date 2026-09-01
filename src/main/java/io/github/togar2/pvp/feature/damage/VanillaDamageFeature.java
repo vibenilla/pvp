@@ -137,7 +137,7 @@ public class VanillaDamageFeature implements DamageFeature, RegistrableFeature {
 			event.setCancelled(true);
 			return;
 		}
-		if (typeInfo.fire() && entity.getEntityType().registry().fireImmune()) {
+		if (typeInfo.fire() && entity.getEntityType().fireImmune()) {
 			event.setCancelled(true);
 			return;
 		}

@@ -11,7 +11,7 @@ class PotionColorUtils {
 
 		for (Potion potion : effects) {
 			if (potion.hasParticles()) {
-				int color = potion.effect().registry().color();
+				int color = potion.effect().color();
 				int amplifier = potion.amplifier() + 1;
 				r += amplifier * (color >> 16 & 0xFF);
 				g += amplifier * (color >> 8 & 0xFF);

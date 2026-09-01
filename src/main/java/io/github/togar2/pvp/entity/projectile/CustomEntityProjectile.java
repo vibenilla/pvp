@@ -196,7 +196,7 @@ public class CustomEntityProjectile extends Entity {
 		var blockGetter = new ChunkBlockGetter(this.instance, this.currentChunk, Block.STONE);
 		var block = blockGetter.getBlock(collidedPoint);
 
-		return !block.registry().collisionShape().intersectBox(collidedPoint.sub(collidedBlockVec).sub(0, 0.6, 0), UNSTUCK_BOX);
+		return !block.collisionShape().intersectBox(collidedPoint.sub(collidedBlockVec).sub(0, 0.6, 0), UNSTUCK_BOX);
 	}
 
 	protected boolean canHit(Entity entity) {
