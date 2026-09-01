@@ -263,6 +263,8 @@ public class CustomEntityProjectile extends Entity {
 					var event = new ProjectileCollideWithEntityEvent(this, collided.collisionPoint().asPos(), collided.entity());
 					EventDispatcher.call(event);
 					if (!event.isCancelled()) {
+						this.refreshPosition(this.position.withCoord(collided.collisionPoint()), this.noClip, this.isStuck());
+
 						if (this.onHit(collided.entity())) {
 							// Don't remove now because rest of Entity#tick might throw errors
                             this.scheduler().scheduleNextProcess(this::remove);
@@ -294,6 +296,7 @@ public class CustomEntityProjectile extends Entity {
                     this.setNoGravity(true);
                     this.setVelocity(Vec.ZERO);
 					this.collisionDirection = collisionDirection;
+					this.refreshPosition(this.position.withCoord(physicsResult.newPosition()), this.noClip, true);
 
 					if (this.onStuck(event)) {
 						// Don't remove now because rest of Entity#tick might throw errors
