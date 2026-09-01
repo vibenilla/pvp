@@ -58,22 +58,23 @@ public class VanillaArmorFeature implements ArmorFeature {
 
 		double armorValue = entity.getAttributeValue(Attribute.ARMOR);
 
-		float armorEffectiveness = 1.0F;
-		if (attacker != null && this.isWeaponDamage(damageType)) {
-			armorEffectiveness = Math.max(0.0F, this.enchantmentFeature.modifyConditionalValue(
-					attacker.getItemInMainHand(), EffectComponent.ARMOR_EFFECTIVENESS, 1.0F
-			));
+		if (this.version.legacy()) {
+			int armorMultiplier = 25 - (int) armorValue;
+			return (amount * (float) armorMultiplier) / 25;
 		}
 
-		if (this.version.legacy()) {
-			int armorMultiplier = 25 - (int) (armorValue * armorEffectiveness);
-			return (amount * (float) armorMultiplier) / 25;
-		} else {
-			return this.getDamageLeft(
-					amount, (float) Math.floor(armorValue) * armorEffectiveness,
-					(float) entity.getAttributeValue(Attribute.ARMOR_TOUGHNESS)
-			);
+		float fraction = this.getArmorFraction(
+				amount, (float) Math.floor(armorValue),
+				(float) entity.getAttributeValue(Attribute.ARMOR_TOUGHNESS)
+		);
+
+		if (attacker != null && this.isWeaponDamage(damageType)) {
+			fraction = Math.clamp(this.enchantmentFeature.modifyConditionalValue(
+					attacker.getItemInMainHand(), EffectComponent.ARMOR_EFFECTIVENESS, fraction
+			), 0.0F, 1.0F);
 		}
+
+		return amount * (1.0F - fraction);
 	}
 
 	private boolean isWeaponDamage(RegistryKey<DamageType> damageType) {
@@ -124,9 +125,13 @@ public class VanillaArmorFeature implements ArmorFeature {
 	}
 
 	protected float getDamageLeft(float damage, float armor, float armorToughness) {
+		return damage * (1.0F - this.getArmorFraction(damage, armor, armorToughness));
+	}
+
+	protected float getArmorFraction(float damage, float armor, float armorToughness) {
 		float f = 2.0f + armorToughness / 4.0f;
 		float g = Math.clamp(armor - damage / f, armor * 0.2f, 20.0f);
-		return damage * (1.0F - g / 25.0F);
+		return g / 25.0F;
 	}
 
 	protected float getDamageAfterProtectionEnchantment(float damageDealt, float protection) {
