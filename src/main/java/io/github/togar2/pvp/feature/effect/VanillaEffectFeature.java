@@ -52,7 +52,6 @@ import net.minestom.server.potion.PotionType;
 import net.minestom.server.potion.TimedPotion;
 import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.tag.Tag;
-import net.minestom.server.utils.time.TimeUnit;
 import net.minestom.server.worldevent.WorldEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -216,11 +215,7 @@ public class VanillaEffectFeature implements EffectFeature, RegistrableFeature {
 			combatPotionEffect.onRemoved(entity, event.getPotion().amplifier(), this.version);
 			this.promoteHiddenPotion(entity, event.getPotion().effect());
 
-			//Delay update 1 tick because we need to have the removing effect removed
-			MinecraftServer.getSchedulerManager()
-					.buildTask(() -> this.updatePotionVisibility(entity))
-					.delay(1, TimeUnit.SERVER_TICK)
-					.schedule();
+			entity.scheduler().scheduleNextTick(() -> this.updatePotionVisibility(entity));
 		});
 	}
 
