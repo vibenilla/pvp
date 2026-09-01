@@ -1,5 +1,6 @@
 package io.github.togar2.pvp.feature;
 
+import io.github.togar2.pvp.feature.config.CombatFeatureRegistry;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.event.trait.EntityInstanceEvent;
@@ -9,6 +10,12 @@ import net.minestom.server.event.trait.EntityInstanceEvent;
  */
 public class CombatFeatureSet extends FeatureConfiguration implements RegistrableFeature {
 	private boolean initialized = false;
+
+	@Override
+	public EventNode<EntityInstanceEvent> createNode() {
+		CombatFeatureRegistry.attach();
+		return RegistrableFeature.super.createNode();
+	}
 
 	@Override
 	public void init(EventNode<EntityInstanceEvent> node) {

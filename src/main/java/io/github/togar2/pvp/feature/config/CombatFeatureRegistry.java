@@ -4,9 +4,11 @@ import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.Event;
 import net.minestom.server.event.EventNode;
+import net.minestom.server.event.GlobalEventHandler;
 import net.minestom.server.event.instance.AddEntityToInstanceEvent;
 import net.minestom.server.event.player.PlayerRespawnEvent;
 import net.minestom.server.event.player.PlayerSpawnEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,13 +16,10 @@ import java.util.List;
 public class CombatFeatureRegistry {
     private static final EventNode<Event> initNode = EventNode.all("combat-feature-init");
     private static final List<DefinedFeature<?>> features = new ArrayList<>();
-    private static boolean attached = false;
+    private static @Nullable GlobalEventHandler attachedHandler;
 
-    public static void init(DefinedFeature<?> feature) {
-        if (!attached) {
-            MinecraftServer.getGlobalEventHandler().addChild(initNode);
-            attached = true;
-        }
+    public static synchronized void init(DefinedFeature<?> feature) {
+        attach();
 
         if (!features.contains(feature)) {
             features.add(feature);
@@ -34,5 +33,14 @@ public class CombatFeatureRegistry {
                 initNode.addListener(PlayerRespawnEvent.class, event -> feature.playerInit().init(event.getPlayer(), false));
             }
         }
+    }
+
+    public static synchronized void attach() {
+        var globalEventHandler = MinecraftServer.getGlobalEventHandler();
+        if (attachedHandler == globalEventHandler) return;
+
+        if (attachedHandler != null) attachedHandler.removeChild(initNode);
+        globalEventHandler.addChild(initNode);
+        attachedHandler = globalEventHandler;
     }
 }
