@@ -3,11 +3,11 @@ package io.github.togar2.pvp.feature.enchantment;
 import io.github.togar2.pvp.enchantment.CombatEnchantment;
 import io.github.togar2.pvp.enchantment.CombatEnchantments;
 import io.github.togar2.pvp.enchantment.EntityGroup;
-import io.github.togar2.pvp.enums.ArmorMaterial;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
+import net.kyori.adventure.key.Key;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.ServerFlag;
 import net.minestom.server.component.DataComponent;
@@ -22,6 +22,7 @@ import net.minestom.server.event.EventNode;
 import net.minestom.server.event.entity.EntitySetFireEvent;
 import net.minestom.server.event.trait.EntityInstanceEvent;
 import net.minestom.server.item.ItemStack;
+import net.minestom.server.item.Material;
 import net.minestom.server.item.component.EnchantmentList;
 import net.minestom.server.item.enchant.ConditionalEffect;
 import net.minestom.server.item.enchant.EffectComponent;
@@ -309,11 +310,17 @@ public class VanillaEnchantmentFeature implements EnchantmentFeature, Registrabl
 		int unbreakingLevel = stack.get(DataComponents.ENCHANTMENTS).level(Enchantment.UNBREAKING);
 		if (unbreakingLevel <= 0) return false;
 
-		var chance = ArmorMaterial.fromMaterial(stack.material()) == null
-				? (double) unbreakingLevel / (2.0 * unbreakingLevel + 1.0)
-				: (2.0 * unbreakingLevel) / (5.0 * unbreakingLevel + 10.0);
+		var chance = isArmorItem(stack.material())
+				? (2.0 * unbreakingLevel) / (10.0 + 5.0 * (unbreakingLevel - 1))
+				: (double) unbreakingLevel / (2.0 + (unbreakingLevel - 1));
 
 		return ThreadLocalRandom.current().nextDouble() < chance;
+	}
+
+	private static boolean isArmorItem(Material material) {
+		var armorTag = MinecraftServer.process().material().getTag(Key.key("minecraft:enchantable/armor"));
+
+		return armorTag != null && armorTag.contains(material.asKey());
 	}
 
 	@Override

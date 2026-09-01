@@ -20,6 +20,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @EnvTest
 public final class VanillaEnchantmentFeatureTest {
     @Test
+    public void unbreakingChancesFollowTheEnchantmentData(Env env) {
+        CombatEnchantments.registerAll();
+        var enchantmentFeature = CombatFeatures.empty()
+                .add(CombatFeatures.VANILLA_ENCHANTMENT)
+                .build()
+                .get(FeatureType.ENCHANTMENT);
+
+        var sword = ItemStack.of(Material.DIAMOND_SWORD).with(
+                DataComponents.ENCHANTMENTS, EnchantmentList.EMPTY.with(Enchantment.UNBREAKING, 3)
+        );
+        var chestplate = ItemStack.of(Material.DIAMOND_CHESTPLATE).with(
+                DataComponents.ENCHANTMENTS, EnchantmentList.EMPTY.with(Enchantment.UNBREAKING, 3)
+        );
+
+        assertEquals(0.75, this.preventedFraction(enchantmentFeature, sword), 0.03);
+        assertEquals(0.30, this.preventedFraction(enchantmentFeature, chestplate), 0.03);
+    }
+
+    private double preventedFraction(EnchantmentFeature enchantmentFeature, ItemStack stack) {
+        var rolls = 20000;
+        var prevented = 0;
+        for (var roll = 0; roll < rolls; roll++) {
+            if (enchantmentFeature.shouldUnbreakingPreventDamage(stack)) prevented++;
+        }
+        return prevented / (double) rolls;
+    }
+
+    @Test
     public void knockbackEnchantmentCountsHalfPowerPerLevel(Env env) {
         CombatEnchantments.registerAll();
         var enchantmentFeature = CombatFeatures.empty()
