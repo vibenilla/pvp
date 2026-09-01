@@ -21,6 +21,7 @@ import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.PlayerHand;
+import net.minestom.server.entity.attribute.Attribute;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.metadata.LivingEntityMeta;
 import net.minestom.server.entity.metadata.projectile.AbstractArrowMeta;
@@ -33,6 +34,8 @@ import org.jspecify.annotations.Nullable;
  * Vanilla implementation of {@link BlockFeature}
  */
 public class VanillaBlockFeature implements BlockFeature {
+	private static final float BLOCK_KNOCKBACK = 0.5F;
+
 	public static final DefinedFeature<VanillaBlockFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.BLOCK, VanillaBlockFeature::new,
 			FeatureType.ITEM_DAMAGE, FeatureType.ITEM_COOLDOWN, FeatureType.VERSION
@@ -193,12 +196,19 @@ public class VanillaBlockFeature implements BlockFeature {
 	}
 
 	protected void takeShieldHit(LivingEntity entity, LivingEntity attacker, @Nullable BlocksAttacks blocksAttacks, boolean applyKnockback) {
+		Pos entityPos = entity.getPosition();
+		Pos attackerPos = attacker.getPosition();
+
+		float blockerStrength = (float) (BLOCK_KNOCKBACK * (1.0 - entity.getAttributeValue(Attribute.KNOCKBACK_RESISTANCE)));
+		entity.takeKnockback(blockerStrength,
+				entityPos.x() - attackerPos.x(),
+				entityPos.z() - attackerPos.z()
+		);
+
 		if (applyKnockback) {
-			Pos entityPos = entity.getPosition();
-			Pos attackerPos = attacker.getPosition();
-			attacker.takeKnockback(0.5F,
-					attackerPos.x() - entityPos.x(),
-					attackerPos.z() - entityPos.z()
+			attacker.takeKnockback(BLOCK_KNOCKBACK,
+					entityPos.x() - attackerPos.x(),
+					entityPos.z() - attackerPos.z()
 			);
 		}
 

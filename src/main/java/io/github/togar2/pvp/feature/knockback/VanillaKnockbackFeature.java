@@ -43,6 +43,11 @@ public class VanillaKnockbackFeature implements KnockbackFeature {
 
 	@Override
 	public boolean applyDamageKnockback(Damage damage, LivingEntity target) {
+		return this.applyDamageKnockback(damage, target, false);
+	}
+
+	@Override
+	public boolean applyDamageKnockback(Damage damage, LivingEntity target, boolean blocked) {
 		Entity attacker = damage.getAttacker();
 		Entity source = damage.getSource();
 
@@ -59,7 +64,7 @@ public class VanillaKnockbackFeature implements KnockbackFeature {
 		// Set the velocity
 		return this.applyKnockback(
 				target, attacker, source,
-				EntityKnockbackEvent.KnockbackType.DAMAGE, 0,
+				blocked ? EntityKnockbackEvent.KnockbackType.BLOCKED_DAMAGE : EntityKnockbackEvent.KnockbackType.DAMAGE, 0,
 				dx, dz, this.version.legacy()
 		);
 	}

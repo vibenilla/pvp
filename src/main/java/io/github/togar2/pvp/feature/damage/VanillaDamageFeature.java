@@ -38,6 +38,8 @@ import net.minestom.server.potion.PotionEffect;
 import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.tag.Tag;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -230,11 +232,11 @@ public class VanillaDamageFeature implements DamageFeature, RegistrableFeature {
 				));
 			}
 
-			if (!fullyBlocked && !this.isNoKnockbackDamage(damage)) {
+			if (!this.isNoKnockbackDamage(damage)) {
 				appliedKnockback = true;
 
 				if (attacker != null && !typeInfo.explosive()) {
-                    this.knockbackFeature.applyDamageKnockback(damage, entity);
+                    this.knockbackFeature.applyDamageKnockback(damage, entity, fullyBlocked);
 				} else {
 					// Update velocity
 					entity.setVelocity(entity.getVelocity());
@@ -243,6 +245,7 @@ public class VanillaDamageFeature implements DamageFeature, RegistrableFeature {
 		}
 
 		if (fullyBlocked) {
+			if (hurtSoundAndAnimation) this.playHurtSound(entity, sound);
 			event.setCancelled(true);
 			return;
 		}
@@ -278,16 +281,7 @@ public class VanillaDamageFeature implements DamageFeature, RegistrableFeature {
 		}
 
 		if (hurtSoundAndAnimation) {
-			// Play sound (copied from Minestom, because of complications with cancelling)
-			if (sound != null) {
-				var random = ThreadLocalRandom.current();
-				var pitch = (random.nextFloat() - random.nextFloat()) * 0.2F + 1.0F;
-				entity.sendPacketToViewersAndSelf(new SoundEffectPacket(
-						sound, entity instanceof Player ? Sound.Source.PLAYER : Sound.Source.HOSTILE,
-						entity.getPosition(),
-						1.0F, pitch, random.nextLong()
-				));
-			}
+			this.playHurtSound(entity, sound);
 
 			if (damage.getType().equals(DamageType.THORNS)) {
 				entity.sendPacketToViewersAndSelf(new SoundEffectPacket(
@@ -320,6 +314,18 @@ public class VanillaDamageFeature implements DamageFeature, RegistrableFeature {
 		// lastDamage field is set when event is not canceled but should also when canceled
 		if (register) EntityUtil.setLastDamage(entity, damage);
 
+	}
+
+	private void playHurtSound(LivingEntity entity, @Nullable SoundEvent sound) {
+		if (sound == null) return;
+
+		var random = ThreadLocalRandom.current();
+		var pitch = (random.nextFloat() - random.nextFloat()) * 0.2F + 1.0F;
+		entity.sendPacketToViewersAndSelf(new SoundEffectPacket(
+				sound, entity instanceof Player ? Sound.Source.PLAYER : Sound.Source.HOSTILE,
+				entity.getPosition(),
+				1.0F, pitch, random.nextLong()
+		));
 	}
 
 	private boolean isNoKnockbackDamage(Damage damage) {

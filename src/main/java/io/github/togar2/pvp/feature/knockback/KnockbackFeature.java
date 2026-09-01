@@ -34,6 +34,10 @@ public interface KnockbackFeature extends CombatFeature {
 	 */
 	boolean applyDamageKnockback(Damage damage, LivingEntity target);
 
+	default boolean applyDamageKnockback(Damage damage, LivingEntity target, boolean blocked) {
+		return this.applyDamageKnockback(damage, target);
+	}
+
 	/**
 	 * Applies an extra attack knockback to the target entity.
 	 *

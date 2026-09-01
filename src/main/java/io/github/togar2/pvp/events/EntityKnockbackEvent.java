@@ -117,6 +117,7 @@ public class EntityKnockbackEvent implements EntityInstanceEvent, CancellableEve
 		 * Default knockback from a damage source
 		 */
 		DAMAGE,
+		BLOCKED_DAMAGE,
 		/**
 		 * Attack knockback for strong attacks by players or from the knockback enchantment
 		 */
