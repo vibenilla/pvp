@@ -245,6 +245,11 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
             return;
         }
 
+		if (fallDistance <= 0.0) {
+			entity.setTag(FALL_DISTANCE, 0.0);
+			return;
+		}
+
 		Point landingPos = this.getLandingPos(entity, newPos);
 		Block block = entity.getInstance().getBlock(landingPos);
 		var adjustedFallDistance = this.adjustFallDistance(block, fallDistance);
