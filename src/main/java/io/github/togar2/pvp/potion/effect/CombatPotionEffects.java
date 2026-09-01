@@ -38,7 +38,7 @@ public class CombatPotionEffects {
 				new CombatPotionEffect(PotionEffect.RESISTANCE),
 				new CombatPotionEffect(PotionEffect.FIRE_RESISTANCE),
 				new CombatPotionEffect(PotionEffect.WATER_BREATHING),
-				new CombatPotionEffect(PotionEffect.INVISIBILITY),
+				new CombatPotionEffect(PotionEffect.INVISIBILITY).addAttributeModifier(Attribute.WAYPOINT_TRANSMIT_RANGE, Key.key("minecraft:effect.waypoint_transmit_range_hide"), -1.0, AttributeOperation.ADD_MULTIPLIED_TOTAL),
 				new CombatPotionEffect(PotionEffect.BLINDNESS),
 				new CombatPotionEffect(PotionEffect.NIGHT_VISION),
 				new CombatPotionEffect(PotionEffect.HUNGER),

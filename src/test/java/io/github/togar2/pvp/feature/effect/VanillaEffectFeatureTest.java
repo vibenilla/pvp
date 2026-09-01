@@ -9,6 +9,7 @@ import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.ItemEntity;
 import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.entity.attribute.Attribute;
 import net.minestom.server.event.EventNode;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
@@ -136,6 +137,23 @@ public final class VanillaEffectFeatureTest {
 
             assertFalse(player.hasEffect(PotionEffect.STRENGTH));
             assertFalse(player.hasTag(VanillaEffectFeature.HIDDEN_EFFECTS));
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void invisibilityHidesThePlayerFromTheLocatorBar(Env env) {
+        var node = this.addEffectFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(0.0, 40.0, 0.0));
+
+            player.addEffect(new Potion(PotionEffect.INVISIBILITY, 0, 100, PotionFlags.defaultFlags()));
+            env.tick();
+
+            assertEquals(0.0, player.getAttributeValue(Attribute.WAYPOINT_TRANSMIT_RANGE), 1.0E-6);
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }
