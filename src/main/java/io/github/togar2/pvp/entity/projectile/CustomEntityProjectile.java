@@ -186,6 +186,10 @@ public class CustomEntityProjectile extends Entity {
 		return this.collisionDirection != null;
 	}
 
+	protected float computeMargin() {
+		return Math.clamp((this.getAliveTicks() - 2) / 20.0F, 0.0F, 0.3F);
+	}
+
 	protected @Nullable PhysicsResult getPreviousPhysicsResult() {
 		return this.previousPhysicsResult;
 	}

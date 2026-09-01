@@ -137,15 +137,39 @@ public class ThrownPotion extends CustomEntityProjectile implements ItemHoldingP
 
 		if (entities.isEmpty()) return;
 
+		float margin = this.computeMargin();
 		for (var entity : entities) {
 			if (entity.getEntityType() == EntityType.ARMOR_STAND) continue;
 
-			double distanceSquared = this.getDistanceSquared(entity);
+			double distanceSquared = this.getBoxDistanceSquared(entity, margin);
 			if (distanceSquared >= 16.0) continue;
 
-			double proximity = entity == hitEntity ? 1.0 : (1.0 - Math.sqrt(distanceSquared) / 4.0);
+			double proximity = 1.0 - Math.sqrt(distanceSquared) / 4.0;
 			this.effectFeature.addSplashPotionEffects(entity, potionContents, proximity, this, this.getShooter());
 		}
+	}
+
+	private double getBoxDistanceSquared(Entity entity, double inflate) {
+		var box = this.getBoundingBox();
+		var position = this.getPosition();
+		var otherBox = entity.getBoundingBox();
+		var otherPosition = entity.getPosition();
+
+		double dx = axisGap(position.x() + box.minX(), position.x() + box.maxX(),
+				otherPosition.x() + otherBox.minX() - inflate, otherPosition.x() + otherBox.maxX() + inflate);
+		double dy = axisGap(position.y() + box.minY(), position.y() + box.maxY(),
+				otherPosition.y() + otherBox.minY() - inflate, otherPosition.y() + otherBox.maxY() + inflate);
+		double dz = axisGap(position.z() + box.minZ(), position.z() + box.maxZ(),
+				otherPosition.z() + otherBox.minZ() - inflate, otherPosition.z() + otherBox.maxZ() + inflate);
+
+		return dx * dx + dy * dy + dz * dz;
+	}
+
+	private static double axisGap(double min, double max, double otherMin, double otherMax) {
+		if (max < otherMin) return otherMin - max;
+		if (otherMax < min) return min - otherMax;
+
+		return 0.0;
 	}
 
 	private void dowseFireBlocks() {
