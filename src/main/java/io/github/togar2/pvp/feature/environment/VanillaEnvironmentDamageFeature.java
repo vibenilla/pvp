@@ -7,6 +7,7 @@ import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.feature.enchantment.VanillaEnchantmentFeature;
 import io.github.togar2.pvp.feature.provider.DifficultyProvider;
+import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.FluidUtil;
 import io.github.togar2.pvp.utils.PotionFlags;
 import io.github.togar2.pvp.utils.ViewUtil;
@@ -41,8 +42,11 @@ import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.tag.Tag;
 import net.minestom.server.world.Difficulty;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 
 /**
  * Vanilla implementation of {@link EnvironmentDamageFeature}
@@ -164,12 +168,11 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 			return;
 		}
 
-		var position = entity.getPosition();
-		var block = instance.getBlock(position);
+		var fireBlock = this.findBlockInside(entity, block -> block.compare(Block.FIRE) || block.compare(Block.SOUL_FIRE));
 
-		if (block.compare(Block.FIRE) || block.compare(Block.SOUL_FIRE)) {
+		if (fireBlock != null) {
 			this.setFireTicks(entity, FIRE_IGNITE_TICKS);
-			var fireDamage = block.compare(Block.SOUL_FIRE) ? 2.0F : 1.0F;
+			var fireDamage = fireBlock.compare(Block.SOUL_FIRE) ? 2.0F : 1.0F;
 			entity.damage(DamageType.IN_FIRE, fireDamage);
 			return;
 		}
@@ -629,9 +632,40 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 		if (instance == null) return false;
 
 		var position = entity.getPosition();
-		var block = instance.getBlock(position);
+		var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
 
-		return block.compare(Block.LAVA) || this.isInLavaCauldron(block, entity);
+		if (FluidUtil.getFluidHeights(blockGetter, position, entity.getBoundingBox()).lava() > 0.0) return true;
+
+		return this.isInLavaCauldron(blockGetter.getBlock(position), entity);
+	}
+
+	private @Nullable Block findBlockInside(LivingEntity entity, Predicate<Block> predicate) {
+		var instance = entity.getInstance();
+
+		if (instance == null) return null;
+
+		var position = entity.getPosition();
+		var boundingBox = entity.getBoundingBox();
+		var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
+
+		int minX = (int) Math.floor(position.x() + boundingBox.minX() + 1.0E-5);
+		int maxX = (int) Math.floor(position.x() + boundingBox.maxX() - 1.0E-5);
+		int minY = (int) Math.floor(position.y() + boundingBox.minY() + 1.0E-5);
+		int maxY = (int) Math.floor(position.y() + boundingBox.maxY() - 1.0E-5);
+		int minZ = (int) Math.floor(position.z() + boundingBox.minZ() + 1.0E-5);
+		int maxZ = (int) Math.floor(position.z() + boundingBox.maxZ() - 1.0E-5);
+
+		for (int blockX = minX; blockX <= maxX; blockX++) {
+			for (int blockY = minY; blockY <= maxY; blockY++) {
+				for (int blockZ = minZ; blockZ <= maxZ; blockZ++) {
+					var block = blockGetter.getBlock(blockX, blockY, blockZ);
+
+					if (predicate.test(block)) return block;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private boolean isInLavaCauldron(Block block, LivingEntity entity) {

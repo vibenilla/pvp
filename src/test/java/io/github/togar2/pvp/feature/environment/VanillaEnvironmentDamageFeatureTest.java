@@ -14,12 +14,14 @@ import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.event.EventFilter;
 import net.minestom.server.event.entity.EntityDamageEvent;
+import net.minestom.server.entity.GameMode;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @EnvTest
@@ -79,6 +81,44 @@ public final class VanillaEnvironmentDamageFeatureTest {
             for (var tick = 0; tick < 80; tick++) env.tick();
 
             damages.assertCount(4);
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void fireBesideTheFeetIgnitesThePlayer(Env env) {
+        var node = this.addEnvironmentFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            instance.setBlock(9, 40, 8, Block.FIRE);
+            var player = env.createPlayer(instance, new Pos(8.8, 40.0, 8.5));
+            player.setGameMode(GameMode.SURVIVAL);
+
+            env.tick();
+
+            assertTrue(player.isOnFire());
+            assertTrue(player.getHealth() < 20.0F);
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void lavaBesideTheFeetBurnsThePlayer(Env env) {
+        var node = this.addEnvironmentFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            instance.setBlock(9, 40, 8, Block.LAVA);
+            var player = env.createPlayer(instance, new Pos(8.8, 40.0, 8.5));
+            player.setGameMode(GameMode.SURVIVAL);
+
+            env.tick();
+
+            assertTrue(player.isOnFire());
+            assertTrue(player.getHealth() <= 16.0F);
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }
