@@ -458,7 +458,11 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 
 	@Override
 	public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity) {
-		var impactY = this.calculateCurrentImpulseImpactY(entity);
+		this.setIgnoreFallDamageFromCurrentImpulse(entity, this.calculateCurrentImpulseImpactY(entity));
+	}
+
+	@Override
+	public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity, double impactY) {
 		entity.setTag(CURRENT_IMPULSE_IMPACT_Y, impactY);
 		this.applyPostImpulseGraceTime(entity, CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TICKS);
 	}

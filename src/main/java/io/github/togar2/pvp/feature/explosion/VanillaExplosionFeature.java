@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class VanillaExplosionFeature implements ExplosionFeature, RegistrableFeature {
 	public static final DefinedFeature<VanillaExplosionFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.EXPLOSION, VanillaExplosionFeature::new,
-			FeatureType.ENCHANTMENT
+			FeatureType.ENCHANTMENT, FeatureType.FALL
 	);
 
 	private final FeatureConfiguration configuration;
@@ -38,7 +38,9 @@ public class VanillaExplosionFeature implements ExplosionFeature, RegistrableFea
 
 	@Override
 	public void initDependencies() {
-		this.explosionSupplier = new VanillaExplosionSupplier(this, this.configuration.get(FeatureType.ENCHANTMENT));
+		this.explosionSupplier = new VanillaExplosionSupplier(
+				this, this.configuration.get(FeatureType.ENCHANTMENT), this.configuration.get(FeatureType.FALL)
+		);
 	}
 
 	@Override

@@ -29,6 +29,9 @@ public interface FallFeature extends CombatFeature {
 		public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity) {}
 
 		@Override
+		public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity, double impactY) {}
+
+		@Override
 		public void clearCurrentImpulseContext(LivingEntity entity) {}
 
 		@Override
@@ -47,6 +50,8 @@ public interface FallFeature extends CombatFeature {
 	void setExtraFallParticles(LivingEntity entity, boolean extraFallParticles);
 
 	void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity);
+
+	void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity, double impactY);
 
 	void clearCurrentImpulseContext(LivingEntity entity);
 

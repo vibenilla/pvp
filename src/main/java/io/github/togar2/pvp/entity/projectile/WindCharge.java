@@ -140,6 +140,10 @@ public final class WindCharge extends CustomEntityProjectile {
 			return;
 		}
 
+		if (entity instanceof Player player) {
+			this.fallFeature.setIgnoreFallDamageFromCurrentImpulse(player, player.getPosition().y());
+		}
+
 		var originY = entity.getPosition().y() + entity.getEyeHeight();
 		var direction = new Vec(
 				entity.getPosition().x() - center.x(),
@@ -172,10 +176,6 @@ public final class WindCharge extends CustomEntityProjectile {
 			player.setVelocity(player.getVelocity().add(knockbackVelocity));
 		} else {
 			entity.setVelocity(entity.getVelocity().add(knockbackVelocity));
-		}
-
-		if (entity instanceof Player player) {
-			this.fallFeature.setIgnoreFallDamageFromCurrentImpulse(player);
 		}
 	}
 

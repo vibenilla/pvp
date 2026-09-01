@@ -3,6 +3,7 @@ package io.github.togar2.pvp.feature.explosion;
 import io.github.togar2.pvp.entity.explosion.CrystalEntity;
 import io.github.togar2.pvp.events.ExplosionEvent;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
+import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.utils.CollisionUtil;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
@@ -41,15 +42,17 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 	private final ExplosionFeature feature;
 
 	private final EnchantmentFeature enchantmentFeature;
+	private final FallFeature fallFeature;
 
     private final WeightedList<ExplosionPacket.BlockParticleInfo> PARTICLES = WeightedList.of(
             new Entry<>(new ExplosionPacket.BlockParticleInfo(Particle.POOF, 0.5f, 1.0f), 1),
             new Entry<>(new ExplosionPacket.BlockParticleInfo(Particle.SMOKE, 1.0f, 1.0f), 1)
     );
 
-	VanillaExplosionSupplier(ExplosionFeature feature, EnchantmentFeature enchantmentFeature) {
+	VanillaExplosionSupplier(ExplosionFeature feature, EnchantmentFeature enchantmentFeature, FallFeature fallFeature) {
 		this.feature = feature;
 		this.enchantmentFeature = enchantmentFeature;
+		this.fallFeature = fallFeature;
 	}
 
 	@Override
@@ -211,6 +214,8 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 
 						var tps = ServerFlag.SERVER_TICKS_PER_SECOND;
 						if (entity instanceof Player player) {
+							VanillaExplosionSupplier.this.fallFeature.resetPostImpulseGraceTime(player);
+
 							if (this.shouldApplyPlayerKnockback(player)) {
 								if (player instanceof CombatPlayer custom) {
 									this.playerKnockback.put(player, knockbackVec);
