@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 public class Arrow extends AbstractArrow {
@@ -34,8 +33,8 @@ public class Arrow extends AbstractArrow {
 	@Override
 	public void update(long time) {
 		super.update(time);
-		if (this.onGround && this.stuckTime >= 600 && (!this.itemStack.has(DataComponents.POTION_CONTENTS)
-				|| !Objects.equals(this.itemStack.get(DataComponents.POTION_CONTENTS), PotionContents.EMPTY))) {
+		var potionContents = this.itemStack.get(DataComponents.POTION_CONTENTS);
+		if (this.isStuck() && this.stuckTime >= 600 && potionContents != null && !potionContents.equals(PotionContents.EMPTY)) {
             this.triggerStatus((byte) 0);
             this.itemStack = DEFAULT_ARROW;
 		}
