@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class ThrownTrident extends AbstractArrow {
 	private final ItemStack tridentItem;
@@ -95,6 +96,12 @@ public class ThrownTrident extends AbstractArrow {
 		return !this.damageDone && (super.canHit(entity) || entity instanceof CrystalEntity);
 	}
 
+	private void deflectBack() {
+		this.setVelocity(this.velocity.mul(-0.01, -0.1, -0.01));
+		var position = this.getPosition();
+		this.refreshPosition(position.withYaw(position.yaw() + 170.0f + 20.0f * ThreadLocalRandom.current().nextFloat()));
+	}
+
 	@Override
 	public boolean onHit(@NotNull Entity entity) {
 		if (this.damageDone) return false;
@@ -105,7 +112,7 @@ public class ThrownTrident extends AbstractArrow {
 			crystal.damage(damageObj);
 			this.damageDone = true;
 
-			this.setVelocity(this.velocity.mul(-0.002, -0.02, -0.002));
+			this.deflectBack();
 			this.getViewersAsAudience().playSound(Sound.sound(
 					SoundEvent.ITEM_TRIDENT_HIT, Sound.Source.NEUTRAL,
 					1.0f, 1.0f
@@ -131,7 +138,7 @@ public class ThrownTrident extends AbstractArrow {
 
         this.damageDone = true;
 
-        this.setVelocity(this.velocity.mul(-0.002, -0.02, -0.002));
+        this.deflectBack();
         this.getViewersAsAudience().playSound(Sound.sound(
 				SoundEvent.ITEM_TRIDENT_HIT, Sound.Source.NEUTRAL,
 				1.0f, 1.0f
