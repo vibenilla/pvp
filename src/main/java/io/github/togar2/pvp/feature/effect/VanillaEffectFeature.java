@@ -113,6 +113,8 @@ public class VanillaEffectFeature implements EffectFeature, RegistrableFeature {
 				this.spawnWeavingCobwebs(entity);
 			}
 
+			event.getEntity().removeTag(HIDDEN_EFFECTS);
+			event.getEntity().removeTag(DURATION_LEFT);
 			event.getEntity().clearEffects();
 		});
 

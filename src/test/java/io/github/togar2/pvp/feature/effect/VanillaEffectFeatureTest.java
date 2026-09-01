@@ -20,6 +20,7 @@ import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnvTest
@@ -111,6 +112,30 @@ public final class VanillaEffectFeatureTest {
             assertTrue(player.hasEffect(PotionEffect.ABSORPTION));
             assertEquals(0, player.getEffect(PotionEffect.ABSORPTION).potion().amplifier());
             assertEquals(4.0F, player.getAdditionalHearts());
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void deathClearsHiddenEffects(Env env) {
+        var node = this.addEffectFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(0.0, 40.0, 0.0));
+
+            player.addEffect(new Potion(PotionEffect.STRENGTH, 0, 400, PotionFlags.defaultFlags()));
+            env.tick();
+            player.addEffect(new Potion(PotionEffect.STRENGTH, 1, 40, PotionFlags.defaultFlags()));
+            env.tick();
+
+            player.kill();
+            env.tick();
+            env.tick();
+
+            assertFalse(player.hasEffect(PotionEffect.STRENGTH));
+            assertFalse(player.hasTag(VanillaEffectFeature.HIDDEN_EFFECTS));
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }
