@@ -15,6 +15,7 @@ import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.item.component.EnchantmentList;
 import net.minestom.server.item.enchant.Enchantment;
+import net.minestom.server.network.packet.server.play.WorldEventPacket;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,33 @@ public final class VanillaSmashAttackFeatureTest {
         smashAttackFeature.applySmashAttack(attacker, target);
 
         assertEquals(-10.0 + 0.7 * ServerFlag.SERVER_TICKS_PER_SECOND, nearby.getVelocity().y(), 1.0E-9);
+    }
+
+    @Test
+    public void smashSendsTheGroundLevelEvent(Env env) {
+        var featureSet = CombatFeatures.empty()
+                .add(CombatFeatures.VANILLA_FALL)
+                .add(CombatFeatures.VANILLA_SMASH_ATTACK)
+                .build();
+        var smashAttackFeature = featureSet.get(FeatureType.SMASH_ATTACK);
+
+        var instance = env.createFlatInstance();
+        var connection = env.createConnection();
+        var attacker = connection.connect(instance, new Pos(0.0, 41.0, 0.0));
+        attacker.setGameMode(GameMode.SURVIVAL);
+        attacker.setItemInMainHand(ItemStack.of(Material.MACE));
+        attacker.setTag(VanillaFallFeature.FALL_DISTANCE, 3.0);
+
+        var target = new LivingEntity(EntityType.ZOMBIE);
+        target.setInstance(instance, new Pos(0.0, 40.0, 1.0)).join();
+
+        var events = connection.trackIncoming(WorldEventPacket.class);
+        smashAttackFeature.applySmashAttack(attacker, target);
+
+        events.assertSingle(packet -> {
+            assertEquals(2013, packet.effectId());
+            assertEquals(750, packet.data());
+        });
     }
 
     @Test

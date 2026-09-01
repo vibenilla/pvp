@@ -11,6 +11,7 @@ import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
+import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
@@ -23,6 +24,7 @@ import net.minestom.server.entity.metadata.other.ArmorStandMeta;
 import net.minestom.server.item.enchant.EffectComponent;
 import net.minestom.server.item.enchant.Enchantment;
 import net.minestom.server.network.packet.server.play.ParticlePacket;
+import net.minestom.server.network.packet.server.play.WorldEventPacket;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.sound.SoundEvent;
 
@@ -44,6 +46,8 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 	private static final float WIND_BURST_FALLBACK_BASE_POWER = 1.5F;
 	private static final float WIND_BURST_FALLBACK_POWER_PER_LEVEL = 0.35F;
 	private static final double WIND_BURST_RADIUS = 3.5;
+	private static final int SMASH_ATTACK_LEVEL_EVENT = 2013;
+	private static final int SMASH_ATTACK_PARTICLE_COUNT = 750;
 
 	private final FeatureConfiguration configuration;
 
@@ -206,30 +210,10 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 	}
 
 	private void applySmashKnockback(LivingEntity attacker, LivingEntity target, boolean heavySmash) {
-		Pos targetPosition = target.getPosition();
-		double centerY = targetPosition.y() + 0.5;
-
-		target.sendPacketToViewersAndSelf(new ParticlePacket(
-				Particle.EXPLOSION, false, false,
-				targetPosition.x(), centerY, targetPosition.z(),
-				0.0F, 0.0F, 0.0F,
-				0.0F, 1
+		Point onPosition = target.getPosition().sub(0.0, 0.2, 0.0).asBlockVec();
+		target.sendPacketToViewersAndSelf(new WorldEventPacket(
+				SMASH_ATTACK_LEVEL_EVENT, onPosition, SMASH_ATTACK_PARTICLE_COUNT, false
 		));
-
-		int ringCount = 32;
-		double ringRadius = 1.5;
-		for (int particleIndex = 0; particleIndex < ringCount; particleIndex++) {
-			double angle = (2.0 * Math.PI * particleIndex) / ringCount;
-			double offsetX = Math.cos(angle) * ringRadius;
-			double offsetZ = Math.sin(angle) * ringRadius;
-
-			target.sendPacketToViewersAndSelf(new ParticlePacket(
-					Particle.SWEEP_ATTACK, false, false,
-					targetPosition.x() + offsetX, centerY, targetPosition.z() + offsetZ,
-					(float) (offsetX * 0.2), 0.1F, (float) (offsetZ * 0.2),
-					0.1F, 0
-			));
-		}
 
 		assert target.getInstance() != null;
 		int tps = ServerFlag.SERVER_TICKS_PER_SECOND;
