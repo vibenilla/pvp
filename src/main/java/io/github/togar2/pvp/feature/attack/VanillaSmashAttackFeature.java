@@ -7,6 +7,7 @@ import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.feature.explosion.VanillaExplosionSupplier;
 import io.github.togar2.pvp.feature.fall.FallFeature;
+import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
@@ -101,6 +102,10 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 		Vec velocity = attacker.getVelocity();
 		attacker.setVelocity(new Vec(velocity.x(), 0.01 * tps, velocity.z()));
 		this.fallFeature.setIgnoreFallDamageFromCurrentImpulse(attacker);
+
+		if (attacker instanceof CombatPlayer combatPlayer) {
+			combatPlayer.sendImmediateVelocityUpdate();
+		}
 
 		boolean heavySmash = fallDistance > SMASH_ATTACK_HEAVY_THRESHOLD;
 		if (target.isOnGround()) {
@@ -263,9 +268,13 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 		Vec nearbyVelocity = nearbyLiving.getVelocity();
 		nearbyLiving.setVelocity(new Vec(
 				nearbyVelocity.x() + knockbackVector.x() * tps,
-				SMASH_ATTACK_VERTICAL_KNOCKBACK * tps,
+				nearbyVelocity.y() + SMASH_ATTACK_VERTICAL_KNOCKBACK * tps,
 				nearbyVelocity.z() + knockbackVector.z() * tps
 		));
+
+		if (nearbyLiving instanceof CombatPlayer combatPlayer) {
+			combatPlayer.sendImmediateVelocityUpdate();
+		}
 	}
 
 	private boolean isMarkerArmorStand(Entity entity) {

@@ -4,8 +4,10 @@ import io.github.togar2.pvp.enchantment.CombatEnchantments;
 import io.github.togar2.pvp.feature.CombatFeatures;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.fall.VanillaFallFeature;
+import net.minestom.server.ServerFlag;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Pos;
+import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.LivingEntity;
@@ -22,6 +24,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @EnvTest
 public final class VanillaSmashAttackFeatureTest {
+    @Test
+    public void smashKnockbackAddsVerticalImpulse(Env env) {
+        var featureSet = CombatFeatures.empty()
+                .add(CombatFeatures.VANILLA_FALL)
+                .add(CombatFeatures.VANILLA_SMASH_ATTACK)
+                .build();
+        var smashAttackFeature = featureSet.get(FeatureType.SMASH_ATTACK);
+
+        var instance = env.createFlatInstance();
+        var attacker = env.createPlayer(instance, new Pos(0.0, 41.0, 0.0));
+        attacker.setGameMode(GameMode.SURVIVAL);
+        attacker.setItemInMainHand(ItemStack.of(Material.MACE));
+        attacker.setTag(VanillaFallFeature.FALL_DISTANCE, 3.0);
+
+        var target = new LivingEntity(EntityType.ZOMBIE);
+        target.setInstance(instance, new Pos(0.0, 40.0, 1.0)).join();
+        var nearby = new LivingEntity(EntityType.ZOMBIE);
+        nearby.setInstance(instance, new Pos(0.0, 40.0, 3.0)).join();
+        nearby.setVelocity(new Vec(0.0, -10.0, 0.0));
+
+        smashAttackFeature.applySmashAttack(attacker, target);
+
+        assertEquals(-10.0 + 0.7 * ServerFlag.SERVER_TICKS_PER_SECOND, nearby.getVelocity().y(), 1.0E-9);
+    }
+
     @Test
     public void windBurstKeepsImpactPositionAndEndsGraceTime(Env env) {
         CombatEnchantments.registerAll();
