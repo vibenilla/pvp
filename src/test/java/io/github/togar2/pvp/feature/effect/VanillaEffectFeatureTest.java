@@ -66,6 +66,56 @@ public final class VanillaEffectFeatureTest {
         }
     }
 
+    @Test
+    public void absorptionRefillsInsteadOfStacking(Env env) {
+        var node = this.addEffectFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(0.0, 40.0, 0.0));
+
+            player.addEffect(new Potion(PotionEffect.ABSORPTION, 0, 100, PotionFlags.defaultFlags()));
+            env.tick();
+            assertEquals(4.0F, player.getAdditionalHearts());
+
+            player.addEffect(new Potion(PotionEffect.ABSORPTION, 0, 200, PotionFlags.defaultFlags()));
+            env.tick();
+            assertEquals(4.0F, player.getAdditionalHearts());
+
+            player.setAdditionalHearts(2.0F);
+            player.addEffect(new Potion(PotionEffect.ABSORPTION, 0, 300, PotionFlags.defaultFlags()));
+            env.tick();
+            assertEquals(4.0F, player.getAdditionalHearts());
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void absorptionClampsToPromotedHiddenLevel(Env env) {
+        var node = this.addEffectFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(0.0, 40.0, 0.0));
+
+            player.addEffect(new Potion(PotionEffect.ABSORPTION, 1, 40, PotionFlags.defaultFlags()));
+            env.tick();
+            player.addEffect(new Potion(PotionEffect.ABSORPTION, 0, 400, PotionFlags.defaultFlags()));
+            env.tick();
+            assertEquals(8.0F, player.getAdditionalHearts());
+            assertEquals(8.0, player.getAttributeValue(net.minestom.server.entity.attribute.Attribute.MAX_ABSORPTION));
+
+            for (var tick = 0; tick < 60; tick++) env.tick();
+
+            assertTrue(player.hasEffect(PotionEffect.ABSORPTION));
+            assertEquals(0, player.getEffect(PotionEffect.ABSORPTION).potion().amplifier());
+            assertEquals(4.0F, player.getAdditionalHearts());
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
     private EventNode<?> addEffectFeature() {
         CombatPotionEffects.registerAll();
 

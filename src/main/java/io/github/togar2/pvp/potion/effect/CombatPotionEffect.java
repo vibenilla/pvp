@@ -165,6 +165,8 @@ public class CombatPotionEffect {
 		return this.potionEffect.registry().isInstantaneous();
 	}
 
+	public void onStarted(LivingEntity entity, int amplifier) {}
+
 	public void onApplied(LivingEntity entity, int amplifier, CombatVersion version) {
 		Map<Attribute, AttributeModifier> modifiers;
 		if (version.legacy() && this.legacyAttributeModifiers != null) {

@@ -171,6 +171,10 @@ public class VanillaEffectFeature implements EffectFeature, RegistrableFeature {
 			}
 
 			var internalUpdate = this.getInternalEffectUpdates(entity).contains(potion.effect());
+			if (!internalUpdate) {
+				CombatPotionEffects.get(potion.effect()).onStarted(entity, potion.amplifier());
+			}
+
 			var currentPotion = entity.getEffect(potion.effect());
 			if (!internalUpdate && currentPotion != null && this.updatePotionStack(entity, currentPotion, potion)) {
 				event.setCancelled(true);
@@ -394,6 +398,14 @@ public class VanillaEffectFeature implements EffectFeature, RegistrableFeature {
 				internalEffectUpdates.remove(potion.effect());
 			});
 		});
+	}
+
+	public static int getHiddenAmplifier(LivingEntity entity, PotionEffect potionEffect) {
+		var hiddenEffects = entity.getTag(HIDDEN_EFFECTS);
+		if (hiddenEffects == null) return -1;
+
+		var hiddenPotion = hiddenEffects.get(potionEffect);
+		return hiddenPotion == null ? -1 : hiddenPotion.potion().amplifier();
 	}
 
 	private void promoteHiddenPotion(LivingEntity entity, PotionEffect potionEffect) {
