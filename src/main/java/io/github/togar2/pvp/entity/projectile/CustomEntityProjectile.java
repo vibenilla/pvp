@@ -250,8 +250,11 @@ public class CustomEntityProjectile extends Entity {
 				// We won't check collisions with self for first ticks of projectile's life, because it spawns in the
 				// shooter and will immediately be triggered by him.
 				boolean noCollideShooter = this.getAliveTicks() < 6;
-				Collection<EntityCollisionResult> entityResult = CollisionUtil.checkEntityCollisions(this.instance, this.boundingBox.expand(0.1, 0.3, 0.1),
-                        this.position.add(0, -0.3, 0), diff, 3, e -> {
+
+				float margin = this.computeMargin();
+				BoundingBox sweepBox = margin > 0.0F ? new BoundingBox(margin * 2.0, margin * 2.0, margin * 2.0) : POINT_BOX;
+				Collection<EntityCollisionResult> entityResult = CollisionUtil.checkEntityCollisions(this.instance, sweepBox,
+                        this.position.sub(0.0, margin, 0.0), diff, 3, e -> {
 							if ((noCollideShooter || !this.leftOwner) && e == this.shooter) return false;
 							return e != this && this.canHit(e);
 						}, physicsResult);
