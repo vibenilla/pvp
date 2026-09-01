@@ -6,6 +6,7 @@ import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
+import io.github.togar2.pvp.feature.cooldown.AttackCooldownFeature;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.feature.food.ExhaustionFeature;
@@ -15,6 +16,7 @@ import io.github.togar2.pvp.utils.FluidUtil;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
+import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
@@ -53,7 +55,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	public static final DefinedFeature<VanillaSpearFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.SPEAR, VanillaSpearFeature::new,
-			FeatureType.ITEM_DAMAGE, FeatureType.ENCHANTMENT, FeatureType.KNOCKBACK, FeatureType.EXHAUSTION, FeatureType.FALL
+			FeatureType.ITEM_DAMAGE, FeatureType.ENCHANTMENT, FeatureType.KNOCKBACK, FeatureType.EXHAUSTION, FeatureType.FALL,
+			FeatureType.ATTACK_COOLDOWN
 	);
 
 	public static final Tag<Long> SPEAR_USE_START = Tag.Long("spearUseStart");
@@ -73,6 +76,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	private static final float LUNGE_IMPULSE_PER_LEVEL = 0.458F;
 	private static final float LUNGE_EXHAUSTION_PER_LEVEL = 4.0F;
 	private static final int LUNGE_POST_IMPULSE_GRACE_TICKS = 10;
+	private static final double STAB_CHARGE_TOLERANCE_TICKS = 5.0;
 
 	private record SpearProperties(
 			float damageMultiplier,
@@ -138,6 +142,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	private KnockbackFeature knockbackFeature;
 	private ExhaustionFeature exhaustionFeature;
 	private FallFeature fallFeature;
+	private AttackCooldownFeature attackCooldownFeature;
 
 	private final Map<UUID, Map<UUID, Long>> recentStabs = new HashMap<>();
 
@@ -152,14 +157,17 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 		this.knockbackFeature = this.configuration.get(FeatureType.KNOCKBACK);
 		this.exhaustionFeature = this.configuration.get(FeatureType.EXHAUSTION);
 		this.fallFeature = this.configuration.get(FeatureType.FALL);
+		this.attackCooldownFeature = this.configuration.get(FeatureType.ATTACK_COOLDOWN);
 	}
 
 	@Override
 	public void init(EventNode<EntityInstanceEvent> node) {
 		node.addListener(PlayerStabEvent.class, event -> {
 			Player player = event.getPlayer();
-			Tool tool = Tool.fromMaterial(player.getItemInMainHand().material());
+			ItemStack stack = player.getItemInMainHand();
+			Tool tool = Tool.fromMaterial(stack.material());
 			if (tool == null || !tool.isSpear()) return;
+			if (this.cannotAttackWithItem(player, stack)) return;
 
 			this.performPiercingAttack(player, tool);
 		});
@@ -226,14 +234,28 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 		});
 	}
 
+	private boolean cannotAttackWithItem(Player player, ItemStack stack) {
+		float requiredCharge = stack.get(DataComponents.MINIMUM_ATTACK_CHARGE, 0.0F);
+		if (requiredCharge <= 0.0F) return false;
+
+		return this.attackCooldownFeature.getAttackCooldownProgress(player, STAB_CHARGE_TOLERANCE_TICKS) < requiredCharge;
+	}
+
 	private void performPiercingAttack(Player attacker, Tool tool) {
 		float baseDamage = (float) attacker.getAttributeValue(Attribute.ATTACK_DAMAGE);
 		ItemStack weapon = attacker.getItemInMainHand();
 		List<LivingEntity> hitEntities = this.findEntitiesAlongRay(attacker);
 
+		double cooldownProgress = 1.0;
+		if (attacker.getItemUseHand() != PlayerHand.MAIN) {
+			cooldownProgress = this.attackCooldownFeature.getAttackCooldownProgress(attacker);
+			baseDamage *= (float) (0.2 + cooldownProgress * cooldownProgress * 0.8);
+		}
+
 		boolean hitSomething = false;
 		for (LivingEntity target : hitEntities) {
-			float magicalDamage = this.enchantmentFeature.getAttackDamage(weapon, EntityGroup.ofEntity(target));
+			float magicalDamage = this.enchantmentFeature.getAttackDamage(weapon, EntityGroup.ofEntity(target))
+					* (float) cooldownProgress;
 			float totalDamage = baseDamage + magicalDamage;
 
 			boolean damaged = target.damage(new Damage(
@@ -256,6 +278,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 			this.exhaustionFeature.addAttackExhaustion(attacker);
 		}
 
+		this.attackCooldownFeature.resetCooldownProgress(attacker);
 		this.applyLungeEffect(attacker);
 		this.playPiercingSounds(attacker, tool, hitSomething);
 	}

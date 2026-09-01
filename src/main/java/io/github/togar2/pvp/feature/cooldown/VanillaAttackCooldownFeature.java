@@ -64,6 +64,11 @@ public class VanillaAttackCooldownFeature implements AttackCooldownFeature, Regi
 
 	@Override
 	public double getAttackCooldownProgress(Player player) {
+		return this.getAttackCooldownProgress(player, 0.5);
+	}
+
+	@Override
+	public double getAttackCooldownProgress(Player player, double adjustTicks) {
 		if (this.version.legacy()) return 1.0;
 
 		Long lastAttacked = player.getTag(LAST_ATTACKED_TICKS);
@@ -71,7 +76,7 @@ public class VanillaAttackCooldownFeature implements AttackCooldownFeature, Regi
 
 		long timeSinceLastAttacked = player.getAliveTicks() - lastAttacked;
 		return Math.clamp(
-				(timeSinceLastAttacked + 0.5) / this.getAttackCooldownProgressPerTick(player),
+				(timeSinceLastAttacked + adjustTicks) / this.getAttackCooldownProgressPerTick(player),
 				0, 1
 		);
 	}

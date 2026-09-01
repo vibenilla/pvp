@@ -16,6 +16,11 @@ public interface AttackCooldownFeature extends CombatFeature {
 		public double getAttackCooldownProgress(Player player) {
 			return 1.0;
 		}
+
+		@Override
+		public double getAttackCooldownProgress(Player player, double adjustTicks) {
+			return 1.0;
+		}
 	};
 
 	/**
@@ -33,4 +38,6 @@ public interface AttackCooldownFeature extends CombatFeature {
 	 * @return the attack cooldown progress of the player
 	 */
 	double getAttackCooldownProgress(Player player);
+
+	double getAttackCooldownProgress(Player player, double adjustTicks);
 }
