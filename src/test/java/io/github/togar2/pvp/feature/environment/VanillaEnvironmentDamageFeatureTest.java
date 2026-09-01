@@ -10,6 +10,10 @@ import net.minestom.server.instance.block.Block;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.potion.PotionEffect;
+import net.minestom.server.entity.EntityType;
+import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.event.EventFilter;
+import net.minestom.server.event.entity.EntityDamageEvent;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
@@ -55,6 +59,26 @@ public final class VanillaEnvironmentDamageFeatureTest {
             env.tick();
 
             assertFalse(player.hasEffect(PotionEffect.WATER_BREATHING));
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void burningDealsDamageEverySecondFromIgnition(Env env) {
+        var node = this.addEnvironmentFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var entity = new LivingEntity(EntityType.ZOMBIE);
+            entity.setInstance(instance, new Pos(8.0, 41.0, 8.0)).join();
+            var damages = env.trackEvent(EntityDamageEvent.class, EventFilter.ENTITY, entity);
+
+            entity.setHealth(20.0F);
+            entity.setFireTicks(80);
+            for (var tick = 0; tick < 80; tick++) env.tick();
+
+            damages.assertCount(4);
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }

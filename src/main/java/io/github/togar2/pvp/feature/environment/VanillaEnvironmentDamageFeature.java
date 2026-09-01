@@ -176,7 +176,7 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 
 		if (!entity.isOnFire()) return;
 
-		if (entity.getFireTicks() % FIRE_DAMAGE_INTERVAL == 0 && !this.isInLava(entity)) {
+		if ((entity.getFireTicks() + 1) % FIRE_DAMAGE_INTERVAL == 0 && !this.isInLava(entity)) {
 			entity.damage(DamageType.ON_FIRE, 1.0F);
 		}
 	}
