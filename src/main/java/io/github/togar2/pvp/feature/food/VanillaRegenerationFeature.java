@@ -56,7 +56,6 @@ public class VanillaRegenerationFeature implements RegenerationFeature, Registra
 	}
 
 	protected void onTick(Player player) {
-		if (player.getGameMode().invulnerable()) return;
 		Difficulty difficulty = this.difficultyFeature.getValue(player);
 
 		int food = player.getFood();
@@ -81,8 +80,8 @@ public class VanillaRegenerationFeature implements RegenerationFeature, Registra
 		} else if (food <= 0) {
 			starvationTicks++;
 			if (starvationTicks >= 80) {
-				if (health > 10 || difficulty == Difficulty.HARD
-						|| ((health > 1) && (difficulty == Difficulty.NORMAL))) {
+				if (!player.getGameMode().invulnerable() && (health > 10 || difficulty == Difficulty.HARD
+						|| ((health > 1) && (difficulty == Difficulty.NORMAL)))) {
 					player.damage(DamageType.STARVE, 1);
 				}
 

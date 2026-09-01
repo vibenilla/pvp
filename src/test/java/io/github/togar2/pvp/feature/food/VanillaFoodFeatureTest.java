@@ -35,6 +35,30 @@ public final class VanillaFoodFeatureTest {
     }
 
     @Test
+    public void creativePlayersRegenerateNaturally(Env env) {
+        var node = CombatFeatures.empty()
+                .add(CombatFeatures.VANILLA_REGENERATION)
+                .build()
+                .createNode();
+        MinecraftServer.getGlobalEventHandler().addChild(node);
+
+        try {
+            var instance = env.createFlatInstance();
+            var player = env.createPlayer(instance, new Pos(8.0, 40.0, 8.0));
+            player.setGameMode(GameMode.CREATIVE);
+            player.setHealth(10.0F);
+            player.setFood(20);
+            player.setFoodSaturation(5.0F);
+
+            for (var tick = 0; tick < 10; tick++) env.tick();
+
+            assertTrue(player.getHealth() > 10.0F);
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
     public void chorusFruitAppliesItsUseCooldown(Env env) {
         var featureSet = CombatFeatures.empty()
                 .add(CombatFeatures.VANILLA_ITEM_COOLDOWN)
