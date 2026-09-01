@@ -4,11 +4,11 @@ import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.coordinate.Pos;
-import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.Player;
+import net.minestom.server.entity.RelativeFlags;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.damage.DamageType;
 import net.minestom.server.entity.metadata.item.ThrownEnderPearlMeta;
@@ -59,7 +59,7 @@ public class ThrownEnderpearl extends CustomEntityProjectile implements ItemHold
 					player.getVehicle().removePassenger(player);
 				}
 
-				player.teleport(position, Vec.ZERO);
+				player.teleport(position.withView(0.0F, 0.0F), null, RelativeFlags.VIEW);
                 this.fallFeature.resetFallDistance(player);
                 this.fallFeature.clearCurrentImpulseContext(player);
 
