@@ -14,6 +14,7 @@ import net.minestom.server.registry.RegistryKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 public class CombatEnchantment {
 	private final RegistryKey<Enchantment> enchantment;
@@ -57,7 +58,7 @@ public class CombatEnchantment {
 		return 0;
 	}
 
-	public float getAttackDamage(int level, EntityGroup group, EnchantmentFeature feature, FeatureConfiguration configuration) {
+	public float getAttackDamage(int level, @Nullable Entity target, EnchantmentFeature feature, FeatureConfiguration configuration) {
 		return 0.0F;
 	}
 

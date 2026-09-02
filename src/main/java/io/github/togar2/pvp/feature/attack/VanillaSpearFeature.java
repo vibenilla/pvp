@@ -1,6 +1,5 @@
 package io.github.togar2.pvp.feature.attack;
 
-import io.github.togar2.pvp.enchantment.EntityGroup;
 import io.github.togar2.pvp.enums.Tool;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
@@ -231,7 +230,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 
 		boolean hitSomething = false;
 		for (LivingEntity target : hitEntities) {
-			float magicalDamage = this.enchantmentFeature.getAttackDamage(weapon, EntityGroup.ofEntity(target))
+			float magicalDamage = this.enchantmentFeature.getAttackDamage(weapon, target)
 					* (float) cooldownProgress;
 			float totalDamage = baseDamage + magicalDamage;
 
@@ -335,7 +334,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 
 			float baseMobDamage = (float) attacker.getAttribute(Attribute.ATTACK_DAMAGE).getBaseValue();
 			float damageDealt = baseMobDamage + (float) Math.floor(relativeSpeed * properties.damageMultiplier())
-					+ this.enchantmentFeature.getAttackDamage(weapon, EntityGroup.ofEntity(target));
+					+ this.enchantmentFeature.getAttackDamage(weapon, target);
 
 			boolean stabAffected = this.applyStabAttack(attacker, target, weapon, damageDealt, dealsDamage, dealsKnockback, dealsDismount);
 			if (stabAffected) {

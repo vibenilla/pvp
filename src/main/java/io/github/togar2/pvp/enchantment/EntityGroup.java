@@ -1,31 +1,45 @@
 package io.github.togar2.pvp.enchantment;
 
+import net.kyori.adventure.key.Key;
+import net.minestom.server.MinecraftServer;
+import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
-import net.minestom.server.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 
 public enum EntityGroup {
-	DEFAULT,
-	UNDEAD,
-	ARTHROPOD,
-	ILLAGER,
-	AQUATIC;
+	UNDEAD("minecraft:sensitive_to_smite"),
+	ARTHROPOD("minecraft:sensitive_to_bane_of_arthropods"),
+	ILLAGER("minecraft:illager"),
+	AQUATIC("minecraft:sensitive_to_impaling");
 
-	public static EntityGroup ofEntity(LivingEntity entity) {
-		EntityType entityType = entity.getEntityType();
-		if (entityType == EntityType.BEE || entityType == EntityType.CAVE_SPIDER || entityType == EntityType.ENDERMITE || entityType == EntityType.SILVERFISH || entityType == EntityType.SPIDER) {
-			return EntityGroup.ARTHROPOD;
-		} else if (entityType == EntityType.AXOLOTL || entityType == EntityType.COD || entityType == EntityType.DOLPHIN || entityType == EntityType.ELDER_GUARDIAN || entityType == EntityType.GLOW_SQUID || entityType == EntityType.GUARDIAN || entityType == EntityType.NAUTILUS || entityType == EntityType.PUFFERFISH || entityType == EntityType.SALMON || entityType == EntityType.SQUID || entityType == EntityType.TADPOLE || entityType == EntityType.TROPICAL_FISH || entityType == EntityType.TURTLE || entityType == EntityType.ZOMBIE_NAUTILUS) {
-			return EntityGroup.AQUATIC;
-		} else if (EntityType.DROWNED == entityType || EntityType.HUSK == entityType || EntityType.PHANTOM == entityType || EntityType.SKELETON == entityType || EntityType.SKELETON_HORSE == entityType || EntityType.STRAY == entityType || EntityType.WITHER == entityType || EntityType.WITHER_SKELETON == entityType || EntityType.ZOGLIN == entityType || EntityType.ZOMBIE == entityType || EntityType.ZOMBIE_HORSE == entityType || EntityType.ZOMBIE_VILLAGER == entityType || EntityType.ZOMBIFIED_PIGLIN == entityType) {
-			return EntityGroup.UNDEAD;
-		} else if (EntityType.EVOKER == entityType || EntityType.ILLUSIONER == entityType || EntityType.PILLAGER == entityType || EntityType.VINDICATOR == entityType) {
-			return EntityGroup.ILLAGER;
-		}
+	private static final Key IGNORES_POISON_AND_REGEN = Key.key("minecraft:ignores_poison_and_regen");
+	private static final Key INVERTED_HEALING_AND_HARM = Key.key("minecraft:inverted_healing_and_harm");
 
-		return EntityGroup.DEFAULT;
+	private final Key tagKey;
+
+	EntityGroup(String tagKey) {
+		this.tagKey = Key.key(tagKey);
 	}
 
-	public boolean isUndead() {
-		return this == UNDEAD;
+	public boolean contains(@Nullable Entity entity) {
+		return entity != null && this.contains(entity.getEntityType());
+	}
+
+	public boolean contains(EntityType entityType) {
+		return isInTag(entityType, this.tagKey);
+	}
+
+	public static boolean ignoresPoisonAndRegen(Entity entity) {
+		return isInTag(entity.getEntityType(), IGNORES_POISON_AND_REGEN);
+	}
+
+	public static boolean hasInvertedHealingAndHarm(Entity entity) {
+		return isInTag(entity.getEntityType(), INVERTED_HEALING_AND_HARM);
+	}
+
+	private static boolean isInTag(EntityType entityType, Key tagKey) {
+		var tag = MinecraftServer.process().entityType().getTag(tagKey);
+
+		return tag != null && tag.contains(entityType);
 	}
 }

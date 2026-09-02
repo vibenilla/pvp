@@ -1,6 +1,5 @@
 package io.github.togar2.pvp.feature.attack;
 
-import io.github.togar2.pvp.enchantment.EntityGroup;
 import io.github.togar2.pvp.entity.explosion.CrystalEntity;
 import io.github.togar2.pvp.entity.projectile.WindCharge;
 import io.github.togar2.pvp.events.FinalAttackEvent;
@@ -315,10 +314,7 @@ public class VanillaAttackFeature implements AttackFeature, RegistrableFeature {
 
 	protected @Nullable AttackValues.Final prepareAttack(LivingEntity attacker, Entity target) {
 		float damage = (float) attacker.getAttributeValue(Attribute.ATTACK_DAMAGE);
-		float magicalDamage = this.enchantmentFeature.getAttackDamage(
-			attacker.getItemInMainHand(),
-			target instanceof LivingEntity living ? EntityGroup.ofEntity(living) : EntityGroup.DEFAULT
-		);
+		float magicalDamage = this.enchantmentFeature.getAttackDamage(attacker.getItemInMainHand(), target);
 
 		double cooldownProgress = 1;
 		if (attacker instanceof Player player) {

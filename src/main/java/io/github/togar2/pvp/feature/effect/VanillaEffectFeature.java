@@ -1,5 +1,6 @@
 package io.github.togar2.pvp.feature.effect;
 
+import io.github.togar2.pvp.enchantment.EntityGroup;
 import io.github.togar2.pvp.entity.projectile.Arrow;
 import io.github.togar2.pvp.events.PotionVisibilityEvent;
 import io.github.togar2.pvp.feature.FeatureType;
@@ -427,6 +428,11 @@ public class VanillaEffectFeature implements EffectFeature, RegistrableFeature {
 
 	private boolean isImmuneToPotion(LivingEntity entity, PotionEffect potionEffect) {
 		var entityType = entity.getEntityType();
+
+		if ((potionEffect == PotionEffect.POISON || potionEffect == PotionEffect.REGENERATION)
+				&& EntityGroup.ignoresPoisonAndRegen(entity)) {
+			return true;
+		}
 
 		return (entityType == EntityType.SILVERFISH && potionEffect == PotionEffect.INFESTED)
 				|| (entityType == EntityType.SLIME && potionEffect == PotionEffect.OOZING);

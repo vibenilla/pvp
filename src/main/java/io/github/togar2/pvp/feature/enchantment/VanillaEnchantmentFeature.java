@@ -2,7 +2,6 @@ package io.github.togar2.pvp.feature.enchantment;
 
 import io.github.togar2.pvp.enchantment.CombatEnchantment;
 import io.github.togar2.pvp.enchantment.CombatEnchantments;
-import io.github.togar2.pvp.enchantment.EntityGroup;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
@@ -37,6 +36,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Vanilla implementation of {@link EnchantmentFeature}
@@ -147,13 +147,13 @@ public class VanillaEnchantmentFeature implements EnchantmentFeature, Registrabl
 	}
 
 	@Override
-	public float getAttackDamage(ItemStack stack, EntityGroup group) {
+	public float getAttackDamage(ItemStack stack, @Nullable Entity target) {
 		AtomicReference<Float> result = new AtomicReference<>((float) 0);
 		stack.get(DataComponents.ENCHANTMENTS).enchantments().forEach((enchantment, level) -> {
 			CombatEnchantment combatEnchantment = CombatEnchantments.get(enchantment);
 			if (combatEnchantment == null) return;
 
-			result.updateAndGet(v -> v + combatEnchantment.getAttackDamage(level, group, this, this.configuration));
+			result.updateAndGet(v -> v + combatEnchantment.getAttackDamage(level, target, this, this.configuration));
 		});
 
 		return result.get();

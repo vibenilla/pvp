@@ -1,6 +1,5 @@
 package io.github.togar2.pvp.entity.projectile;
 
-import io.github.togar2.pvp.enchantment.EntityGroup;
 import io.github.togar2.pvp.entity.explosion.CrystalEntity;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.utils.EntityUtil;
@@ -123,7 +122,7 @@ public class ThrownTrident extends AbstractArrow {
 
 		if (!(entity instanceof LivingEntity living)) return false;
 
-		var damage = 8.0F + this.enchantmentFeature.getAttackDamage(this.tridentItem, EntityGroup.ofEntity(living));
+		var damage = 8.0F + this.enchantmentFeature.getAttackDamage(this.tridentItem, living);
 		var damageObj = new Damage(DamageType.TRIDENT, this, shooter == null ? this : shooter, null, damage);
 		var damaged = living.damage(damageObj);
 

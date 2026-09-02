@@ -1,7 +1,6 @@
 package io.github.togar2.pvp.feature.projectile;
 
 import io.github.togar2.pvp.entity.projectile.ThrownTrident;
-import io.github.togar2.pvp.enchantment.EntityGroup;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
@@ -173,7 +172,7 @@ public class VanillaTridentFeature implements TridentFeature, RegistrableFeature
 		this.attackCooldownFeature.resetCooldownProgress(player);
 
 		var baseDamage = RIPTIDE_SPIN_ATTACK_DAMAGE * (0.2F + (float) (cooldownProgress * cooldownProgress) * 0.8F);
-		var magicalDamage = this.enchantmentFeature.getAttackDamage(stack, EntityGroup.ofEntity(target)) * (float) cooldownProgress;
+		var magicalDamage = this.enchantmentFeature.getAttackDamage(stack, target) * (float) cooldownProgress;
 		var damage = baseDamage + magicalDamage;
 		var damaged = target.damage(new Damage(DamageType.PLAYER_ATTACK, player, player, null, damage));
 		if (!damaged) return;

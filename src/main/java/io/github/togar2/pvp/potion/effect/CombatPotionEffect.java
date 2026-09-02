@@ -103,9 +103,7 @@ public class CombatPotionEffect {
 		}
 
 		if (this.potionEffect == PotionEffect.INSTANT_DAMAGE || this.potionEffect == PotionEffect.INSTANT_HEALTH) {
-			EntityGroup entityGroup = EntityGroup.ofEntity(entity);
-
-			if (this.shouldHeal(entityGroup)) {
+			if (this.shouldHeal(entity)) {
 				entity.setHealth(entity.getHealth() + (float) Math.max(4 << amplifier, 0));
 			} else {
 				entity.damage(DamageType.MAGIC, (float) (6 << amplifier));
@@ -115,14 +113,12 @@ public class CombatPotionEffect {
 
 	public void applyInstantEffect(@Nullable Entity source, @Nullable Entity attacker, LivingEntity target,
 	                               int amplifier, double proximity, ExhaustionFeature exhaustionFeature, FoodFeature foodFeature) {
-		EntityGroup targetGroup = EntityGroup.ofEntity(target);
-
 		if (this.potionEffect != PotionEffect.INSTANT_DAMAGE && this.potionEffect != PotionEffect.INSTANT_HEALTH) {
             this.applyUpdateEffect(target, amplifier, exhaustionFeature, foodFeature);
 			return;
 		}
 
-		if (this.shouldHeal(targetGroup)) {
+		if (this.shouldHeal(target)) {
 			int amount = (int) (proximity * (double) (4 << amplifier) + 0.5D);
 			target.setHealth(target.getHealth() + (float) amount);
 		} else {
@@ -135,9 +131,10 @@ public class CombatPotionEffect {
 		}
 	}
 
-	private boolean shouldHeal(EntityGroup group) {
-		return (group.isUndead() && this.potionEffect == PotionEffect.INSTANT_DAMAGE)
-				|| (!group.isUndead() && this.potionEffect == PotionEffect.INSTANT_HEALTH);
+	private boolean shouldHeal(LivingEntity entity) {
+		var healing = EntityGroup.hasInvertedHealingAndHarm(entity) ? PotionEffect.INSTANT_DAMAGE : PotionEffect.INSTANT_HEALTH;
+
+		return this.potionEffect == healing;
 	}
 
 	public boolean canApplyUpdateEffect(int duration, int amplifier) {

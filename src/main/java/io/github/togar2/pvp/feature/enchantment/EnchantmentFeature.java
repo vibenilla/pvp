@@ -1,6 +1,5 @@
 package io.github.togar2.pvp.feature.enchantment;
 
-import io.github.togar2.pvp.enchantment.EntityGroup;
 import io.github.togar2.pvp.feature.CombatFeature;
 import net.minestom.server.component.DataComponent;
 import net.minestom.server.entity.Entity;
@@ -15,6 +14,7 @@ import net.minestom.server.registry.RegistryKey;
 
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Combat feature which manages enchantments.
@@ -40,7 +40,7 @@ public interface EnchantmentFeature extends CombatFeature {
 		}
 
 		@Override
-		public float getAttackDamage(ItemStack stack, EntityGroup group) {
+		public float getAttackDamage(ItemStack stack, @Nullable Entity target) {
 			return 0;
 		}
 
@@ -135,7 +135,7 @@ public interface EnchantmentFeature extends CombatFeature {
 
 	int getProtectionAmount(LivingEntity entity, DamageType damageType);
 
-	float getAttackDamage(ItemStack stack, EntityGroup group);
+	float getAttackDamage(ItemStack stack, @Nullable Entity target);
 
 	double getExplosionKnockback(LivingEntity entity, double strength);
 
