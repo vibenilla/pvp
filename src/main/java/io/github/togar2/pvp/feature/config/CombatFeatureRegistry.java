@@ -36,6 +36,10 @@ public class CombatFeatureRegistry {
     }
 
     public static synchronized void attach() {
+        if (MinecraftServer.process() == null) {
+            throw new IllegalStateException("MinecraftServer.init() must run before combat features are used");
+        }
+
         var globalEventHandler = MinecraftServer.getGlobalEventHandler();
         if (attachedHandler == globalEventHandler) return;
 
