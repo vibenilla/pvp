@@ -7,6 +7,8 @@ import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.config.PlayerInitReason;
 import io.github.togar2.pvp.feature.item.ItemDamageFeature;
 import io.github.togar2.pvp.feature.state.PlayerStateFeature;
+import io.github.togar2.pvp.utils.BlockUtil;
+import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.FluidUtil;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
@@ -220,8 +222,16 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 			entity.setTag(FALL_DISTANCE, fallDistance);
 		}
 
-		if (FluidUtil.isTouchingWater(entity, newPos) || this.isTouchingSweetBerryBush(entity, newPos)) {
+		if (FluidUtil.isTouchingWater(entity, newPos)) {
 			entity.setTag(FALL_DISTANCE, 0.0);
+			return;
+		}
+
+		if (this.isStuckInBlock(entity, newPos)) {
+			entity.setTag(FALL_DISTANCE, 0.0);
+			if (entity instanceof Player && entity.getTag(CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME) <= 0) {
+				this.resetCurrentImpulseContext(entity);
+			}
 			return;
 		}
 
@@ -624,8 +634,15 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 		return this.isTouchingBlock(entity, position, Block.LAVA);
 	}
 
-	private boolean isTouchingSweetBerryBush(LivingEntity entity, Pos position) {
-		return this.isTouchingBlock(entity, position, Block.SWEET_BERRY_BUSH);
+	private boolean isStuckInBlock(LivingEntity entity, Pos position) {
+		var instance = entity.getInstance();
+
+		if (instance == null) return false;
+		if (entity instanceof Player player && player.isFlying()) return false;
+
+		var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
+
+		return !BlockUtil.getStuckSpeedMultiplier(blockGetter, position, entity.getBoundingBox(), false).isZero();
 	}
 
 	private boolean isFallDamageResetting(Block block) {

@@ -238,6 +238,29 @@ public final class VanillaFallFeatureTest {
         return node;
     }
 
+    @Test
+    public void cobwebResetsFallDistance(Env env) {
+        var node = this.addFallFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            instance.setBlock(8, 42, 8, Block.COBWEB);
+            var player = env.createPlayer(instance, new Pos(8.0, 50.0, 8.0));
+            player.setGameMode(GameMode.SURVIVAL);
+            this.confirmTeleport(player);
+
+            this.move(player, new Pos(8.0, 48.0, 8.0), false);
+            this.move(player, new Pos(8.0, 46.0, 8.0), false);
+            this.move(player, new Pos(8.0, 44.0, 8.0), false);
+            this.move(player, new Pos(8.0, 42.5, 8.0), false);
+            this.move(player, new Pos(8.0, 40.0, 8.0), true);
+
+            assertEquals(20.0F, player.getHealth());
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
     private void confirmTeleport(Player player) {
         player.addPacketToQueue(new ClientTeleportConfirmPacket(player.getLastSentTeleportId()));
         player.interpretPacketQueue();

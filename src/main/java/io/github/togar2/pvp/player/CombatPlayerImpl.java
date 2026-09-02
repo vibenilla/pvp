@@ -248,33 +248,7 @@ public class CombatPlayerImpl extends Player implements CombatPlayer {
 	private Vec collectStuckSpeedMultiplier(Block.Getter blockGetter, Pos position) {
 		if (this.isFlying()) return Vec.ZERO;
 
-		var startX = (int) Math.floor(position.x() + this.boundingBox.minX() + 1.0E-5);
-		var startY = (int) Math.floor(position.y() + this.boundingBox.minY() + 1.0E-5);
-		var startZ = (int) Math.floor(position.z() + this.boundingBox.minZ() + 1.0E-5);
-		var endX = (int) Math.ceil(position.x() + this.boundingBox.maxX() - 1.0E-5) - 1;
-		var endY = (int) Math.ceil(position.y() + this.boundingBox.maxY() - 1.0E-5) - 1;
-		var endZ = (int) Math.ceil(position.z() + this.boundingBox.maxZ() - 1.0E-5) - 1;
-		var multiplier = Vec.ZERO;
-
-		for (var blockX = startX; blockX <= endX; blockX++) {
-			for (var blockY = startY; blockY <= endY; blockY++) {
-				for (var blockZ = startZ; blockZ <= endZ; blockZ++) {
-					var block = blockGetter.getBlock(blockX, blockY, blockZ);
-
-					if (block.compare(Block.COBWEB)) {
-						multiplier = this.hasEffect(PotionEffect.WEAVING)
-								? new Vec(0.5, 0.25, 0.5) : new Vec(0.25, 0.05F, 0.25);
-					} else if (block.compare(Block.POWDER_SNOW)) {
-						if (blockGetter.getBlock(position).compare(Block.POWDER_SNOW))
-							multiplier = new Vec(0.9F, 1.5, 0.9F);
-					} else if (block.compare(Block.SWEET_BERRY_BUSH)) {
-						multiplier = new Vec(0.8F, 0.75, 0.8F);
-					}
-				}
-			}
-		}
-
-		return multiplier;
+		return BlockUtil.getStuckSpeedMultiplier(blockGetter, position, this.boundingBox, this.hasEffect(PotionEffect.WEAVING));
 	}
 
 	private void handleFallFlyingCollision(PhysicsResult physicsResult, double oldHorizontalSpeed, double newHorizontalSpeed) {
