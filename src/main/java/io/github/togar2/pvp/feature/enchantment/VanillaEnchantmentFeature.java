@@ -166,8 +166,7 @@ public class VanillaEnchantmentFeature implements EnchantmentFeature, Registrabl
 
 	@Override
 	public int getFireDuration(LivingEntity entity, int duration) {
-		var level = this.getEquipmentLevel(entity, Enchantment.FIRE_PROTECTION);
-		var burningTime = Math.max(1.0 - level * 0.15, 0.0);
+		var burningTime = Math.max(entity.getAttributeValue(Attribute.BURNING_TIME), 0.0);
 
 		return (int) Math.ceil(duration * burningTime);
 	}
