@@ -5,6 +5,7 @@ import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.EntityUtil;
 import io.github.togar2.pvp.utils.FluidUtil;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -32,12 +33,17 @@ public class CombatManager {
 					.hoverEvent(HoverEvent.showText(Component.text("MCPE-28723"))))
 			.append(Component.text("]"));
 
+	private static final int HURT_MEMORY_TICKS = 100;
+
 	private final List<CombatEntry> entries = new ArrayList<>();
 	private final Player player;
-	private int lastDamagedBy = -1;
-	private long lastDamageTime;
-	private long combatStartTime;
-	private long combatEndTime;
+	private int lastHurtByPlayer = -1;
+	private int lastHurtByPlayerMemoryTicks;
+	private int lastHurtByMob = -1;
+	private long lastHurtByMobTick;
+	private long lastDamageTick;
+	private long combatStartTick;
+	private long combatEndTick;
 	private boolean inCombat;
 	private boolean takingDamage;
 
@@ -53,11 +59,7 @@ public class CombatManager {
 			return null;
 		}
 
-		if (lastClimbedBlock.compare(Block.LADDER) || lastClimbedBlock.compare(Block.ACACIA_TRAPDOOR)
-				|| lastClimbedBlock.compare(Block.BIRCH_TRAPDOOR) || lastClimbedBlock.compare(Block.CRIMSON_TRAPDOOR)
-				|| lastClimbedBlock.compare(Block.IRON_TRAPDOOR) || lastClimbedBlock.compare(Block.DARK_OAK_TRAPDOOR)
-				|| lastClimbedBlock.compare(Block.JUNGLE_TRAPDOOR) || lastClimbedBlock.compare(Block.OAK_TRAPDOOR)
-				|| lastClimbedBlock.compare(Block.SPRUCE_TRAPDOOR) || lastClimbedBlock.compare(Block.WARPED_TRAPDOOR)) {
+		if (lastClimbedBlock.compare(Block.LADDER) || this.isTrapdoor(lastClimbedBlock)) {
 			return "ladder";
 		}
 
@@ -80,6 +82,12 @@ public class CombatManager {
 		return "other_climbable";
 	}
 
+	private boolean isTrapdoor(Block block) {
+		var trapdoors = MinecraftServer.process().blocks().getTag(Key.key("minecraft:trapdoors"));
+
+		return trapdoors != null && trapdoors.contains(block.asKey());
+	}
+
 	public void recordDamage(int attackerId, Damage damage,
 	                         FallFeature fallFeature, PlayerStateFeature playerStateFeature) {
         this.recheckStatus();
@@ -87,14 +95,22 @@ public class CombatManager {
 		CombatEntry entry = new CombatEntry(damage, this.getFallLocation(playerStateFeature), fallFeature.getFallDistance(this.player));
         this.entries.add(entry);
 
-        this.lastDamagedBy = attackerId;
-        this.lastDamageTime = System.currentTimeMillis();
+		long now = this.player.getAliveTicks();
+		if (damage.getAttacker() instanceof LivingEntity attacker) {
+			this.lastHurtByMob = attackerId;
+			this.lastHurtByMobTick = now;
+			if (attacker instanceof Player) {
+				this.lastHurtByPlayer = attackerId;
+				this.lastHurtByPlayerMemoryTicks = HURT_MEMORY_TICKS;
+			}
+		}
+        this.lastDamageTick = now;
         this.takingDamage = true;
 
 		if (entry.isCombat() && !this.inCombat && !this.player.isDead()) {
             this.inCombat = true;
-            this.combatStartTime = System.currentTimeMillis();
-            this.combatEndTime = this.combatStartTime;
+            this.combatStartTick = now;
+            this.combatEndTick = now;
 
             this.onEnterCombat();
 		}
@@ -176,39 +192,19 @@ public class CombatManager {
 	}
 
 	private @Nullable LivingEntity getKillCredit() {
-		LivingEntity killer = this.getKiller();
-		if (killer != null) return killer;
+		LivingEntity player = this.getLivingEntity(this.lastHurtByPlayer);
+		if (player != null) return player;
 
-		if (this.lastDamagedBy != -1) {
-			Entity entity = this.player.getInstance().getEntityById(this.lastDamagedBy);
-			if (entity instanceof LivingEntity living) return living;
-		}
-
-		return null;
+		return this.getLivingEntity(this.lastHurtByMob);
 	}
 
-	private @Nullable LivingEntity getKiller() {
-		LivingEntity entity = null;
-		Player player = null;
-		float livingDamage = 0.0F;
-		float playerDamage = 0.0F;
+	private @Nullable LivingEntity getLivingEntity(int entityId) {
+		if (entityId == -1) return null;
 
-		for (CombatEntry entry : this.entries) {
-			Entity attacker = entry.getAttacker();
-			if (attacker instanceof Player && (player == null || entry.damage().getAmount() > playerDamage)) {
-				player = (Player) attacker;
-				playerDamage = entry.damage().getAmount();
-			} else if (attacker instanceof LivingEntity && (entity == null || entry.damage().getAmount() > livingDamage)) {
-				entity = (LivingEntity) attacker;
-				livingDamage = entry.damage().getAmount();
-			}
-		}
+		var instance = this.player.getInstance();
+		if (instance == null) return null;
 
-		if (player != null && playerDamage >= livingDamage / 3.0F) {
-			return player;
-		}
-
-		return entity;
+		return instance.getEntityById(entityId) instanceof LivingEntity living ? living : null;
 	}
 
 	public @Nullable CombatEntry getHeaviestFall() {
@@ -248,30 +244,34 @@ public class CombatManager {
 	}
 
 	public long getCombatDuration() {
-		return this.inCombat ? System.currentTimeMillis() - this.combatStartTime : this.combatEndTime - this.combatStartTime;
+		return this.inCombat ? this.player.getAliveTicks() - this.combatStartTick : this.combatEndTick - this.combatStartTick;
 	}
 
 	public void tick() {
 		if (this.player.isDead() || this.player.getAliveTicks() % 20 == 0)
             this.recheckStatus();
 
-		if (this.lastDamagedBy != -1) {
-			Entity lastDamager = this.player.getInstance().getEntityById(this.lastDamagedBy);
-			if (lastDamager instanceof LivingEntity living && living.isDead()) {
-                this.lastDamagedBy = -1;
-			} else if (System.currentTimeMillis() - this.lastDamageTime > 5000) {
-				// After 5 seconds of no attack the last damaged by does not count anymore
-                this.lastDamagedBy = -1;
+		if (this.lastHurtByPlayer != -1) {
+			var lastPlayer = this.getLivingEntity(this.lastHurtByPlayer);
+			if (lastPlayer == null || lastPlayer.isDead() || --this.lastHurtByPlayerMemoryTicks <= 0) {
+				this.lastHurtByPlayer = -1;
+			}
+		}
+
+		if (this.lastHurtByMob != -1) {
+			var lastMob = this.getLivingEntity(this.lastHurtByMob);
+			if (lastMob == null || lastMob.isDead() || this.player.getAliveTicks() - this.lastHurtByMobTick > HURT_MEMORY_TICKS) {
+				this.lastHurtByMob = -1;
 			}
 		}
 	}
 
 	public void recheckStatus() {
 		// Check if combat should end
-		int idleMillis = this.inCombat ? 300 * MinecraftServer.TICK_MS : 100 * MinecraftServer.TICK_MS;
-		if (this.takingDamage && (this.player.isDead() || System.currentTimeMillis() - this.lastDamageTime > idleMillis)) {
+		int idleTicks = this.inCombat ? 300 : 100;
+		if (this.takingDamage && (this.player.isDead() || this.player.getAliveTicks() - this.lastDamageTick > idleTicks)) {
             this.reset();
-            this.combatEndTime = System.currentTimeMillis();
+            this.combatEndTick = this.player.getAliveTicks();
 		}
 	}
 
@@ -296,8 +296,7 @@ public class CombatManager {
 	}
 
 	private void onLeaveCombat() {
-		int duration = (int) (this.getCombatDuration() / MinecraftServer.TICK_MS);
-        this.player.getPlayerConnection().sendPacket(new EndCombatEventPacket(duration));
+        this.player.getPlayerConnection().sendPacket(new EndCombatEventPacket((int) this.getCombatDuration()));
 	}
 
 	public List<CombatEntry> getEntries() {
@@ -308,16 +307,16 @@ public class CombatManager {
 		return this.player;
 	}
 
-	public long getLastDamageTime() {
-		return this.lastDamageTime;
+	public long getLastDamageTick() {
+		return this.lastDamageTick;
 	}
 
-	public long getCombatStartTime() {
-		return this.combatStartTime;
+	public long getCombatStartTick() {
+		return this.combatStartTick;
 	}
 
-	public long getCombatEndTime() {
-		return this.combatEndTime;
+	public long getCombatEndTick() {
+		return this.combatEndTick;
 	}
 
 	public boolean isInCombat() {
