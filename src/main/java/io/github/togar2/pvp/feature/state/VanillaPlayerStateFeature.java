@@ -3,8 +3,7 @@ package io.github.togar2.pvp.feature.state;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
-import net.kyori.adventure.key.Key;
-import net.minestom.server.MinecraftServer;
+import io.github.togar2.pvp.utils.BlockUtil;
 import net.minestom.server.ServerFlag;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
@@ -72,13 +71,7 @@ public class VanillaPlayerStateFeature implements PlayerStateFeature, Registrabl
 	public boolean isClimbing(LivingEntity entity) {
 		if (entity instanceof Player player && player.getGameMode() == GameMode.SPECTATOR) return false;
 
-		var tag = MinecraftServer.process().blocks().getTag(Key.key("minecraft:climbable"));
-		assert tag != null;
-
-		Block block = Objects.requireNonNull(entity.getInstance()).getBlock(entity.getPosition());
-		var key = block.asKey();
-		assert key != null;
-		return tag.contains(key);
+		return BlockUtil.isClimbable(Objects.requireNonNull(entity.getInstance()), entity.getPosition());
 	}
 
 	@Override
