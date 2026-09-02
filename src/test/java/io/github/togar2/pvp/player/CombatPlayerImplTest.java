@@ -1,11 +1,14 @@
 package io.github.togar2.pvp.player;
 
+import io.github.togar2.pvp.feature.state.VanillaPlayerStateFeature;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.coordinate.Pos;
+import net.minestom.server.coordinate.Vec;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,5 +26,19 @@ public final class CombatPlayerImplTest {
 
         assertTrue(player.getVelocity().z() > 0.0);
         assertTrue(player.getVelocity().y() < 0.0);
+    }
+
+    @Test
+    public void groundPredictionStartsFromTheReportedMovement(Env env) {
+        MinecraftServer.getConnectionManager().setPlayerProvider(CombatPlayerImpl::new);
+        var instance = env.createFlatInstance();
+        var player = assertInstanceOf(CombatPlayerImpl.class,
+                env.createPlayer(instance, new Pos(8.0, 47.0, 8.0)));
+
+        assertFalse(player.isOnGroundAfterTicks(10));
+
+        player.setTag(VanillaPlayerStateFeature.KNOWN_MOVEMENT, new Vec(0.0, -0.5, 0.0));
+
+        assertTrue(player.isOnGroundAfterTicks(10));
     }
 }

@@ -1,5 +1,6 @@
 package io.github.togar2.pvp.player;
 
+import io.github.togar2.pvp.feature.state.VanillaPlayerStateFeature;
 import io.github.togar2.pvp.utils.BlockUtil;
 import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.CollisionUtil;
@@ -72,6 +73,9 @@ public class CombatPlayerImpl extends Player implements CombatPlayer {
 		final double tps = ServerFlag.SERVER_TICKS_PER_SECOND;
 		Vec velocity = this.velocity.div(tps);
 		Pos position = this.position;
+
+		Vec knownMovement = this.getTag(VanillaPlayerStateFeature.KNOWN_MOVEMENT);
+		if (knownMovement != null && knownMovement.lengthSquared() > velocity.lengthSquared()) velocity = knownMovement;
 
 		// Slow falling effect
 		Aerodynamics aerodynamics = this.getAerodynamics();
