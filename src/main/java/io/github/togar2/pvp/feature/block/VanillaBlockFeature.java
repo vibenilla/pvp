@@ -159,10 +159,6 @@ public class VanillaBlockFeature implements BlockFeature {
 
 			if (entity.getItemInHand(hand).isAir()) {
 				((LivingEntityMeta) entity.getEntityMeta()).setHandActive(false);
-				entity.getViewersAsAudience().playSound(Sound.sound(
-						SoundEvent.ITEM_SHIELD_BREAK, Sound.Source.PLAYER,
-						0.8f, 0.8f + ThreadLocalRandom.current().nextFloat(0.4f)
-				));
 			}
 		}
 
@@ -238,8 +234,6 @@ public class VanillaBlockFeature implements BlockFeature {
 			), player);
 		}
 
-		// Shield disable status
-		player.triggerStatus((byte) 30);
 		player.triggerStatus((byte) 9);
 
 		player.refreshActiveHand(false, hand == PlayerHand.OFF, false);
