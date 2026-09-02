@@ -1,6 +1,7 @@
 package io.github.togar2.pvp.entity.projectile;
 
 import io.github.togar2.pvp.feature.projectile.VanillaFishingRodFeature;
+import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.FluidUtil;
 import java.util.concurrent.ThreadLocalRandom;
@@ -201,6 +202,13 @@ public class FishingBobber extends CustomEntityProjectile {
 		Vec velocity = new Vec(shooterPos.x() - pos.x(), shooterPos.y() - pos.y(),
 				shooterPos.z() - pos.z()).mul(0.1);
 		velocity = velocity.mul(ServerFlag.SERVER_TICKS_PER_SECOND);
+
+		if (entity instanceof Player) {
+			Vec pull = velocity;
+			if (entity instanceof CombatPlayer custom) custom.setVelocityNoUpdate(current -> current.add(pull));
+			return;
+		}
+
 		entity.setVelocity(entity.getVelocity().add(velocity));
 	}
 
