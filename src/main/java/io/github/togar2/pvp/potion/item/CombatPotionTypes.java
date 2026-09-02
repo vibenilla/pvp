@@ -22,6 +22,8 @@ public class CombatPotionTypes {
 	}
 
 	public static void registerAll() {
+		if (!POTION_EFFECTS.isEmpty()) return;
+
 		register(
 				new CombatPotionType(PotionType.WATER),
 				new CombatPotionType(PotionType.MUNDANE),

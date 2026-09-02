@@ -54,6 +54,7 @@ public class VanillaEnchantmentFeature implements EnchantmentFeature, Registrabl
 
 	public VanillaEnchantmentFeature(FeatureConfiguration configuration) {
 		this.configuration = configuration;
+		CombatEnchantments.registerAll();
 	}
 
 	@Override

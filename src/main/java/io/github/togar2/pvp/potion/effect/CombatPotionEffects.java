@@ -7,14 +7,15 @@ import net.minestom.server.particle.Particle;
 import net.minestom.server.potion.PotionEffect;
 import net.minestom.server.sound.SoundEvent;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 public class CombatPotionEffects {
-	private static final Map<PotionEffect, CombatPotionEffect> POTION_EFFECTS = new HashMap<>();
+	private static final Map<PotionEffect, CombatPotionEffect> POTION_EFFECTS = new ConcurrentHashMap<>();
+	private static boolean registered;
 
 	public static CombatPotionEffect get(PotionEffect potionEffect) {
-		return POTION_EFFECTS.get(potionEffect);
+		return POTION_EFFECTS.computeIfAbsent(potionEffect, CombatPotionEffect::new);
 	}
 
 	public static void register(CombatPotionEffect... potionEffects) {
@@ -24,6 +25,9 @@ public class CombatPotionEffects {
 	}
 
 	public static void registerAll() {
+		if (registered) return;
+		registered = true;
+
 		register(
 				new CombatPotionEffect(PotionEffect.SPEED).addAttributeModifier(Attribute.MOVEMENT_SPEED, Key.key("minecraft:effect.speed"), 0.2, AttributeOperation.ADD_MULTIPLIED_TOTAL),
 				new CombatPotionEffect(PotionEffect.SLOWNESS).addAttributeModifier(Attribute.MOVEMENT_SPEED, Key.key("minecraft:effect.slowness"), -0.15, AttributeOperation.ADD_MULTIPLIED_TOTAL),

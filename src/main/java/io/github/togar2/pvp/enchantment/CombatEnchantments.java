@@ -44,6 +44,8 @@ public class CombatEnchantments {
 	}
 
 	public static void registerAll() {
+		if (!ENCHANTMENTS.isEmpty()) return;
+
 		if (registered) return;
 		registered = true;
 

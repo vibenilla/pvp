@@ -94,6 +94,8 @@ public class VanillaEffectFeature implements EffectFeature, RegistrableFeature {
 
 	public VanillaEffectFeature(FeatureConfiguration configuration) {
 		this.configuration = configuration;
+		CombatPotionEffects.registerAll();
+		CombatPotionTypes.registerAll();
 	}
 
 	@Override
