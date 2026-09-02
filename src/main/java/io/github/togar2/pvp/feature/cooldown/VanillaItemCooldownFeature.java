@@ -3,7 +3,6 @@ package io.github.togar2.pvp.feature.cooldown;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
-import net.minestom.server.MinecraftServer;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventNode;
@@ -45,7 +44,7 @@ public class VanillaItemCooldownFeature implements ItemCooldownFeature, Registra
 			Player player = event.getPlayer();
 			Map<String, Long> cooldown = player.getTag(COOLDOWN_END);
 			if (cooldown.isEmpty()) return;
-			long time = System.currentTimeMillis();
+			long time = player.getAliveTicks();
 
 			Iterator<Map.Entry<String, Long>> iterator = cooldown.entrySet().iterator();
 
@@ -67,13 +66,13 @@ public class VanillaItemCooldownFeature implements ItemCooldownFeature, Registra
 	@Override
 	public boolean hasCooldown(Player player, String cooldownGroup) {
 		Map<String, Long> cooldown = player.getTag(COOLDOWN_END);
-		return cooldown.containsKey(cooldownGroup) && cooldown.get(cooldownGroup) > System.currentTimeMillis();
+		return cooldown.containsKey(cooldownGroup) && cooldown.get(cooldownGroup) > player.getAliveTicks();
 	}
 
 	@Override
 	public void setCooldown(Player player, String cooldownGroup, int ticks) {
 		Map<String, Long> cooldown = player.getTag(COOLDOWN_END);
-		cooldown.put(cooldownGroup, System.currentTimeMillis() + (long) ticks * MinecraftServer.TICK_MS);
+		cooldown.put(cooldownGroup, player.getAliveTicks() + ticks);
         this.sendCooldownPacket(player, cooldownGroup, ticks);
 	}
 
