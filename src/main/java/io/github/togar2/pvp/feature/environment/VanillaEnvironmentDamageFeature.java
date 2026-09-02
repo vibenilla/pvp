@@ -4,6 +4,7 @@ import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
+import io.github.togar2.pvp.feature.config.PlayerInitReason;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.feature.enchantment.VanillaEnchantmentFeature;
 import io.github.togar2.pvp.feature.provider.DifficultyProvider;
@@ -101,7 +102,9 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 	private final EnchantmentFeature enchantmentFeature;
 	private final DifficultyProvider difficultyProvider;
 
-	public static void initPlayer(Player player, boolean firstInit) {
+	public static void initPlayer(Player player, PlayerInitReason reason) {
+		if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
+
 		player.setTag(AIR_SUPPLY, MAX_AIR_SUPPLY);
 		player.setTag(FREEZE_TICKS, 0);
 	}

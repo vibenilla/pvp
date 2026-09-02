@@ -5,6 +5,7 @@ import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
+import io.github.togar2.pvp.feature.config.PlayerInitReason;
 import io.github.togar2.pvp.feature.provider.DifficultyProvider;
 import io.github.togar2.pvp.utils.CombatVersion;
 import net.minestom.server.entity.Player;
@@ -46,7 +47,9 @@ public class VanillaRegenerationFeature implements RegenerationFeature, Registra
 		this.version = this.configuration.get(FeatureType.VERSION);
 	}
 
-	public static void initPlayer(Player player, boolean firstInit) {
+	public static void initPlayer(Player player, PlayerInitReason reason) {
+		if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
+
 		player.setTag(STARVATION_TICKS, 0);
 	}
 

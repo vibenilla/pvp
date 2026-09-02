@@ -14,8 +14,8 @@ import java.util.Set;
  * and which it can get the dependencies from once {@link CombatFeature#initDependencies()} is called.
  * <p>
  * A defined feature can also contain a {@link PlayerInit},
- * which describes everything that should happen when a players state is reset (they join, they respawn, etc.).
- * This can for example be used to add certain tags to a player that a feature needs.
+ * which describes everything that should happen when a player joins, respawns or changes instance,
+ * see {@link PlayerInitReason}. This can for example be used to add certain tags to a player that a feature needs.
  * Since features might be instantiated multiple times, this player init is contained in the feature definition
  * and not every time when it is instantiated.
  *
@@ -65,6 +65,6 @@ public class DefinedFeature<F extends CombatFeature> {
 
 	@FunctionalInterface
 	public interface PlayerInit {
-		void init(Player player, boolean firstInit);
+		void init(Player player, PlayerInitReason reason);
 	}
 }

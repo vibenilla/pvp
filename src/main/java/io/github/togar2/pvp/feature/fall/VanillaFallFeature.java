@@ -4,6 +4,7 @@ import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
+import io.github.togar2.pvp.feature.config.PlayerInitReason;
 import io.github.togar2.pvp.feature.item.ItemDamageFeature;
 import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.FluidUtil;
@@ -75,10 +76,14 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 		this.itemDamageFeature = this.configuration.get(FeatureType.ITEM_DAMAGE);
 	}
 
-	public static void initPlayer(Player player, boolean firstInit) {
+	public static void initPlayer(Player player, PlayerInitReason reason) {
 		player.setTag(FALL_DISTANCE, 0.0);
+		if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
+
 		player.setTag(FALL_FLYING_TICKS, 0);
 		player.setTag(CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME, 0);
+		player.removeTag(CURRENT_IMPULSE_IMPACT_Y);
+		player.removeTag(EXTRA_FALL_PARTICLES);
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package io.github.togar2.pvp.feature.cooldown;
 import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
+import io.github.togar2.pvp.feature.config.PlayerInitReason;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.EventNode;
@@ -28,7 +29,9 @@ public class VanillaItemCooldownFeature implements ItemCooldownFeature, Registra
 
 	public static final Tag<Map<String, Long>> COOLDOWN_END = Tag.Transient("cooldownEnd");
 
-	private static void initPlayer(Player player, boolean firstInit) {
+	private static void initPlayer(Player player, PlayerInitReason reason) {
+		if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
+
 		player.setTag(COOLDOWN_END, new HashMap<>());
 	}
 

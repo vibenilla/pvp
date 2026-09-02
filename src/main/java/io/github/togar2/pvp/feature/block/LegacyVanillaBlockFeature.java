@@ -4,6 +4,7 @@ import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
+import io.github.togar2.pvp.feature.config.PlayerInitReason;
 import io.github.togar2.pvp.utils.CombatVersion;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.PlayerHand;
@@ -40,7 +41,9 @@ public class LegacyVanillaBlockFeature extends VanillaBlockFeature
 		this.blockingItem = blockingItem;
 	}
 
-	public static void initPlayer(Player player, boolean firstInit) {
+	public static void initPlayer(Player player, PlayerInitReason reason) {
+		if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
+
 		player.setTag(LAST_SWING_TIME, 0L);
 		player.setTag(BLOCKING_SWORD, false);
 	}
