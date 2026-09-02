@@ -5,6 +5,7 @@ import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
+import io.github.togar2.pvp.utils.FluidUtil;
 import io.github.togar2.pvp.feature.provider.DifficultyProvider;
 import io.github.togar2.pvp.utils.CombatVersion;
 import net.minestom.server.entity.Player;
@@ -15,7 +16,6 @@ import net.minestom.server.event.player.PlayerBlockBreakEvent;
 import net.minestom.server.event.player.PlayerMoveEvent;
 import net.minestom.server.event.player.PlayerTickEvent;
 import net.minestom.server.event.trait.EntityInstanceEvent;
-import net.minestom.server.instance.block.Block;
 import net.minestom.server.tag.Tag;
 import net.minestom.server.world.Difficulty;
 
@@ -91,14 +91,18 @@ public class VanillaExhaustionFeature implements ExhaustionFeature, RegistrableF
 			}
 		}
 
-		if (player.isOnGround()) {
+		var instance = Objects.requireNonNull(player.getInstance());
+		if (FluidUtil.isTouchingWater(player, event.getNewPosition())) {
+			var eyePosition = event.getNewPosition().add(0.0, player.getEyeHeight(), 0.0);
+			var submerged = FluidUtil.isWater(instance.getBlock(eyePosition));
+			var distance = submerged
+					? Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff)
+					: Math.sqrt(xDiff * xDiff + zDiff * zDiff);
+			int l = (int) Math.round(distance * 100.0f);
+			if (l > 0) this.addExhaustion(player, 0.01f * (float) l * 0.01f);
+		} else if (player.isOnGround()) {
 			int l = (int) Math.round(Math.sqrt(xDiff * xDiff + zDiff * zDiff) * 100.0f);
 			if (l > 0) this.addExhaustion(player, (player.isSprinting() ? 0.1f : 0.0f) * (float) l * 0.01f);
-		} else {
-			if (Objects.requireNonNull(player.getInstance()).getBlock(player.getPosition()) == Block.WATER) {
-				int l = (int) Math.round(Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff) * 100.0f);
-				if (l > 0) this.addExhaustion(player, 0.01f * (float) l * 0.01f);
-			}
 		}
 	}
 
