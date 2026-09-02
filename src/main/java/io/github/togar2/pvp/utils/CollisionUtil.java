@@ -49,6 +49,16 @@ public final class CollisionUtil {
 		return result.newPosition().samePoint(end, 1.0E-5);
 	}
 
+	public static @Nullable Pos clipBlocks(Block.Getter blockGetter, Point start, Point end) {
+		var delta = end.sub(start).asVec();
+		if (delta.isZero()) return null;
+
+		var result = BlockCollision.handlePhysics(new BoundingBox(0.0, 0.0, 0.0), delta, start.asPos(),
+				blockGetter, null, true);
+
+		return result.hasCollision() ? result.newPosition() : null;
+	}
+
 	public static Pos applyWorldBorder(WorldBorder worldBorder, Pos currentPosition, Pos newPosition) {
 		var radius = worldBorder.diameter() / 2.0;
 		var collisionX = newPosition.x() > worldBorder.centerX() + radius
