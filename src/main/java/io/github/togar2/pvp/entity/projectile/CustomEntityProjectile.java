@@ -138,10 +138,10 @@ public class CustomEntityProjectile extends Entity {
 		dy /= length;
 		dz /= length;
 		Random random = ThreadLocalRandom.current();
-		spread *= 0.007499999832361937D;
-		dx += random.nextGaussian() * spread;
-		dy += random.nextGaussian() * spread;
-		dz += random.nextGaussian() * spread;
+		spread *= 0.0172275D;
+		dx += (random.nextDouble() - random.nextDouble()) * spread;
+		dy += (random.nextDouble() - random.nextDouble()) * spread;
+		dz += (random.nextDouble() - random.nextDouble()) * spread;
 
         final double mul = ServerFlag.SERVER_TICKS_PER_SECOND * power;
         this.velocity = new Vec(dx * mul, dy * mul, dz * mul);
