@@ -124,4 +124,9 @@ public class ThrownEnderpearl extends CustomEntityProjectile implements ItemHold
 	public void setItem(@NotNull ItemStack item) {
 		((ThrownEnderPearlMeta) this.getEntityMeta()).setItem(item);
 	}
+
+	@Override
+	protected int getUpdateInterval() {
+		return 10;
+	}
 }

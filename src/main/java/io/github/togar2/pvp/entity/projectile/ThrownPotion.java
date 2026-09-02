@@ -217,4 +217,9 @@ public class ThrownPotion extends CustomEntityProjectile implements ItemHoldingP
 			((SplashPotionMeta) this.getEntityMeta()).setItem(item);
 		}
 	}
+
+	@Override
+	protected int getUpdateInterval() {
+		return 10;
+	}
 }

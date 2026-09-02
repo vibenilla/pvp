@@ -242,4 +242,9 @@ public final class FireworkRocket extends CustomEntityProjectile {
 
         ((FireworkRocketMeta) this.getEntityMeta()).setFireworkInfo(this.itemStack);
     }
+
+    @Override
+    protected int getUpdateInterval() {
+        return 10;
+    }
 }

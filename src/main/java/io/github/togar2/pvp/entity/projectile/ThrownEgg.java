@@ -46,4 +46,9 @@ public class ThrownEgg extends CustomEntityProjectile implements ItemHoldingProj
 	public void setItem(@NotNull ItemStack item) {
 		((ThrownEggMeta) this.getEntityMeta()).setItem(item);
 	}
+
+	@Override
+	protected int getUpdateInterval() {
+		return 10;
+	}
 }

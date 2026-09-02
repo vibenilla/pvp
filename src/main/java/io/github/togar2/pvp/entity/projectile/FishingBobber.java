@@ -199,4 +199,9 @@ public class FishingBobber extends CustomEntityProjectile {
 		HOOKED_ENTITY,
 		BOBBING
 	}
+
+	@Override
+	protected int getUpdateInterval() {
+		return 5;
+	}
 }

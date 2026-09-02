@@ -187,4 +187,9 @@ public final class WindCharge extends CustomEntityProjectile {
 
 		return false;
 	}
+
+	@Override
+	protected int getUpdateInterval() {
+		return 10;
+	}
 }

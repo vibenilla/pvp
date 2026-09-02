@@ -47,4 +47,9 @@ public class Snowball extends CustomEntityProjectile implements ItemHoldingProje
 	public void setItem(@NotNull ItemStack item) {
 		((SnowballMeta) this.getEntityMeta()).setItem(item);
 	}
+
+	@Override
+	protected int getUpdateInterval() {
+		return 10;
+	}
 }
