@@ -6,7 +6,9 @@ import io.github.togar2.pvp.feature.fall.VanillaFallFeature;
 import net.minestom.server.coordinate.Pos;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.minestom.server.entity.GameMode;
+import net.minestom.server.entity.ItemEntity;
 import net.minestom.server.instance.block.Block;
+import net.minestom.server.item.Material;
 import net.minestom.server.network.packet.server.play.EntityVelocityPacket;
 import net.minestom.server.network.packet.server.play.ExplosionPacket;
 import net.minestom.testing.Env;
@@ -99,5 +101,27 @@ public final class VanillaExplosionSupplierTest {
 
         assertTrue(instance.getBlock(1, 40, 0).compare(Block.STONE));
         assertTrue(instance.getBlock(0, 40, 1).compare(Block.STONE));
+    }
+
+    @Test
+    public void explosionDropsBlockItemsWhenAsked(Env env) {
+        var featureSet = CombatFeatures.empty()
+                .add(CombatFeatures.VANILLA_FALL)
+                .add(CombatFeatures.VANILLA_EXPLOSION)
+                .build();
+
+        var instance = env.createFlatInstance();
+        instance.setExplosionSupplier(featureSet.get(FeatureType.EXPLOSION).getExplosionSupplier());
+        instance.loadChunk(0, 0).join();
+        instance.setBlock(1, 40, 0, Block.STONE);
+
+        instance.explode(0.5F, 40.5F, 0.5F, 4.0F, CompoundBinaryTag.builder()
+                .putBoolean("dropBlocks", true)
+                .putBoolean("dropDecay", false)
+                .build());
+
+        assertTrue(instance.getBlock(1, 40, 0).air());
+        assertTrue(instance.getEntities().stream()
+                .anyMatch(entity -> entity instanceof ItemEntity item && item.getItemStack().material() == Material.STONE));
     }
 }

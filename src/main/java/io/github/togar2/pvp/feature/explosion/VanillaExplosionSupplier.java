@@ -15,6 +15,7 @@ import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.GameMode;
+import net.minestom.server.entity.ItemEntity;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.attribute.Attribute;
@@ -25,12 +26,15 @@ import net.minestom.server.instance.Explosion;
 import net.minestom.server.instance.ExplosionSupplier;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.block.Block;
+import net.minestom.server.item.ItemStack;
+import net.minestom.server.item.Material;
 import net.minestom.server.network.packet.server.play.ExplosionPacket;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.sound.SoundEvent;
 
 import net.minestom.server.utils.WeightedList;
 import net.minestom.server.utils.WeightedList.Entry;
+import net.minestom.server.utils.time.TimeUnit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,13 +245,20 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 				if (additionalData != null && additionalData.keySet().contains("tntExplodes"))
 					tntExplodes = additionalData.getBoolean("tntExplodes");
 
+				boolean dropBlocks = additionalData != null && additionalData.getBoolean("dropBlocks", false);
+				float dropChance = additionalData == null || additionalData.getBoolean("dropDecay", true)
+						? 1.0F / this.getStrength() : 1.0F;
+
 				byte[] records = new byte[3 * blocks.size()];
 				for (int i = 0; i < blocks.size(); i++) {
 					final var pos = blocks.get(i);
-					if (tntExplodes && instance.getBlock(pos).compare(Block.TNT)) {
+					var block = instance.getBlock(pos);
+					if (tntExplodes && block.compare(Block.TNT)) {
 						Entity causingEntity = this.getCausingEntity(instance);
                         VanillaExplosionSupplier.this.feature.primeExplosive(instance, pos, new ExplosionFeature.IgnitionCause.Explosion(causingEntity),
 								ThreadLocalRandom.current().nextInt(20) + 10);
+					} else if (dropBlocks && ThreadLocalRandom.current().nextFloat() < dropChance) {
+						this.dropBlockItem(instance, pos, block);
 					}
 					instance.setBlock(pos, Block.AIR);
 					final byte x = (byte) (pos.x() - Math.floor(this.getCenterX()));
@@ -330,6 +341,15 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 						&& maxY >= entityPosition.y() + boundingBox.minY()
 						&& minZ <= entityPosition.z() + boundingBox.maxZ()
 						&& maxZ >= entityPosition.z() + boundingBox.minZ();
+			}
+
+			private void dropBlockItem(Instance instance, Point position, Block block) {
+				var material = Material.fromKey(block.key());
+				if (material == null) return;
+
+				var item = new ItemEntity(ItemStack.of(material));
+				item.setPickupDelay(10, TimeUnit.SERVER_TICK);
+				item.setInstance(instance, position.add(0.5, 0.5, 0.5));
 			}
 
 			private float getExplosionResistance(Block block) {
