@@ -10,6 +10,7 @@ import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -50,6 +51,27 @@ public final class CombatFeatureRegistryTest {
             player.respawn();
 
             assertFalse(player.hasTag(VanillaFallFeature.CURRENT_IMPULSE_IMPACT_Y));
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void respawnRestoresFood(Env env) {
+        var node = CombatFeatures.modernVanilla().createNode();
+        MinecraftServer.getGlobalEventHandler().addChild(node);
+
+        try {
+            var player = env.createPlayer(env.createFlatInstance(), SPAWN);
+            player.setRespawnPoint(SPAWN);
+            player.setFood(3);
+            player.setFoodSaturation(0.0f);
+
+            player.kill();
+            player.respawn();
+
+            assertEquals(20, player.getFood());
+            assertEquals(5.0f, player.getFoodSaturation());
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }

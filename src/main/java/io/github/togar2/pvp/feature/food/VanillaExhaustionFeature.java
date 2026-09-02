@@ -53,6 +53,10 @@ public class VanillaExhaustionFeature implements ExhaustionFeature, RegistrableF
 		if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
 
 		player.setTag(EXHAUSTION, 0.0f);
+		if (reason == PlayerInitReason.RESPAWN) {
+			player.setFood(20);
+			player.setFoodSaturation(5.0f);
+		}
 	}
 
 	@Override
