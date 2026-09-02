@@ -35,6 +35,7 @@ import net.minestom.server.event.trait.EntityInstanceEvent;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.WorldBorder;
 import net.minestom.server.instance.block.Block;
+import net.minestom.server.instance.block.BlockFace;
 import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.item.Material;
 import net.minestom.server.potion.Potion;
@@ -217,6 +218,8 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 		var instance = entity.getInstance();
 
 		if (instance == null) return;
+		if (!entity.hasPhysics()) return;
+		if (entity instanceof Player player && player.getGameMode() == GameMode.SPECTATOR) return;
 
 		var position = entity.getPosition();
 		var checkWidth = entity.getBoundingBox().width() * 0.8;
@@ -238,7 +241,7 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 				for (var blockZ = minZ; blockZ <= maxZ; blockZ++) {
 					var block = instance.getBlock(blockX, blockY, blockZ);
 
-					if (block.air() || !block.solid()) continue;
+					if (!this.isSuffocating(block)) continue;
 
 					var blockPosition = new Vec(blockX, blockY, blockZ);
 					if (block.collisionShape().intersectBox(eyePosition.sub(blockPosition), checkBox)) {
@@ -248,6 +251,25 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 				}
 			}
 		}
+	}
+
+	private boolean isSuffocating(Block block) {
+		if (block.air() || !block.blocksMotion()) return false;
+
+		var shape = block.collisionShape();
+		for (var face : BlockFace.values()) {
+			if (!shape.isFaceFull(face)) return false;
+		}
+
+		if (block.compare(Block.MANGROVE_ROOTS) || block.compare(Block.MOVING_PISTON)) return false;
+		if ((block.compare(Block.PISTON) || block.compare(Block.STICKY_PISTON)) && "true".equals(block.getProperty("extended"))) return false;
+
+		var key = block.key().value();
+		if (key.endsWith("glass") || key.endsWith("copper_grate")) return false;
+
+		var leaves = MinecraftServer.process().blocks().getTag(Key.key("minecraft:leaves"));
+
+		return leaves == null || !leaves.contains(block.asKey());
 	}
 
 	private void handleCrammingDamage(LivingEntity entity) {

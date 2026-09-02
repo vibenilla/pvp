@@ -124,6 +124,36 @@ public final class VanillaEnvironmentDamageFeatureTest {
         }
     }
 
+    @Test
+    public void suffocationRequiresAFullSuffocatingBlock(Env env) {
+        var node = this.addEnvironmentFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var entity = new LivingEntity(EntityType.ZOMBIE);
+            entity.setInstance(instance, new Pos(8.0, 41.0, 8.0)).join();
+            entity.setHealth(20.0F);
+
+            instance.setBlock(8, 42, 8, Block.GLASS);
+            env.tick();
+            assertEquals(20.0F, entity.getHealth());
+
+            instance.setBlock(8, 42, 8, Block.OAK_LEAVES);
+            env.tick();
+            assertEquals(20.0F, entity.getHealth());
+
+            instance.setBlock(8, 42, 8, Block.OAK_SLAB);
+            env.tick();
+            assertEquals(20.0F, entity.getHealth());
+
+            instance.setBlock(8, 42, 8, Block.STONE);
+            env.tick();
+            assertEquals(19.0F, entity.getHealth());
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
     private EventNode<?> addEnvironmentFeature() {
         var node = CombatFeatures.empty()
                 .add(CombatFeatures.VANILLA_ENVIRONMENT_DAMAGE)
