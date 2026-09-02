@@ -56,7 +56,7 @@ public class VanillaKnockbackFeature implements KnockbackFeature {
 
 		// Randomize direction
 		ThreadLocalRandom random = ThreadLocalRandom.current();
-		while (dx * dx + dz * dz < 0.0001) {
+		while (dx * dx + dz * dz < 1.0E-5) {
 			dx = random.nextDouble(-1, 1) * 0.01;
 			dz = random.nextDouble(-1, 1) * 0.01;
 		}
