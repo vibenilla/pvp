@@ -8,10 +8,8 @@ import net.minestom.server.entity.EquipmentSlot;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.damage.DamageType;
-import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.enchant.Enchantment;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -21,20 +19,16 @@ public class ThornsEnchantment extends CombatEnchantment {
 	}
 
 	@Override
-	public void onUserDamaged(LivingEntity user, LivingEntity attacker, int level,
+	public void onUserDamaged(LivingEntity user, LivingEntity attacker, int level, EquipmentSlot slot,
 	                          EnchantmentFeature feature, FeatureConfiguration configuration) {
 		ThreadLocalRandom random = ThreadLocalRandom.current();
 		if (!shouldDamageAttacker(level, random)) return;
-
-		Map.Entry<EquipmentSlot, ItemStack> entry = feature.pickRandom(user, Enchantment.THORNS);
 
 		if (attacker != null) {
 			attacker.damage(new Damage(DamageType.THORNS, user, user, null, getDamageAmount(random)));
 		}
 
-		if (entry != null) {
-			configuration.get(FeatureType.ITEM_DAMAGE).damageEquipment(user, entry.getKey(), 2);
-		}
+		configuration.get(FeatureType.ITEM_DAMAGE).damageEquipment(user, slot, 2);
 	}
 
 	private static boolean shouldDamageAttacker(int level, ThreadLocalRandom random) {

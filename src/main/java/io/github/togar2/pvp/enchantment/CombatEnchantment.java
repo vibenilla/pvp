@@ -64,4 +64,9 @@ public class CombatEnchantment {
 
 	public void onTargetDamaged(LivingEntity user, Entity target, int level, EnchantmentFeature feature, FeatureConfiguration configuration) {}
 	public void onUserDamaged(LivingEntity user, LivingEntity attacker, int level, EnchantmentFeature feature, FeatureConfiguration configuration) {}
+
+	public void onUserDamaged(LivingEntity user, LivingEntity attacker, int level, EquipmentSlot slot,
+	                          EnchantmentFeature feature, FeatureConfiguration configuration) {
+		this.onUserDamaged(user, attacker, level, feature, configuration);
+	}
 }
