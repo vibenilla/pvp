@@ -96,15 +96,11 @@ public class ThrownPotion extends CustomEntityProjectile implements ItemHoldingP
 	private void applyWaterSplash(@Nullable Entity hitEntity) {
 		var boundingBox = this.getBoundingBox().expand(8.0, 4.0, 8.0);
 		var entities = Objects.requireNonNull(this.getInstance()).getEntities().stream()
-				.filter(entity -> !(entity instanceof Player))
 				.filter(entity -> boundingBox.intersectEntity(this.getPosition().add(0, -2, 0), entity))
 				.filter(entity -> entity instanceof LivingEntity)
+				.filter(entity -> !(entity instanceof Player player) || player.getGameMode() != GameMode.SPECTATOR)
 				.map(entity -> (LivingEntity) entity)
 				.collect(Collectors.toList());
-		entities.addAll(Objects.requireNonNull(this.getInstance()).getPlayers().stream()
-				.filter(player -> boundingBox.intersectEntity(this.getPosition().add(0, -2, 0), player))
-				.filter(player -> player.getGameMode() != GameMode.SPECTATOR)
-				.toList());
 
 		if (hitEntity instanceof LivingEntity livingEntity && !entities.contains(livingEntity)) {
 			entities.add(livingEntity);
@@ -121,15 +117,11 @@ public class ThrownPotion extends CustomEntityProjectile implements ItemHoldingP
 	private void applySplash(PotionContents potionContents, @Nullable Entity hitEntity) {
 		var boundingBox = this.getBoundingBox().expand(8.0, 4.0, 8.0);
 		var entities = Objects.requireNonNull(this.getInstance()).getEntities().stream()
-				.filter(entity -> !(entity instanceof Player))
 				.filter(entity -> boundingBox.intersectEntity(this.getPosition().add(0, -2, 0), entity))
 				.filter(entity -> entity instanceof LivingEntity)
+				.filter(entity -> !(entity instanceof Player player) || player.getGameMode() != GameMode.SPECTATOR)
 				.map(entity -> (LivingEntity) entity)
 				.collect(Collectors.toList());
-		entities.addAll(Objects.requireNonNull(this.getInstance()).getPlayers().stream()
-				.filter(player -> boundingBox.intersectEntity(this.getPosition().add(0, -2, 0), player))
-				.filter(player -> player.getGameMode() != GameMode.SPECTATOR)
-				.toList());
 
 		if (hitEntity instanceof LivingEntity && !entities.contains(hitEntity)) {
 			entities.add((LivingEntity) hitEntity);

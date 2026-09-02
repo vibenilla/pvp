@@ -141,14 +141,9 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 				Entity sourceEntity = this.getSourceEntity(instance);
 
 				List<Entity> entities = new ArrayList<>(instance.getEntities().stream()
-						.filter(entity -> !(entity instanceof Player))
 						.filter(entity -> entity != sourceEntity)
+						.filter(entity -> !(entity instanceof Player player) || player.getGameMode() != GameMode.SPECTATOR)
 						.filter(entity -> this.intersectsEntity(minX, minY, minZ, maxX, maxY, maxZ, entity))
-						.toList());
-				entities.addAll(instance.getPlayers().stream()
-						.filter(player -> player != sourceEntity)
-						.filter(player -> player.getGameMode() != GameMode.SPECTATOR)
-						.filter(player -> this.intersectsEntity(minX, minY, minZ, maxX, maxY, maxZ, player))
 						.toList());
 
 				boolean anchor = false;
@@ -313,16 +308,7 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 			private @Nullable Entity getEntity(Instance instance, String key) {
 				if (additionalData == null || !additionalData.keySet().contains(key)) return null;
 
-				UUID uuid = UUID.fromString(additionalData.getString(key));
-				var entity = instance.getEntities().stream()
-						.filter(candidate -> candidate.getUuid().equals(uuid))
-						.findAny().orElse(null);
-
-				if (entity != null) return entity;
-
-				return instance.getPlayers().stream()
-						.filter(player -> player.getUuid().equals(uuid))
-						.findAny().orElse(null);
+				return instance.getEntityByUuid(UUID.fromString(additionalData.getString(key)));
 			}
 
 			private boolean shouldApplyPlayerKnockback(Player player) {

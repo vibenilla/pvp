@@ -86,18 +86,8 @@ public class VanillaSweepingFeature implements SweepingFeature {
 		BoundingBox boundingBox = target.getBoundingBox().growSymmetrically(1.0, 0.25, 1.0);
 		assert target.getInstance() != null;
 		for (Entity nearbyEntity : target.getInstance().getNearbyEntities(target.getPosition(), 3)) {
-			if (nearbyEntity instanceof Player) continue;
-
 			var affectedEntity = this.applySweepingToEntity(attacker, target, sweepingDamage, cooldownProgress,
 					boundingBox, nearbyEntity);
-
-			if (affectedEntity != null) {
-				affectedEntities.add(affectedEntity);
-			}
-		}
-		for (var player : target.getInstance().getPlayers()) {
-			var affectedEntity = this.applySweepingToEntity(attacker, target, sweepingDamage, cooldownProgress,
-					boundingBox, player);
 
 			if (affectedEntity != null) {
 				affectedEntities.add(affectedEntity);

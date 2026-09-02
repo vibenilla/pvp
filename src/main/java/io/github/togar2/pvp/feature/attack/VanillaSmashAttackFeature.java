@@ -167,14 +167,8 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 
 		for (Entity nearbyEntity : attacker.getInstance().getNearbyEntities(attackerPosition, radius)) {
 			if (nearbyEntity == attacker) continue;
-			if (nearbyEntity instanceof Player) continue;
 
 			this.applyWindBurstKnockback(attackerPosition, power, nearbyEntity);
-		}
-		for (var player : attacker.getInstance().getPlayers()) {
-			if (player == attacker) continue;
-
-			this.applyWindBurstKnockback(attackerPosition, power, player);
 		}
 	}
 
@@ -219,12 +213,7 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 		int tps = ServerFlag.SERVER_TICKS_PER_SECOND;
 
 		for (Entity nearbyEntity : target.getInstance().getNearbyEntities(target.getPosition(), SMASH_ATTACK_KNOCKBACK_RADIUS)) {
-			if (nearbyEntity instanceof Player) continue;
-
 			this.applySmashKnockbackToEntity(attacker, target, heavySmash, tps, nearbyEntity);
-		}
-		for (var player : target.getInstance().getPlayers()) {
-			this.applySmashKnockbackToEntity(attacker, target, heavySmash, tps, player);
 		}
 	}
 

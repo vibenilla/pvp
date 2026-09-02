@@ -122,12 +122,7 @@ public final class WindCharge extends CustomEntityProjectile {
 		var ticksPerSecond = ServerFlag.SERVER_TICKS_PER_SECOND;
 
 		for (var entity : instance.getNearbyEntities(center, doubleRadius)) {
-			if (entity instanceof Player) continue;
-
 			this.applyExplosionKnockback(center, centerVector, doubleRadius, ticksPerSecond, entity);
-		}
-		for (var player : instance.getPlayers()) {
-			this.applyExplosionKnockback(center, centerVector, doubleRadius, ticksPerSecond, player);
 		}
 	}
 

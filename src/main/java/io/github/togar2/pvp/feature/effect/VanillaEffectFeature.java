@@ -477,16 +477,7 @@ public class VanillaEffectFeature implements EffectFeature, RegistrableFeature {
 				continue;
 			}
 
-			if (nearbyEntity instanceof Player) continue;
-
 			this.applyWindChargedKnockback(position, radius, nearbyEntity);
-		}
-		for (var player : instance.getPlayers()) {
-			if (player == entity) {
-				continue;
-			}
-
-			this.applyWindChargedKnockback(position, radius, player);
 		}
 	}
 

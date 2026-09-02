@@ -12,7 +12,6 @@ import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.LivingEntity;
-import net.minestom.server.entity.Player;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.damage.DamageType;
 import net.minestom.server.entity.metadata.projectile.FireworkRocketMeta;
@@ -191,8 +190,6 @@ public final class FireworkRocket extends CustomEntityProjectile {
         var source = center.sub(0.0, radius, 0.0);
 
         for (var entity : instance.getEntities()) {
-            if (entity instanceof Player) continue;
-
             if (!(entity instanceof LivingEntity livingEntity)) {
                 continue;
             }
@@ -207,19 +204,6 @@ public final class FireworkRocket extends CustomEntityProjectile {
 
             damage.setAmount(damageAmount * (float) Math.sqrt((radius - this.getDistance(entity)) / radius));
             livingEntity.damage(damage);
-        }
-        for (var player : instance.getPlayers()) {
-
-            if (!damageBox.intersectEntity(source, player) || this.getDistance(player) > radius) {
-                continue;
-            }
-
-            if (!this.canDamage(center, player)) {
-                continue;
-            }
-
-            damage.setAmount(damageAmount * (float) Math.sqrt((radius - this.getDistance(player)) / radius));
-            player.damage(damage);
         }
     }
 
