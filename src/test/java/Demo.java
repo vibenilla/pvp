@@ -9,11 +9,13 @@ import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.Player;
 import net.minestom.server.event.player.AsyncPlayerConfigurationEvent;
 import net.minestom.server.event.player.PlayerSpawnEvent;
+import net.minestom.server.instance.LightingChunk;
 import net.minestom.server.instance.block.Block;
 
 void main() {
     var server = MinecraftServer.init();
     var instance = MinecraftServer.getInstanceManager().createInstanceContainer();
+    instance.setChunkSupplier(LightingChunk::new);
     instance.setGenerator(unit -> unit.modifier().fillHeight(-64, 0, Block.STONE));
     instance.setExplosionSupplier(CombatFeatures.modernVanilla().get(FeatureType.EXPLOSION).getExplosionSupplier());
 
