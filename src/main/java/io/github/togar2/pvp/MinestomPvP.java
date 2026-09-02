@@ -6,15 +6,12 @@ import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.player.CombatPlayerImpl;
 import io.github.togar2.pvp.potion.effect.CombatPotionEffects;
 import io.github.togar2.pvp.potion.item.CombatPotionTypes;
-import io.github.togar2.pvp.utils.AccurateLatencyListener;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
 import net.minestom.server.entity.attribute.Attribute;
 import net.minestom.server.entity.attribute.AttributeInstance;
 import net.minestom.server.event.EventNode;
-import net.minestom.server.event.player.PlayerPacketOutEvent;
 import net.minestom.server.event.trait.EntityInstanceEvent;
-import net.minestom.server.network.packet.client.common.ClientKeepAlivePacket;
 
 /**
  * The main class of MinestomPvP, which contains the {@link MinestomPvP#init()} method.
@@ -57,23 +54,22 @@ public class MinestomPvP {
 	}
 
 	/**
-	 * Initializes the PvP library. This has a few side effects, for more details see {@link #init(boolean, boolean)}.
+	 * Initializes the PvP library. This has a few side effects, for more details see {@link #init(boolean)}.
 	 */
 	public static void init() {
-		init(true, true);
+		init(true);
 	}
 
 	/**
 	 * Initializes the PvP library.
-	 * This method will always initialize the registries and register some global event handlers.
-	 * Depending on the value of the parameters, it might also register:<br>
-	 * - a custom player implementation<br>
-	 * - a custom packet listener for {@link ClientKeepAlivePacket}<br>
+	 * This method always initializes the registries and registers some global event handlers.
+	 * Depending on the value of the parameter, it also registers a custom player implementation.
+	 * <p>
+	 * Player latency comes from Minestom's own keep alive handling, which measures the round trip in nanoseconds.
 	 *
 	 * @param player When set to true, the custom player implementation will be registered
-	 * @param keepAlive When set to true, the custom packet listener will be registered
 	 */
-	public static void init(boolean player, boolean keepAlive) {
+	public static void init(boolean player) {
 		CombatEnchantments.registerAll();
 		CombatPotionEffects.registerAll();
 		CombatPotionTypes.registerAll();
@@ -83,10 +79,10 @@ public class MinestomPvP {
 		if (player) {
 			MinecraftServer.getConnectionManager().setPlayerProvider(CombatPlayerImpl::new);
 		}
+	}
 
-		if (keepAlive) {
-			MinecraftServer.getPacketListenerManager().setPlayListener(ClientKeepAlivePacket.class, AccurateLatencyListener::listener);
-			MinecraftServer.getGlobalEventHandler().addListener(PlayerPacketOutEvent.class, AccurateLatencyListener::onSend);
-		}
+	@Deprecated(forRemoval = true)
+	public static void init(boolean player, boolean keepAlive) {
+		init(player);
 	}
 }
