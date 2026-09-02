@@ -1,6 +1,7 @@
 package io.github.togar2.pvp.entity.projectile;
 
 import io.github.togar2.pvp.feature.explosion.VanillaExplosionSupplier;
+import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
@@ -12,6 +13,7 @@ import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
 import net.minestom.server.entity.LivingEntity;
+import net.minestom.server.entity.Player;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.damage.DamageType;
 import net.minestom.server.entity.metadata.projectile.FireworkRocketMeta;
@@ -126,17 +128,24 @@ public final class FireworkRocket extends CustomEntityProjectile {
 
         if (this.attachedToEntity.isFlyingWithElytra()) {
             var look = this.attachedToEntity.getPosition().direction();
-            var velocity = this.attachedToEntity.getVelocity();
-            var ticksPerSecond = (double) ServerFlag.SERVER_TICKS_PER_SECOND;
-            var boostedVelocity = velocity
-                    .add(look.mul(0.1 * ticksPerSecond))
-                    .add(look.mul(1.5 * ticksPerSecond).sub(velocity).mul(0.5));
 
-            this.attachedToEntity.setVelocity(boostedVelocity);
+            if (this.attachedToEntity instanceof CombatPlayer custom) {
+                custom.setVelocityNoUpdate(velocity -> this.boost(velocity, look));
+            } else if (!(this.attachedToEntity instanceof Player)) {
+                this.attachedToEntity.setVelocity(this.boost(this.attachedToEntity.getVelocity(), look));
+            }
         }
 
         this.refreshPosition(this.attachedToEntity.getPosition());
         this.setVelocity(this.attachedToEntity.getVelocity());
+    }
+
+    private Vec boost(Vec velocity, Vec look) {
+        var ticksPerSecond = (double) ServerFlag.SERVER_TICKS_PER_SECOND;
+
+        return velocity
+                .add(look.mul(0.1 * ticksPerSecond))
+                .add(look.mul(1.5 * ticksPerSecond).sub(velocity).mul(0.5));
     }
 
     @Override
