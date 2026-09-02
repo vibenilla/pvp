@@ -1,5 +1,6 @@
 package io.github.togar2.pvp.utils;
 
+import java.util.function.BiPredicate;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
@@ -58,5 +59,36 @@ public class BlockUtil {
 		}
 
 		return multiplier;
+	}
+
+	public static boolean hasCollision(Block.Getter blockGetter, Pos position, BoundingBox boundingBox) {
+		return anyBlockInBox(blockGetter, position, boundingBox, (block, blockPosition) ->
+				!block.air() && block.collisionShape().intersectBox(position.sub(blockPosition), boundingBox));
+	}
+
+	public static boolean containsLiquid(Block.Getter blockGetter, Pos position, BoundingBox boundingBox) {
+		return anyBlockInBox(blockGetter, position, boundingBox, (block, blockPosition) ->
+				block.liquid() || "true".equals(block.getProperty("waterlogged")));
+	}
+
+	private static boolean anyBlockInBox(Block.Getter blockGetter, Pos position, BoundingBox boundingBox,
+	                                     BiPredicate<Block, Vec> predicate) {
+		var startX = (int) Math.floor(position.x() + boundingBox.minX());
+		var startY = (int) Math.floor(position.y() + boundingBox.minY());
+		var startZ = (int) Math.floor(position.z() + boundingBox.minZ());
+		var endX = (int) Math.floor(position.x() + boundingBox.maxX());
+		var endY = (int) Math.floor(position.y() + boundingBox.maxY());
+		var endZ = (int) Math.floor(position.z() + boundingBox.maxZ());
+
+		for (var blockX = startX; blockX <= endX; blockX++) {
+			for (var blockY = startY; blockY <= endY; blockY++) {
+				for (var blockZ = startZ; blockZ <= endZ; blockZ++) {
+					var block = blockGetter.getBlock(blockX, blockY, blockZ);
+					if (predicate.test(block, new Vec(blockX, blockY, blockZ))) return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }

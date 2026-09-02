@@ -1,8 +1,11 @@
 package io.github.togar2.pvp.feature.food;
 
+import io.github.togar2.pvp.utils.BlockUtil;
+import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.instance.Instance;
@@ -16,29 +19,33 @@ public class ChorusFruitUtil {
 	private static boolean randomTeleport(Entity entity, Pos to) {
 		Instance instance = entity.getInstance();
 		assert instance != null;
+		if (!instance.isChunkLoaded(to)) return false;
 
-		boolean success = false;
-		int lowestY = to.blockY();
-		if (lowestY == 0) lowestY++;
-		while (lowestY > MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType()).minY()) {
-			Block block = instance.getBlock(to.blockX(), lowestY - 1, to.blockZ());
-			if (!block.air() && !block.liquid()) {
-				Block above = instance.getBlock(to.blockX(), lowestY, to.blockZ());
-				Block above2 = instance.getBlock(to.blockX(), lowestY + 1, to.blockZ());
-				if (above.air() && above2.air()) {
-					success = true;
-					break;
-				} else {
-					lowestY--;
-				}
+		var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
+		int minY = MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType()).minY();
+
+		double y = to.y();
+		int blockY = to.blockY();
+		boolean landed = false;
+		while (!landed && blockY > minY) {
+			if (blockGetter.getBlock(to.blockX(), blockY - 1, to.blockZ()).blocksMotion()) {
+				landed = true;
 			} else {
-				lowestY--;
+				y--;
+				blockY--;
 			}
 		}
 
-		if (!success) return false;
+		if (!landed) return false;
 
-		entity.teleport(to.withY(lowestY));
+		Pos target = to.withY(y);
+		BoundingBox boundingBox = entity.getBoundingBox();
+		if (BlockUtil.hasCollision(blockGetter, target, boundingBox)
+				|| BlockUtil.containsLiquid(blockGetter, target, boundingBox)) {
+			return false;
+		}
+
+		entity.teleport(target);
 		entity.triggerStatus((byte) 46);
 
 		return true;
@@ -72,17 +79,10 @@ public class ChorusFruitUtil {
 			}
 
 			if (randomTeleport(entity, new Pos(x, y, z, yaw, pitch))) {
-				ViewUtil.packetGroup(entity).playSound(Sound.sound(
+				ViewUtil.viewersAndSelf(entity).playSound(Sound.sound(
 						SoundEvent.ITEM_CHORUS_FRUIT_TELEPORT, Sound.Source.PLAYER,
 						1.0f, 1.0f
-				), prevPosition);
-
-				if (!entity.isSilent()) {
-					entity.getViewersAsAudience().playSound(Sound.sound(
-							SoundEvent.ITEM_CHORUS_FRUIT_TELEPORT, Sound.Source.PLAYER,
-							1.0f, 1.0f
-					), entity);
-				}
+				), entity);
 
 				break;
 			}
