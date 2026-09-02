@@ -6,6 +6,8 @@ import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.enchantment.EnchantmentFeature;
 import io.github.togar2.pvp.feature.knockback.KnockbackFeature;
+import net.kyori.adventure.key.Key;
+import net.minestom.server.MinecraftServer;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.entity.Entity;
@@ -59,16 +61,13 @@ public class VanillaSweepingFeature implements SweepingFeature {
 		var maxMovement = attacker.getAttributeValue(Attribute.MOVEMENT_SPEED) * 2.5;
 		if (horizontalMovementSquared >= maxMovement * maxMovement) return false;
 
-		Tool tool = Tool.fromMaterial(attacker.getItemInMainHand().material());
-		return tool != null && tool.isSword();
+		var swords = MinecraftServer.process().material().getTag(Key.key("minecraft:swords"));
+		return swords != null && swords.contains(attacker.getItemInMainHand().material());
 	}
 
 	@Override
 	public float getSweepingDamage(LivingEntity attacker, float damage) {
-		float sweepingMultiplier = 0;
-		int sweepingLevel = this.enchantmentFeature.getSweeping(attacker);
-		if (sweepingLevel > 0) sweepingMultiplier = 1.0f - (1.0f / (float) (sweepingLevel + 1));
-		return 1.0f + sweepingMultiplier * damage;
+		return 1.0f + (float) attacker.getAttributeValue(Attribute.SWEEPING_DAMAGE_RATIO) * damage;
 	}
 
 	@Override
