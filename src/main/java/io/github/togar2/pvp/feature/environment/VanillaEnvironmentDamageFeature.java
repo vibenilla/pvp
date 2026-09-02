@@ -11,10 +11,9 @@ import io.github.togar2.pvp.feature.provider.DifficultyProvider;
 import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.FluidUtil;
 import io.github.togar2.pvp.utils.PotionFlags;
+import io.github.togar2.pvp.utils.RegistryTags;
 import io.github.togar2.pvp.utils.ViewUtil;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
-import net.minestom.server.MinecraftServer;
 import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.CoordConversion;
@@ -263,9 +262,7 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 		var key = block.key().value();
 		if (key.endsWith("glass") || key.endsWith("copper_grate")) return false;
 
-		var leaves = MinecraftServer.process().blocks().getTag(Key.key("minecraft:leaves"));
-
-		return leaves == null || !leaves.contains(block.asKey());
+		return !RegistryTags.contains(RegistryTags.LEAVES, block);
 	}
 
 	private void handleCrammingDamage(LivingEntity entity) {
@@ -595,27 +592,20 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 	}
 
 	private boolean canFreeze(LivingEntity entity) {
-		var freezeImmune = MinecraftServer.process().material().getTag(Key.key("minecraft:freeze_immune_wearables"));
 		if (entity instanceof Player player && player.getGameMode() == GameMode.SPECTATOR) return false;
 		if (this.isFreezeImmuneEntityType(entity)) return false;
 
 		for (var slot : EquipmentSlot.armors()) {
 			var material = entity.getEquipment(slot).material();
 
-			if (freezeImmune != null && freezeImmune.contains(material)) return false;
+			if (RegistryTags.contains(RegistryTags.FREEZE_IMMUNE_WEARABLES, material)) return false;
 		}
 
 		return true;
 	}
 
 	private boolean isFreezeImmuneEntityType(LivingEntity entity) {
-		var entityTypeTag = MinecraftServer.process().entityType().getTag(Key.key("minecraft:freeze_immune_entity_types"));
-
-		if (entityTypeTag == null) return false;
-
-		var key = entity.getEntityType().asKey();
-
-		return key != null && entityTypeTag.contains(key);
+		return RegistryTags.contains(RegistryTags.FREEZE_IMMUNE_ENTITY_TYPES, entity.getEntityType());
 	}
 
 	private void extinguish(LivingEntity entity) {
@@ -804,13 +794,7 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 	}
 
 	private boolean canBreatheUnderwater(LivingEntity entity) {
-		var entityTypeTag = MinecraftServer.process().entityType().getTag(Key.key("minecraft:can_breathe_under_water"));
-
-		if (entityTypeTag == null) return false;
-
-		var key = entity.getEntityType().asKey();
-
-		return key != null && entityTypeTag.contains(key);
+		return RegistryTags.contains(RegistryTags.CAN_BREATHE_UNDER_WATER, entity.getEntityType());
 	}
 
 	private boolean isFireImmune(LivingEntity entity) {

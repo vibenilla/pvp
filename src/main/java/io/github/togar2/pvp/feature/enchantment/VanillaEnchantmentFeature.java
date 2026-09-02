@@ -6,7 +6,8 @@ import io.github.togar2.pvp.feature.FeatureType;
 import io.github.togar2.pvp.feature.RegistrableFeature;
 import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
-import net.kyori.adventure.key.Key;
+import io.github.togar2.pvp.utils.RegistryTags;
+import java.util.List;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.ServerFlag;
 import net.minestom.server.component.DataComponent;
@@ -318,18 +319,15 @@ public class VanillaEnchantmentFeature implements EnchantmentFeature, Registrabl
 	}
 
 	private static boolean isArmorItem(Material material) {
-		var armorTag = MinecraftServer.process().material().getTag(Key.key("minecraft:enchantable/armor"));
-
-		return armorTag != null && armorTag.contains(material.asKey());
+		return RegistryTags.contains(RegistryTags.ENCHANTABLE_ARMOR, material);
 	}
 
 	@Override
 	public void onUserDamaged(LivingEntity user, LivingEntity attacker) {
-		forEachEnchantment(Arrays.asList(
-				user.getBoots(), user.getLeggings(),
-				user.getChestplate(), user.getHelmet(),
-				user.getItemInMainHand(), user.getItemInOffHand()
-		), (enchantment, level) -> enchantment.onUserDamaged(user, attacker, level, this, this.configuration));
+		for (var slot : EquipmentSlot.values()) {
+			forEachEnchantment(List.of(user.getEquipment(slot)), (enchantment, level) ->
+					enchantment.onUserDamaged(user, attacker, level, slot, this, this.configuration));
+		}
 	}
 
 	@Override

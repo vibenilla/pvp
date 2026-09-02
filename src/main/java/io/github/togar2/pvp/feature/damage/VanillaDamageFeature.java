@@ -18,6 +18,7 @@ import io.github.togar2.pvp.feature.totem.TotemFeature;
 import io.github.togar2.pvp.feature.tracking.TrackingFeature;
 import io.github.togar2.pvp.utils.CombatVersion;
 import io.github.togar2.pvp.utils.EntityUtil;
+import io.github.togar2.pvp.utils.RegistryTags;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.MinecraftServer;
@@ -40,7 +41,6 @@ import net.minestom.server.tag.Tag;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -150,10 +150,7 @@ public class VanillaDamageFeature implements DamageFeature, RegistrableFeature {
 		}
 
 		float amount = damage.getAmount();
-		var key = entity.getEntityType().asKey();
-		assert key != null;
-		if (typeInfo.freeze() && Objects.requireNonNull(MinecraftServer.process().entityType().getTag(Key.key("minecraft:freeze_hurts_extra_types")))
-				.contains(key)) {
+		if (typeInfo.freeze() && RegistryTags.contains(RegistryTags.FREEZE_HURTS_EXTRA_TYPES, entity.getEntityType())) {
 			amount *= 5.0F;
 		}
 
@@ -218,10 +215,7 @@ public class VanillaDamageFeature implements DamageFeature, RegistrableFeature {
 		if (hurtSoundAndAnimation) {
 			entity.setTag(NEW_DAMAGE_TIME, entity.getAliveTicks() + finalDamageEvent.getInvulnerabilityTicks());
 
-			if (fullyBlocked) {
-				// Shield status
-				entity.triggerStatus((byte) 29);
-			} else if (finalDamageEvent.shouldAnimate()) {
+			if (!fullyBlocked && finalDamageEvent.shouldAnimate()) {
 				// Send damage animation
 				entity.sendPacketToViewersAndSelf(new DamageEventPacket(
 						entity.getEntityId(),

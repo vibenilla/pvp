@@ -1,24 +1,21 @@
 package io.github.togar2.pvp.enchantment;
 
-import net.kyori.adventure.key.Key;
-import net.minestom.server.MinecraftServer;
+import io.github.togar2.pvp.utils.RegistryTags;
 import net.minestom.server.entity.Entity;
 import net.minestom.server.entity.EntityType;
+import net.minestom.server.registry.RegistryTag;
 import org.jetbrains.annotations.Nullable;
 
 public enum EntityGroup {
-	UNDEAD("minecraft:sensitive_to_smite"),
-	ARTHROPOD("minecraft:sensitive_to_bane_of_arthropods"),
-	ILLAGER("minecraft:illager"),
-	AQUATIC("minecraft:sensitive_to_impaling");
+	UNDEAD(RegistryTags.SENSITIVE_TO_SMITE),
+	ARTHROPOD(RegistryTags.SENSITIVE_TO_BANE_OF_ARTHROPODS),
+	ILLAGER(RegistryTags.ILLAGER),
+	AQUATIC(RegistryTags.SENSITIVE_TO_IMPALING);
 
-	private static final Key IGNORES_POISON_AND_REGEN = Key.key("minecraft:ignores_poison_and_regen");
-	private static final Key INVERTED_HEALING_AND_HARM = Key.key("minecraft:inverted_healing_and_harm");
+	private final @Nullable RegistryTag<EntityType> tag;
 
-	private final Key tagKey;
-
-	EntityGroup(String tagKey) {
-		this.tagKey = Key.key(tagKey);
+	EntityGroup(@Nullable RegistryTag<EntityType> tag) {
+		this.tag = tag;
 	}
 
 	public boolean contains(@Nullable Entity entity) {
@@ -26,20 +23,14 @@ public enum EntityGroup {
 	}
 
 	public boolean contains(EntityType entityType) {
-		return isInTag(entityType, this.tagKey);
+		return RegistryTags.contains(this.tag, entityType);
 	}
 
 	public static boolean ignoresPoisonAndRegen(Entity entity) {
-		return isInTag(entity.getEntityType(), IGNORES_POISON_AND_REGEN);
+		return RegistryTags.contains(RegistryTags.IGNORES_POISON_AND_REGEN, entity.getEntityType());
 	}
 
 	public static boolean hasInvertedHealingAndHarm(Entity entity) {
-		return isInTag(entity.getEntityType(), INVERTED_HEALING_AND_HARM);
-	}
-
-	private static boolean isInTag(EntityType entityType, Key tagKey) {
-		var tag = MinecraftServer.process().entityType().getTag(tagKey);
-
-		return tag != null && tag.contains(entityType);
+		return RegistryTags.contains(RegistryTags.INVERTED_HEALING_AND_HARM, entity.getEntityType());
 	}
 }

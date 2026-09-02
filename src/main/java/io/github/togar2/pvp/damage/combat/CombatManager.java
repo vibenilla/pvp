@@ -5,7 +5,7 @@ import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.EntityUtil;
 import io.github.togar2.pvp.utils.FluidUtil;
-import net.kyori.adventure.key.Key;
+import io.github.togar2.pvp.utils.RegistryTags;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -83,9 +83,7 @@ public class CombatManager {
 	}
 
 	private boolean isTrapdoor(Block block) {
-		var trapdoors = MinecraftServer.process().blocks().getTag(Key.key("minecraft:trapdoors"));
-
-		return trapdoors != null && trapdoors.contains(block.asKey());
+		return RegistryTags.contains(RegistryTags.TRAPDOORS, block);
 	}
 
 	public void recordDamage(int attackerId, Damage damage,

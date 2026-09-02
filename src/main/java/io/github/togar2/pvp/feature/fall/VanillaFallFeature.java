@@ -10,9 +10,8 @@ import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.BlockUtil;
 import io.github.togar2.pvp.utils.ChunkBlockGetter;
 import io.github.togar2.pvp.utils.FluidUtil;
-import net.kyori.adventure.key.Key;
+import io.github.togar2.pvp.utils.RegistryTags;
 import net.kyori.adventure.sound.Sound;
-import net.minestom.server.MinecraftServer;
 import net.minestom.server.ServerFlag;
 import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Point;
@@ -36,7 +35,6 @@ import net.minestom.server.item.ItemStack;
 import net.minestom.server.network.packet.server.play.ParticlePacket;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.potion.PotionEffect;
-import net.minestom.server.registry.Registries;
 import net.minestom.server.registry.RegistryKey;
 import net.minestom.server.sound.SoundEvent;
 import net.minestom.server.tag.Tag;
@@ -465,13 +463,7 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 	}
 
 	private boolean isFallDamageImmune(LivingEntity entity) {
-		var entityTypeTag = MinecraftServer.process().entityType().getTag(Key.key("minecraft:fall_damage_immune"));
-
-		if (entityTypeTag == null) return false;
-
-		var key = entity.getEntityType().asKey();
-
-		return key != null && entityTypeTag.contains(key);
+		return RegistryTags.contains(RegistryTags.FALL_DAMAGE_IMMUNE, entity.getEntityType());
 	}
 
 	@Override
@@ -569,21 +561,9 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 		Point offsetDown = offset.add(0, -1, 0);
 		Block block = instance.getBlock(offsetDown);
 
-		Registries registries = MinecraftServer.process();
-		var fences = registries.blocks().getTag(Key.key("minecraft:fences"));
-		var walls = registries.blocks().getTag(Key.key("minecraft:walls"));
-		var fenceGates = registries.blocks().getTag(Key.key("minecraft:fence_gates"));
-
-		var key = block.asKey();
-
-		assert fences != null;
-		assert walls != null;
-		assert fenceGates != null;
-		assert key != null;
-
-		if (fences.contains(key)
-				|| walls.contains(key)
-				|| fenceGates.contains(key)) {
+		if (RegistryTags.contains(RegistryTags.FENCES, block)
+				|| RegistryTags.contains(RegistryTags.WALLS, block)
+				|| RegistryTags.contains(RegistryTags.FENCE_GATES, block)) {
 			return offsetDown;
 		}
 
@@ -646,13 +626,7 @@ public class VanillaFallFeature implements FallFeature, RegistrableFeature {
 	}
 
 	private boolean isFallDamageResetting(Block block) {
-		var tag = MinecraftServer.process().blocks().getTag(Key.key("minecraft:fall_damage_resetting"));
-
-		if (tag == null) return false;
-
-		var key = block.asKey();
-
-		return key != null && tag.contains(key);
+		return RegistryTags.contains(RegistryTags.FALL_DAMAGE_RESETTING, block);
 	}
 
 	private boolean isWaterFluidBlock(Block block) {
