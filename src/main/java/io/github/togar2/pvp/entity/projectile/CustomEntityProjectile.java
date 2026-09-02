@@ -283,7 +283,7 @@ public class CustomEntityProjectile extends Entity {
 			Chunk finalChunk = this.instance.getChunkAt(physicsResult.newPosition());
 			if (finalChunk == null || !finalChunk.isLoaded()) return;
 
-			if (physicsResult.hasCollision() && !this.isStuck()) {
+			if (physicsResult.hasCollision() && !this.isStuck() && this.sticksToBlocks()) {
 				double signumX = physicsResult.collisionX() ? Math.signum(this.velocity.x()) : 0;
 				double signumY = physicsResult.collisionY() ? Math.signum(this.velocity.y()) : 0;
 				double signumZ = physicsResult.collisionZ() ? Math.signum(this.velocity.z()) : 0;
@@ -408,6 +408,10 @@ public class CustomEntityProjectile extends Entity {
 
 	protected int getUpdateInterval() {
 		return 20;
+	}
+
+	protected boolean sticksToBlocks() {
+		return true;
 	}
 
 	protected boolean shouldUpdateVelocityBeforeMovement() {

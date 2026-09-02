@@ -1,6 +1,9 @@
 package io.github.togar2.pvp.entity.projectile;
 
 import io.github.togar2.pvp.feature.projectile.VanillaFishingRodFeature;
+import io.github.togar2.pvp.utils.ChunkBlockGetter;
+import io.github.togar2.pvp.utils.FluidUtil;
+import java.util.concurrent.ThreadLocalRandom;
 import net.minestom.server.ServerFlag;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
@@ -8,6 +11,8 @@ import net.minestom.server.entity.*;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.damage.DamageType;
 import net.minestom.server.entity.metadata.other.FishingHookMeta;
+import net.minestom.server.instance.Instance;
+import net.minestom.server.instance.block.Block;
 import net.minestom.server.item.Material;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,49 +39,96 @@ public class FishingBobber extends CustomEntityProjectile {
 
 	@Override
 	public void tick(long time) {
-        this.prevPos = this.getPosition();
-        this.velocity = this.velocity.add(0, -this.customGravity * ServerFlag.SERVER_TICKS_PER_SECOND, 0);
-		super.tick(time);
-	}
-
-	@Override
-	public void update(long time) {
+		this.prevPos = this.getPosition();
 		if (!(this.getShooter() instanceof Player shooter)) {
-            this.remove();
+			this.remove();
 			return;
 		}
 		if (this.shouldStopFishing(shooter)) return;
 
+		this.tickState();
+		if (this.isRemoved()) return;
+
+		super.tick(time);
+		if (this.isRemoved()) return;
+
+		var physicsResult = this.getPreviousPhysicsResult();
+		if (this.state == State.IN_AIR && physicsResult != null
+				&& (this.onGround || physicsResult.collisionX() || physicsResult.collisionZ())) {
+			this.velocity = Vec.ZERO;
+		}
+	}
+
+	private void tickState() {
 		if (this.onGround) {
-            this.stuckTime++;
+			this.stuckTime++;
 			if (this.stuckTime >= 1200) {
-                this.remove();
+				this.remove();
 				return;
 			}
 		} else {
-            this.stuckTime = 0;
+			this.stuckTime = 0;
 		}
 
-		if (this.state == State.IN_AIR) {
-			if (this.hooked != null) {
-                this.velocity = Vec.ZERO;
-                this.setNoGravity(true);
-                this.state = State.HOOKED_ENTITY;
-			}
-		} else {
-			if (this.state == State.HOOKED_ENTITY) {
+		var instance = this.getInstance();
+		if (instance == null) return;
+
+		double liquidHeight = this.getWaterHeight(instance);
+		boolean inWater = liquidHeight > 0.0;
+		double tps = ServerFlag.SERVER_TICKS_PER_SECOND;
+		Vec movement = this.velocity.div(tps);
+
+		switch (this.state) {
+			case IN_AIR -> {
 				if (this.hooked != null) {
-					if (this.hooked.isRemoved() || this.hooked.getInstance() != this.getInstance()) {
-                        this.setHookedEntity(null);
-                        this.setNoGravity(false);
-                        this.state = State.IN_AIR;
+					movement = Vec.ZERO;
+					this.state = State.HOOKED_ENTITY;
+				} else if (inWater) {
+					movement = movement.mul(0.3, 0.2, 0.3);
+					this.state = State.BOBBING;
+				}
+			}
+			case HOOKED_ENTITY -> {
+				movement = Vec.ZERO;
+				if (this.hooked != null) {
+					if (this.hooked.isRemoved() || this.hooked.getInstance() != instance) {
+						this.setHookedEntity(null);
+						this.state = State.IN_AIR;
 					} else {
 						Pos hookedPos = this.hooked.getPosition();
-                        this.teleport(hookedPos.withY(hookedPos.y() + this.hooked.getBoundingBox().height() * 0.8));
+						this.teleport(hookedPos.withY(hookedPos.y() + this.hooked.getBoundingBox().height() * 0.8));
 					}
 				}
 			}
+			case BOBBING -> {
+				double force = this.position.y() + movement.y() - Math.floor(this.position.y()) - liquidHeight;
+				if (Math.abs(force) < 0.01) force += Math.signum(force) * 0.1;
+
+				movement = new Vec(movement.x() * 0.9,
+						movement.y() - force * ThreadLocalRandom.current().nextFloat() * 0.2, movement.z() * 0.9);
+			}
 		}
+
+		if (!inWater && !this.onGround && this.hooked == null) {
+			movement = movement.sub(0.0, this.customGravity, 0.0);
+		}
+
+		this.velocity = movement.mul(tps);
+	}
+
+	private double getWaterHeight(Instance instance) {
+		var blockGetter = new ChunkBlockGetter(instance, this.currentChunk, Block.AIR);
+		var block = blockGetter.getBlock(this.position);
+		if (!FluidUtil.isWater(block)) return 0.0;
+
+		var above = blockGetter.getBlock(this.position.add(0.0, 1.0, 0.0));
+
+		return FluidUtil.isWater(above) ? 1.0 : FluidUtil.getOwnHeight(block);
+	}
+
+	@Override
+	protected boolean sticksToBlocks() {
+		return false;
 	}
 
 	@Override
