@@ -220,11 +220,9 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 							VanillaExplosionSupplier.this.fallFeature.resetPostImpulseGraceTime(player);
 
 							if (this.shouldApplyPlayerKnockback(player)) {
+								this.playerKnockback.put(player, knockbackVec);
 								if (player instanceof CombatPlayer custom) {
-									this.playerKnockback.put(player, knockbackVec);
 									custom.setVelocityNoUpdate(velocity -> velocity.add(knockbackVec.mul(tps)));
-								} else {
-									player.setVelocity(player.getVelocity().add(knockbackVec.mul(tps)));
 								}
 							}
 						} else {
