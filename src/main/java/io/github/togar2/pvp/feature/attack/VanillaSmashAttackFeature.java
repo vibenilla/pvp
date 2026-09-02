@@ -38,6 +38,7 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 	);
 
 	private static final float SMASH_ATTACK_FALL_THRESHOLD = 1.5F;
+	private static final float WIND_BURST_FALL_THRESHOLD = 1.5F;
 	private static final float SMASH_ATTACK_HEAVY_THRESHOLD = 5.0F;
 	private static final double SMASH_ATTACK_KNOCKBACK_RADIUS = 3.5;
 	private static final double SMASH_ATTACK_KNOCKBACK_POWER = 0.7;
@@ -134,10 +135,12 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 		this.fallFeature.resetFallDistance(attacker);
 	}
 
-	private void applyWindBurst(LivingEntity attacker) {
+	@Override
+	public void applyWindBurst(LivingEntity attacker) {
 		int windBurstLevel = this.enchantmentFeature.getEquipmentLevel(attacker, Enchantment.WIND_BURST);
 		if (windBurstLevel <= 0) return;
 		if (attacker instanceof Player player && player.isFlying()) return;
+		if (this.fallFeature.getFallDistance(attacker) < WIND_BURST_FALL_THRESHOLD) return;
 
 		float power = this.getWindBurstPower(windBurstLevel);
 
@@ -181,7 +184,6 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 	}
 
 	private void applyWindBurstKnockback(Pos attackerPosition, float power, Entity nearbyEntity) {
-		if (!(nearbyEntity instanceof LivingEntity nearbyLiving)) return;
 		if (this.isMarkerArmorStand(nearbyEntity)) return;
 		if (nearbyEntity instanceof Player player && player.getGameMode() == GameMode.SPECTATOR) return;
 		if (nearbyEntity instanceof Player player && player.getGameMode() == GameMode.CREATIVE && player.isFlying()) return;
@@ -195,12 +197,13 @@ public class VanillaSmashAttackFeature implements SmashAttackFeature {
 
 		var exposure = VanillaExplosionSupplier.getExposure(attackerPosition, nearbyEntity);
 		var knockbackFactor = (1.0 - directionLength / radius) * exposure * power;
-		knockbackFactor *= 1.0 - nearbyLiving.getAttributeValue(Attribute.EXPLOSION_KNOCKBACK_RESISTANCE);
+		if (nearbyEntity instanceof LivingEntity nearbyLiving) {
+			knockbackFactor *= 1.0 - nearbyLiving.getAttributeValue(Attribute.EXPLOSION_KNOCKBACK_RESISTANCE);
+		}
 		var knockbackVector = direction.normalize().mul(knockbackFactor);
-		var nearbyVelocity = nearbyLiving.getVelocity();
-		nearbyLiving.setVelocity(nearbyVelocity.add(knockbackVector.mul(ServerFlag.SERVER_TICKS_PER_SECOND)));
+		nearbyEntity.setVelocity(nearbyEntity.getVelocity().add(knockbackVector.mul(ServerFlag.SERVER_TICKS_PER_SECOND)));
 
-		this.fallFeature.resetPostImpulseGraceTime(nearbyLiving);
+		if (nearbyEntity instanceof LivingEntity nearbyLiving) this.fallFeature.resetPostImpulseGraceTime(nearbyLiving);
 	}
 
 	private void applySmashKnockback(LivingEntity attacker, LivingEntity target, boolean heavySmash) {

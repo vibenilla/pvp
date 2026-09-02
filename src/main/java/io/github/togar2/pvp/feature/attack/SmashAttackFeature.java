@@ -20,6 +20,9 @@ public interface SmashAttackFeature extends CombatFeature {
 
 		@Override
 		public void applySmashAttack(LivingEntity attacker, LivingEntity target) {}
+
+		@Override
+		public void applyWindBurst(LivingEntity attacker) {}
 	};
 
 	/**
@@ -46,4 +49,6 @@ public interface SmashAttackFeature extends CombatFeature {
 	 * @param target the target entity
 	 */
 	void applySmashAttack(LivingEntity attacker, LivingEntity target);
+
+	void applyWindBurst(LivingEntity attacker);
 }

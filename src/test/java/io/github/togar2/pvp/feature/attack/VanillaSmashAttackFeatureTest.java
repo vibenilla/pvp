@@ -9,6 +9,7 @@ import net.minestom.server.component.DataComponents;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 import net.minestom.server.entity.EntityType;
+import net.minestom.server.entity.ItemEntity;
 import net.minestom.server.entity.GameMode;
 import net.minestom.server.entity.LivingEntity;
 import net.minestom.server.item.ItemStack;
@@ -104,5 +105,32 @@ public final class VanillaSmashAttackFeatureTest {
         assertEquals(41.0, attacker.getTag(VanillaFallFeature.CURRENT_IMPULSE_IMPACT_Y));
         assertEquals(0, attacker.getTag(VanillaFallFeature.CURRENT_IMPULSE_CONTEXT_RESET_GRACE_TIME));
         assertEquals(0.0, attacker.getTag(VanillaFallFeature.FALL_DISTANCE));
+    }
+
+    @Test
+    public void windBurstPushesNonLivingEntities(Env env) {
+        CombatEnchantments.registerAll();
+        var featureSet = CombatFeatures.empty()
+                .add(CombatFeatures.VANILLA_FALL)
+                .add(CombatFeatures.VANILLA_ENCHANTMENT)
+                .add(CombatFeatures.VANILLA_SMASH_ATTACK)
+                .build();
+        var smashAttackFeature = featureSet.get(FeatureType.SMASH_ATTACK);
+
+        var instance = env.createFlatInstance();
+        var attacker = env.createPlayer(instance, new Pos(8.0, 41.0, 8.0));
+        attacker.setGameMode(GameMode.SURVIVAL);
+        attacker.setItemInMainHand(ItemStack.of(Material.MACE).with(
+                DataComponents.ENCHANTMENTS, EnchantmentList.EMPTY.with(Enchantment.WIND_BURST, 1)
+        ));
+        attacker.setTag(VanillaFallFeature.FALL_DISTANCE, 3.0);
+
+        var item = new ItemEntity(ItemStack.of(Material.STONE));
+        item.setNoGravity(true);
+        item.setInstance(instance, new Pos(8.0, 40.0, 10.0)).join();
+
+        smashAttackFeature.applyWindBurst(attacker);
+
+        assertTrue(item.getVelocity().length() > 0.0);
     }
 }

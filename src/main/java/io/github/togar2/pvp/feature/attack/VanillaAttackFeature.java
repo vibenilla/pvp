@@ -224,7 +224,11 @@ public class VanillaAttackFeature implements AttackFeature, RegistrableFeature {
 			affectedEntities.add(living);
 		}
 
-		if (smashAttack) this.smashAttackFeature.applySmashAttack(attacker, living);
+		if (smashAttack) {
+			this.smashAttackFeature.applySmashAttack(attacker, living);
+		} else {
+			this.smashAttackFeature.applyWindBurst(attacker);
+		}
 
 		if (target instanceof CombatPlayer custom)
 			custom.sendImmediateVelocityUpdate();
