@@ -12,6 +12,7 @@ import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.feature.food.ExhaustionFeature;
 import io.github.togar2.pvp.feature.item.ItemDamageFeature;
 import io.github.togar2.pvp.feature.knockback.KnockbackFeature;
+import io.github.togar2.pvp.feature.state.PlayerStateFeature;
 import io.github.togar2.pvp.utils.FluidUtil;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
@@ -55,13 +56,10 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	public static final DefinedFeature<VanillaSpearFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.SPEAR, VanillaSpearFeature::new,
 			FeatureType.ITEM_DAMAGE, FeatureType.ENCHANTMENT, FeatureType.KNOCKBACK, FeatureType.EXHAUSTION, FeatureType.FALL,
-			FeatureType.ATTACK_COOLDOWN
+			FeatureType.ATTACK_COOLDOWN, FeatureType.PLAYER_STATE
 	);
 
 	public static final Tag<Long> SPEAR_USE_START = Tag.Long("spearUseStart");
-	private static final Tag<Double> LAST_POS_X = Tag.Double("spearLastPosX");
-	private static final Tag<Double> LAST_POS_Y = Tag.Double("spearLastPosY");
-	private static final Tag<Double> LAST_POS_Z = Tag.Double("spearLastPosZ");
 
 	private static final long SPEAR_USE_TIME = 72000L;
 	private static final int CONTACT_COOLDOWN_TICKS = 10;
@@ -142,6 +140,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	private ExhaustionFeature exhaustionFeature;
 	private FallFeature fallFeature;
 	private AttackCooldownFeature attackCooldownFeature;
+	private PlayerStateFeature playerStateFeature;
 
 	private final Map<UUID, Map<UUID, Long>> recentStabs = new HashMap<>();
 
@@ -157,6 +156,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 		this.exhaustionFeature = this.configuration.get(FeatureType.EXHAUSTION);
 		this.fallFeature = this.configuration.get(FeatureType.FALL);
 		this.attackCooldownFeature = this.configuration.get(FeatureType.ATTACK_COOLDOWN);
+		this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
 	}
 
 	@Override
@@ -188,22 +188,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 		node.addListener(PlayerTickEvent.class, event -> {
 			Player player = event.getPlayer();
 
-			var currentPos = player.getPosition();
-			Vec knownMotion;
-
-			if (player.hasTag(LAST_POS_X)) {
-				knownMotion = new Vec(
-						(currentPos.x() - player.getTag(LAST_POS_X)) * 20,
-						(currentPos.y() - player.getTag(LAST_POS_Y)) * 20,
-						(currentPos.z() - player.getTag(LAST_POS_Z)) * 20
-				);
-			} else {
-				knownMotion = Vec.ZERO;
-			}
-
-			player.setTag(LAST_POS_X, currentPos.x());
-			player.setTag(LAST_POS_Y, currentPos.y());
-			player.setTag(LAST_POS_Z, currentPos.z());
+			Vec knownMotion = this.playerStateFeature.getKnownMovement(player);
 
 			if (player.getItemUseHand() == null) return;
 
@@ -405,13 +390,10 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	}
 
 	private Vec getKnownMotion(Entity entity) {
+		if (entity instanceof Player) return this.playerStateFeature.getKnownMovement(entity);
+
 		var vehicle = entity.getVehicle();
-
-		if (vehicle != null) {
-			return vehicle.getVelocity();
-		}
-
-		return entity.getVelocity();
+		return vehicle != null ? vehicle.getVelocity() : entity.getVelocity();
 	}
 
 	private List<LivingEntity> findEntitiesAlongRay(Player attacker) {
