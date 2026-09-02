@@ -80,6 +80,9 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 				if (breakBlocks) {
 					var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
 
+					boolean anchorWater = additionalData != null && additionalData.getBoolean("anchorWater", false);
+					Vec originBlock = new Vec(this.getCenterX(), this.getCenterY(), this.getCenterZ()).apply(Vec.Operator.FLOOR);
+
 					for (int x = 0; x < 16; ++x) {
 						for (int y = 0; y < 16; ++y) {
 							for (int z = 0; z < 16; ++z) {
@@ -99,12 +102,13 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 									for (; strengthLeft > 0.0F; strengthLeft -= 0.225F) {
 										Vec position = new Vec(centerX, centerY, centerZ);
 										Block block = blockGetter.getBlock(position);
+										boolean anchorBlock = anchorWater && position.sameBlock(originBlock);
 
-										if (!block.air()) {
-											var explosionResistance = this.getExplosionResistance(block);
+										if (anchorBlock || !block.air()) {
+											var explosionResistance = anchorBlock ? LIQUID_EXPLOSION_RESISTANCE : this.getExplosionResistance(block);
 											strengthLeft -= (explosionResistance + 0.3F) * 0.3F;
 
-											if (strengthLeft > 0.0F) {
+											if (strengthLeft > 0.0F && !block.air()) {
 												Vec blockPosition = position.apply(Vec.Operator.FLOOR);
 												if (!blocks.contains(blockPosition)) {
 													blocks.add(blockPosition);
@@ -153,7 +157,7 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 
 				Damage damageObj;
 				if (anchor) {
-					damageObj = new Damage(DamageType.BAD_RESPAWN_POINT, null, null, null, 0);
+					damageObj = new Damage(DamageType.BAD_RESPAWN_POINT, null, null, centerPoint, 0);
 				} else {
 					Entity causingEntity = this.getCausingEntity(instance);
 					damageObj = new Damage(causingEntity == null || sourceEntity == null ? DamageType.EXPLOSION : DamageType.PLAYER_EXPLOSION,

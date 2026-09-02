@@ -11,6 +11,7 @@ import io.github.togar2.pvp.feature.config.DefinedFeature;
 import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.explosion.ExplosionFeature.IgnitionCause.ByPlayer;
 import io.github.togar2.pvp.feature.item.ItemDamageFeature;
+import io.github.togar2.pvp.utils.FluidUtil;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.sound.Sound;
@@ -214,6 +215,7 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
 							CompoundBinaryTag.builder()
 									.putBoolean("fire", true)
 									.putBoolean("anchor", true)
+									.putBoolean("anchorWater", this.isAnchorInWater(instance, event.getBlockPosition()))
 									.build()
 					);
 					if (event.getHand() == PlayerHand.MAIN) {
@@ -508,5 +510,27 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
 	private boolean shouldSuppressAnchorUse(Player player) {
 		return (player.isSneaking() || player.inputs().shift())
 				&& (!player.getItemInMainHand().isAir() || !player.getItemInOffHand().isAir());
+	}
+
+	private boolean isAnchorInWater(Instance instance, Point position) {
+		if (FluidUtil.isWater(instance.getBlock(position.add(0, 1, 0)))) return true;
+
+		return this.isWaterThatWouldFlow(instance, position.add(1, 0, 0))
+				|| this.isWaterThatWouldFlow(instance, position.add(-1, 0, 0))
+				|| this.isWaterThatWouldFlow(instance, position.add(0, 0, 1))
+				|| this.isWaterThatWouldFlow(instance, position.add(0, 0, -1));
+	}
+
+	private boolean isWaterThatWouldFlow(Instance instance, Point position) {
+		var block = instance.getBlock(position);
+		if (!FluidUtil.isWater(block)) return false;
+
+		var level = block.getProperty("level");
+		if (level == null || "0".equals(level)) return true;
+
+		var amount = "8".equals(level) ? 8 : 8 - Integer.parseInt(level);
+		if (amount < 2) return false;
+
+		return !FluidUtil.isWater(instance.getBlock(position.sub(0, 1, 0)));
 	}
 }
