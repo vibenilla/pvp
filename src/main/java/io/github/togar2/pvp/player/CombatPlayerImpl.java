@@ -167,6 +167,10 @@ public class CombatPlayerImpl extends Player implements CombatPlayer {
 		var stuck = stuckSpeedMultiplier.lengthSquared() > 1.0E-7;
 		var delta = stuck ? velocity.mul(stuckSpeedMultiplier) : velocity;
 
+		var gliding = this.isFlyingWithElytra() && fluidHeights.water() <= 0.0 && fluidHeights.lava() <= 0.0
+				&& !BlockUtil.isClimbable(blockGetter, position);
+		if (gliding) delta = this.updateFallFlyingMovement(delta, gravity);
+
 		var physicsResult = this.hasPhysics
 				? CollisionUtil.handlePhysics(blockGetter, this.boundingBox, position, delta, previousPhysicsResult, false)
 				: CollisionUtil.blocklessCollision(position, delta);
@@ -183,6 +187,8 @@ public class CombatPlayerImpl extends Player implements CombatPlayer {
 			newVelocity = this.travelInWater(movedVelocity, gravity, isFalling, onGround, climbable);
 		} else if (fluidHeights.lava() > 0.0) {
 			newVelocity = this.travelInLava(movedVelocity, gravity, isFalling, fluidHeights.lava());
+		} else if (gliding) {
+			newVelocity = movedVelocity;
 		} else {
 			newVelocity = PhysicsUtils.updateVelocity(newPosition, movedVelocity, blockGetter, aerodynamics,
 					!newPosition.samePoint(position), this.isFlying(), onGround, this.hasNoGravity());
@@ -199,6 +205,34 @@ public class CombatPlayerImpl extends Player implements CombatPlayer {
 				physicsResult.collisionShapePositions(), physicsResult.hasCollision(), physicsResult.collisionFraction());
 
 		return new MovementResult(newPhysicsResult, this.collectStuckSpeedMultiplier(blockGetter, newPosition));
+	}
+
+	private Vec updateFallFlyingMovement(Vec movement, double gravity) {
+		var look = this.position.direction();
+		var lean = Math.toRadians(this.position.pitch());
+		var lookHorizontal = Math.sqrt(look.x() * look.x() + look.z() * look.z());
+		var moveHorizontal = Math.sqrt(movement.x() * movement.x() + movement.z() * movement.z());
+		var lift = Math.cos(lean) * Math.cos(lean);
+
+		movement = movement.add(0.0, gravity * (-1.0 + lift * 0.75), 0.0);
+		if (movement.y() < 0.0 && lookHorizontal > 0.0) {
+			var convert = movement.y() * -0.1 * lift;
+			movement = movement.add(look.x() * convert / lookHorizontal, convert, look.z() * convert / lookHorizontal);
+		}
+
+		if (lean < 0.0 && lookHorizontal > 0.0) {
+			var convert = moveHorizontal * -Math.sin(lean) * 0.04;
+			movement = movement.add(-look.x() * convert / lookHorizontal, convert * 3.2, -look.z() * convert / lookHorizontal);
+		}
+
+		if (lookHorizontal > 0.0) {
+			movement = movement.add(
+					(look.x() / lookHorizontal * moveHorizontal - movement.x()) * 0.1, 0.0,
+					(look.z() / lookHorizontal * moveHorizontal - movement.z()) * 0.1
+			);
+		}
+
+		return movement.mul(0.99F, 0.98F, 0.99F);
 	}
 
 	private Vec travelInWater(Vec movement, double gravity, boolean isFalling, boolean onGround, boolean climbable) {
