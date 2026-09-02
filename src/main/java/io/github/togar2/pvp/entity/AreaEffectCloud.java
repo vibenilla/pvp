@@ -2,6 +2,7 @@ package io.github.togar2.pvp.entity;
 
 import io.github.togar2.pvp.feature.effect.EffectFeature;
 import net.minestom.server.collision.Aerodynamics;
+import net.minestom.server.collision.BoundingBox;
 import net.minestom.server.color.AlphaColor;
 import net.minestom.server.color.Color;
 import net.minestom.server.entity.Entity;
@@ -108,10 +109,12 @@ public final class AreaEffectCloud extends Entity {
         this.nearbyVictims.clear();
         var radius = this.meta.getRadius();
         var radiusSquared = radius * radius;
+        var cloudBox = new BoundingBox(radius * 2.0, 0.5, radius * 2.0);
+        var chunkRange = (int) Math.ceil((radius + 8.0) / 16.0);
 
-        instance.getEntityTracker().nearbyEntities(
+        instance.getEntityTracker().nearbyEntitiesByChunkRange(
                 this.position,
-                radius,
+                chunkRange,
                 EntityTracker.Target.ENTITIES,
                 entity -> {
 
@@ -123,21 +126,15 @@ public final class AreaEffectCloud extends Entity {
                         return;
                     }
 
+                    if (!cloudBox.intersectEntity(this.position, entity)) {
+                        return;
+                    }
+
                     if (this.getHorizontalDistanceSquared(entity) <= radiusSquared) {
                         this.nearbyVictims.add(livingEntity);
                     }
                 }
         );
-        for (var player : instance.getPlayers()) {
-
-            if (player.getGameMode() == GameMode.SPECTATOR) {
-                continue;
-            }
-
-            if (this.getHorizontalDistanceSquared(player) <= radiusSquared) {
-                this.nearbyVictims.add(player);
-            }
-        }
 
         for (var entity : this.nearbyVictims) {
 
