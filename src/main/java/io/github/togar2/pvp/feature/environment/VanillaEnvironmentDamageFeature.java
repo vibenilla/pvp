@@ -79,10 +79,6 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 	private static final Tag<Integer> DOLPHIN_MOISTNESS = Tag.Integer("environmentDolphinMoistness");
 	private static final Tag<Integer> FREEZE_TICKS = Tag.Integer("environmentFreezeTicks");
 
-	private static final Set<Material> FREEZE_IMMUNE_WEARABLES = Set.of(
-			Material.LEATHER_BOOTS, Material.LEATHER_LEGGINGS,
-			Material.LEATHER_CHESTPLATE, Material.LEATHER_HELMET
-	);
 	private static final Set<EntityType> WATER_ANIMAL_DROWN_TYPES = Set.of(
 			EntityType.COD, EntityType.GLOW_SQUID, EntityType.PUFFERFISH, EntityType.SALMON,
 			EntityType.SQUID, EntityType.TADPOLE, EntityType.TROPICAL_FISH
@@ -599,13 +595,14 @@ public final class VanillaEnvironmentDamageFeature implements EnvironmentDamageF
 	}
 
 	private boolean canFreeze(LivingEntity entity) {
+		var freezeImmune = MinecraftServer.process().material().getTag(Key.key("minecraft:freeze_immune_wearables"));
 		if (entity instanceof Player player && player.getGameMode() == GameMode.SPECTATOR) return false;
 		if (this.isFreezeImmuneEntityType(entity)) return false;
 
 		for (var slot : EquipmentSlot.armors()) {
 			var material = entity.getEquipment(slot).material();
 
-			if (FREEZE_IMMUNE_WEARABLES.contains(material)) return false;
+			if (freezeImmune != null && freezeImmune.contains(material)) return false;
 		}
 
 		return true;
