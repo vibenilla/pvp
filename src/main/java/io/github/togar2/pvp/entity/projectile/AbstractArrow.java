@@ -117,7 +117,7 @@ public abstract class AbstractArrow extends CustomEntityProjectile {
 			}
 		}
 
-		tickRemoval();
+		if (this.isStuck()) this.tickRemoval();
 	}
 
 	public void setFireTicksLeft(int fireTicksLeft) {
