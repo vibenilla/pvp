@@ -30,8 +30,7 @@ public class ThrownPotion extends CustomEntityProjectile implements ItemHoldingP
 		this.effectFeature = effectFeature;
 		this.lingering = lingering;
 
-		// Why does Minestom have the wrong value 0.03 in its registries?
-        this.setAerodynamics(this.getAerodynamics().withGravity(0.05));
+		this.setAerodynamics(this.getAerodynamics().withGravity(0.05));
 	}
 
 	@Override

@@ -29,8 +29,7 @@ public class FishingBobber extends CustomEntityProjectile {
         this.customGravity = legacy ? 0.04 : 0.03;
         this.setAerodynamics(this.getAerodynamics().withGravity(0));
 
-		// Minestom seems to like having wrong values in its registries
-        this.setAerodynamics(this.getAerodynamics().withHorizontalAirResistance(0.92).withVerticalAirResistance(0.92));
+		this.setAerodynamics(this.getAerodynamics().withHorizontalAirResistance(0.92).withVerticalAirResistance(0.92));
 	}
 
 	@Override
