@@ -71,8 +71,7 @@ public class VanillaFoodFeature implements FoodFeature, RegistrableFeature {
 			@Nullable Consumable consumableComponent = event.getItemStack().get(DataComponents.CONSUMABLE);
 
 			// If the players hunger is full and the food is not always edible, cancel
-			// For some reason vanilla doesn't say honey is always edible but just overrides the method to always consume it
-			boolean alwaysEat = foodComponent == null || foodComponent.canAlwaysEat() || event.getItemStack().material() == Material.HONEY_BOTTLE;
+			boolean alwaysEat = foodComponent == null || foodComponent.canAlwaysEat();
 			if (event.getPlayer().getGameMode() != GameMode.CREATIVE
 					&& !alwaysEat && event.getPlayer().getFood() == 20) {
 				event.setCancelled(true);
