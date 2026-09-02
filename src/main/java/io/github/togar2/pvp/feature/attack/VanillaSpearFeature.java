@@ -142,7 +142,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 	private AttackCooldownFeature attackCooldownFeature;
 	private PlayerStateFeature playerStateFeature;
 
-	private final Map<UUID, Map<UUID, Long>> recentStabs = new HashMap<>();
+	private static final Tag<Map<UUID, Long>> RECENT_STABS = Tag.Transient("spearRecentStabs");
 
 	public VanillaSpearFeature(FeatureConfiguration configuration) {
 		this.configuration = configuration;
@@ -214,7 +214,7 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 			if (tool == null || !tool.isSpear()) return;
 
 			player.removeTag(SPEAR_USE_START);
-            this.recentStabs.remove(player.getUuid());
+			player.removeTag(RECENT_STABS);
 		});
 	}
 
@@ -307,7 +307,12 @@ public class VanillaSpearFeature implements SpearFeature, RegistrableFeature {
 		boolean affected = false;
 
 		long currentTick = attacker.getAliveTicks();
-		Map<UUID, Long> playerStabs = this.recentStabs.computeIfAbsent(attacker.getUuid(), uuid -> new HashMap<>());
+		Map<UUID, Long> playerStabs = attacker.getTag(RECENT_STABS);
+		if (playerStabs == null) {
+			playerStabs = new HashMap<>();
+			attacker.setTag(RECENT_STABS, playerStabs);
+		}
+
 		playerStabs.entrySet().removeIf(entry -> currentTick - entry.getValue() > CONTACT_COOLDOWN_TICKS);
 
 		for (LivingEntity target : entities) {
