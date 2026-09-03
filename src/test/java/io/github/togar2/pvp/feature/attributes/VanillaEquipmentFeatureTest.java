@@ -17,6 +17,7 @@ import net.minestom.server.item.component.AttributeList;
 import net.minestom.server.item.component.EnchantmentList;
 import net.minestom.server.item.enchant.Enchantment;
 import net.minestom.server.network.packet.client.play.ClientClickWindowPacket;
+import net.minestom.server.network.packet.server.play.SoundEffectPacket;
 import net.minestom.server.utils.inventory.PlayerInventoryUtils;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
@@ -127,6 +128,27 @@ public final class VanillaEquipmentFeatureTest {
 
             player.setItemInMainHand(ItemStack.AIR);
             assertEquals(1.0, player.getAttributeValue(Attribute.ATTACK_DAMAGE), 1.0E-5);
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void armorDamageDoesNotPlayAnEquipSound(Env env) {
+        var node = this.addEquipmentFeature();
+
+        try {
+            var instance = env.createFlatInstance();
+            var connection = env.createConnection();
+            var player = connection.connect(instance, new Pos(0.0, 40.0, 0.0));
+            var helmet = ItemStack.of(Material.DIAMOND_HELMET);
+            player.setEquipment(EquipmentSlot.HELMET, helmet);
+            env.tick();
+
+            var sounds = connection.trackIncoming(SoundEffectPacket.class);
+            player.setEquipment(EquipmentSlot.HELMET, helmet.with(DataComponents.DAMAGE, 1));
+
+            assertTrue(sounds.collect().isEmpty());
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }

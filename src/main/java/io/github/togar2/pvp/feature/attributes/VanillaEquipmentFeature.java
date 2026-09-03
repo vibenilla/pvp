@@ -167,7 +167,7 @@ public class VanillaEquipmentFeature implements EquipmentFeature, RegistrableFea
     private void playEquipSound(LivingEntity entity, ItemStack oldStack, ItemStack newStack, EquipmentSlot slot) {
         if (entity.isSilent()) return;
         if (entity.getAliveTicks() <= 0) return;
-        if (newStack.isSimilar(oldStack)) return;
+        if (newStack.without(DataComponents.DAMAGE).isSimilar(oldStack.without(DataComponents.DAMAGE))) return;
 
         var equippable = newStack.get(DataComponents.EQUIPPABLE);
         if (equippable == null) return;
