@@ -12,6 +12,7 @@ import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.explosion.ExplosionFeature.IgnitionCause.ByPlayer;
 import io.github.togar2.pvp.feature.item.ItemDamageFeature;
 import io.github.togar2.pvp.utils.ViewUtil;
+import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.sound.Sound.Source;
@@ -28,6 +29,7 @@ import net.minestom.server.event.EventNode;
 import net.minestom.server.event.player.PlayerBlockInteractEvent;
 import net.minestom.server.event.player.PlayerUseItemOnBlockEvent;
 import net.minestom.server.event.trait.EntityInstanceEvent;
+import net.minestom.server.instance.Chunk;
 import net.minestom.server.instance.Instance;
 import net.minestom.server.instance.block.Block;
 import net.minestom.server.item.ItemStack;
@@ -47,39 +49,39 @@ import java.util.concurrent.ThreadLocalRandom;
  * Vanilla implementation of {@link ExplosiveFeature}
  */
 public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFeature {
-    private static final Set<String> WOOD_TYPES = Set.of(
-            "oak", "spruce", "birch", "jungle", "acacia", "cherry",
-            "dark_oak", "pale_oak", "mangrove", "bamboo"
-    );
-    private static final Set<String> LOG_WOOD_TYPES = Set.of(
-            "oak", "spruce", "birch", "jungle", "acacia", "cherry",
-            "dark_oak", "pale_oak", "mangrove"
-    );
-    private static final Set<String> COLORS = Set.of(
-            "white", "orange", "magenta", "light_blue", "yellow", "lime",
-            "pink", "gray", "light_gray", "cyan", "purple", "blue",
-            "brown", "green", "red", "black"
-    );
-    private static final Set<String> FLAMMABLE_BLOCKS = Set.of(
-            "mangrove_roots", "bookshelf", "tnt", "short_grass", "fern",
-            "dead_bush", "short_dry_grass", "tall_dry_grass", "sunflower",
-            "lilac", "rose_bush", "peony", "tall_grass", "large_fern",
-            "dandelion", "golden_dandelion", "poppy", "open_eyeblossom",
-            "closed_eyeblossom", "blue_orchid", "allium", "azure_bluet",
-            "red_tulip", "orange_tulip", "white_tulip", "pink_tulip",
-            "oxeye_daisy", "cornflower", "lily_of_the_valley", "torchflower",
-            "pitcher_plant", "wither_rose", "pink_petals", "wildflowers",
-            "leaf_litter", "cactus_flower", "vine", "coal_block", "hay_block",
-            "target", "pale_moss_block", "pale_moss_carpet", "pale_hanging_moss",
-            "dried_kelp_block", "bamboo", "bamboo_block", "stripped_bamboo_block",
-            "bamboo_mosaic", "bamboo_mosaic_slab", "bamboo_mosaic_stairs",
-            "scaffolding", "lectern", "composter", "sweet_berry_bush",
-            "beehive", "bee_nest", "azalea_leaves", "flowering_azalea_leaves",
-            "cave_vines", "cave_vines_plant", "spore_blossom", "azalea",
-            "flowering_azalea", "big_dripleaf", "big_dripleaf_stem",
-            "small_dripleaf", "hanging_roots", "glow_lichen", "firefly_bush",
-            "bush"
-    );
+	private static final Set<String> WOOD_TYPES = Set.of(
+			"oak", "spruce", "birch", "jungle", "acacia", "cherry",
+			"dark_oak", "pale_oak", "mangrove", "bamboo"
+	);
+	private static final Set<String> LOG_WOOD_TYPES = Set.of(
+			"oak", "spruce", "birch", "jungle", "acacia", "cherry",
+			"dark_oak", "pale_oak", "mangrove"
+	);
+	private static final Set<String> COLORS = Set.of(
+			"white", "orange", "magenta", "light_blue", "yellow", "lime",
+			"pink", "gray", "light_gray", "cyan", "purple", "blue",
+			"brown", "green", "red", "black"
+	);
+	private static final Set<String> FLAMMABLE_BLOCKS = Set.of(
+			"mangrove_roots", "bookshelf", "tnt", "short_grass", "fern",
+			"dead_bush", "short_dry_grass", "tall_dry_grass", "sunflower",
+			"lilac", "rose_bush", "peony", "tall_grass", "large_fern",
+			"dandelion", "golden_dandelion", "poppy", "open_eyeblossom",
+			"closed_eyeblossom", "blue_orchid", "allium", "azure_bluet",
+			"red_tulip", "orange_tulip", "white_tulip", "pink_tulip",
+			"oxeye_daisy", "cornflower", "lily_of_the_valley", "torchflower",
+			"pitcher_plant", "wither_rose", "pink_petals", "wildflowers",
+			"leaf_litter", "cactus_flower", "vine", "coal_block", "hay_block",
+			"target", "pale_moss_block", "pale_moss_carpet", "pale_hanging_moss",
+			"dried_kelp_block", "bamboo", "bamboo_block", "stripped_bamboo_block",
+			"bamboo_mosaic", "bamboo_mosaic_slab", "bamboo_mosaic_stairs",
+			"scaffolding", "lectern", "composter", "sweet_berry_bush",
+			"beehive", "bee_nest", "azalea_leaves", "flowering_azalea_leaves",
+			"cave_vines", "cave_vines_plant", "spore_blossom", "azalea",
+			"flowering_azalea", "big_dripleaf", "big_dripleaf_stem",
+			"small_dripleaf", "hanging_roots", "glow_lichen", "firefly_bush",
+			"bush"
+	);
 
 	public static final DefinedFeature<VanillaExplosiveFeature> DEFINED = new DefinedFeature<>(
 			FeatureType.EXPLOSIVE, VanillaExplosiveFeature::new,
@@ -148,8 +150,8 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
 
 			// Exit if offhand has glowstone but current hand is main, to prevent exploding when it should be charged instead
 			if (event.getHand() == PlayerHand.MAIN
-					&& player.getItemInMainHand().material() != Material.GLOWSTONE
-					&& player.getItemInOffHand().material() == Material.GLOWSTONE)
+				&& player.getItemInMainHand().material() != Material.GLOWSTONE
+				&& player.getItemInOffHand().material() == Material.GLOWSTONE)
 				return;
 
 			ItemStack stack = player.getItemInHand(event.getHand());
@@ -178,7 +180,7 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
 
 			if (charges == 0) return;
 
-            EnvironmentAttributeMap dimension = MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType()).attributes();
+			EnvironmentAttributeMap dimension = MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType()).attributes();
 			var respawnAnchorEntry = dimension.entries().get(EnvironmentAttribute.RESPAWN_ANCHOR_WORKS);
 
 			boolean worksInDimension = respawnAnchorEntry != null
@@ -186,19 +188,19 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
 					: EnvironmentAttribute.RESPAWN_ANCHOR_WORKS.defaultValue();
 
 			Biome biome = MinecraftServer.getBiomeRegistry().get(instance.getChunkAt(event.getBlockPosition())
-                .getBiome(event.getBlockPosition()));
+					.getBiome(event.getBlockPosition()));
 
 			boolean respawnAnchorWorks;
-			 if (biome.attributes().entries().containsKey(EnvironmentAttribute.RESPAWN_ANCHOR_WORKS)) {
-                 //noinspection unchecked
-				 respawnAnchorWorks = ((Modifier<Boolean, Boolean>) biome.attributes().entries()
-                     .get(EnvironmentAttribute.RESPAWN_ANCHOR_WORKS).modifier())
-                     .modify(worksInDimension, (Boolean) biome.attributes().entries()
-                         .get(EnvironmentAttribute.RESPAWN_ANCHOR_WORKS).argument());
+			if (biome.attributes().entries().containsKey(EnvironmentAttribute.RESPAWN_ANCHOR_WORKS)) {
+				//noinspection unchecked
+				respawnAnchorWorks = ((Modifier<Boolean, Boolean>) biome.attributes().entries()
+						.get(EnvironmentAttribute.RESPAWN_ANCHOR_WORKS).modifier())
+						.modify(worksInDimension, (Boolean) biome.attributes().entries()
+								.get(EnvironmentAttribute.RESPAWN_ANCHOR_WORKS).argument());
 
-			 } else {
-                 respawnAnchorWorks = worksInDimension;
-             }
+			} else {
+				respawnAnchorWorks = worksInDimension;
+			}
 
 			this.installExplosionSupplier(instance);
 
@@ -284,169 +286,172 @@ public class VanillaExplosiveFeature implements ExplosiveFeature, RegistrableFea
 		return block.key().value().endsWith("_bed");
 	}
 
-    private void handleIgnitionItem(PlayerUseItemOnBlockEvent event) {
-        var stack = event.getItemStack();
-        if (!this.isIgnitionItem(stack.material())) return;
+	private void handleIgnitionItem(PlayerUseItemOnBlockEvent event) {
+		var stack = event.getItemStack();
+		if (!this.isIgnitionItem(stack.material())) return;
 
-        var instance = event.getInstance();
-        var position = event.getPosition();
-        var player = event.getPlayer();
-        var block = instance.getBlock(position);
+		var instance = event.getInstance();
+		var position = event.getPosition();
+		var player = event.getPlayer();
+		var block = instance.getBlock(position);
 
-        if (block.compare(Block.TNT)) {
-            this.installExplosionSupplier(instance);
-            this.explosionFeature.primeExplosive(instance, position, new ByPlayer(player), 80);
-            instance.setBlock(position, Block.AIR);
-            this.useIgnitionItem(player, event.getHand(), stack);
-            return;
-        }
+		if (block.compare(Block.TNT)) {
+			this.installExplosionSupplier(instance);
+			this.explosionFeature.primeExplosive(instance, position, new ByPlayer(player), 80);
+			instance.setBlock(position, Block.AIR);
+			this.useIgnitionItem(player, event.getHand(), stack);
+			return;
+		}
 
-        if (this.lightBlock(instance, position, block, stack.material(), player)) {
-            this.useIgnitionItem(player, event.getHand(), stack);
-            return;
-        }
+		if (this.lightBlock(instance, position, block, stack.material(), player)) {
+			this.useIgnitionItem(player, event.getHand(), stack);
+			return;
+		}
 
-        var firePosition = position.relative(event.getBlockFace());
-        if (!this.canPlaceFireAt(instance, firePosition)) return;
+		var firePosition = position.relative(event.getBlockFace());
+		if (!this.canPlaceFireAt(instance, firePosition)) return;
 
-        this.playIgnitionSound(player, stack.material(), firePosition);
-        instance.setBlock(firePosition, this.createFireBlock(instance, firePosition));
-        this.useIgnitionItem(player, event.getHand(), stack);
-    }
+		this.playIgnitionSound(player, stack.material(), firePosition, instance);
+		instance.setBlock(firePosition, this.createFireBlock(instance, firePosition));
+		this.useIgnitionItem(player, event.getHand(), stack);
+	}
 
-    private boolean isIgnitionItem(Material material) {
-        return material == Material.FLINT_AND_STEEL || material == Material.FIRE_CHARGE;
-    }
+	private boolean isIgnitionItem(Material material) {
+		return material == Material.FLINT_AND_STEEL || material == Material.FIRE_CHARGE;
+	}
 
-    private boolean lightBlock(Instance instance, Point position, Block block, Material material, Player player) {
-        if (!this.canLight(block)) return false;
+	private boolean lightBlock(Instance instance, Point position, Block block, Material material, Player player) {
+		if (!this.canLight(block)) return false;
 
-        this.playIgnitionSound(player, material, position);
-        instance.setBlock(position, block.withProperty("lit", "true"));
-        return true;
-    }
+		this.playIgnitionSound(player, material, position, instance);
+		instance.setBlock(position, block.withProperty("lit", "true"));
+		return true;
+	}
 
-    private boolean canLight(Block block) {
-        var lit = block.getProperty("lit");
-        if (!"false".equals(lit)) return false;
+	private boolean canLight(Block block) {
+		var lit = block.getProperty("lit");
+		if (!"false".equals(lit)) return false;
 
-        var blockKey = block.key().value();
-        if (blockKey.endsWith("campfire")) {
-            return "false".equals(block.getProperty("waterlogged"));
-        }
+		var blockKey = block.key().value();
+		if (blockKey.endsWith("campfire")) {
+			return "false".equals(block.getProperty("waterlogged"));
+		}
 
-        if (this.isCandle(blockKey)) {
-            return "false".equals(block.getProperty("waterlogged"));
-        }
+		if (this.isCandle(blockKey)) {
+			return "false".equals(block.getProperty("waterlogged"));
+		}
 
-        return this.isCandleCake(blockKey);
-    }
+		return this.isCandleCake(blockKey);
+	}
 
-    private boolean isCandle(String blockKey) {
-        return "candle".equals(blockKey) || blockKey.endsWith("_candle") && !blockKey.endsWith("_candle_cake");
-    }
+	private boolean isCandle(String blockKey) {
+		return "candle".equals(blockKey) || blockKey.endsWith("_candle") && !blockKey.endsWith("_candle_cake");
+	}
 
-    private boolean isCandleCake(String blockKey) {
-        return "candle_cake".equals(blockKey) || blockKey.endsWith("_candle_cake");
-    }
+	private boolean isCandleCake(String blockKey) {
+		return "candle_cake".equals(blockKey) || blockKey.endsWith("_candle_cake");
+	}
 
-    private boolean canPlaceFireAt(Instance instance, Point position) {
-        if (!instance.getBlock(position).isAir()) return false;
+	private boolean canPlaceFireAt(Instance instance, Point position) {
+		if (!instance.getBlock(position).isAir()) return false;
 
-        var belowBlock = instance.getBlock(position.add(0, -1, 0));
-        if (this.isSoulFireBase(belowBlock)) return true;
+		var belowBlock = instance.getBlock(position.add(0, -1, 0));
+		if (this.isSoulFireBase(belowBlock)) return true;
 
-        return belowBlock.isSolid() || this.hasFlammableNeighbor(instance, position);
-    }
+		return belowBlock.isSolid() || this.hasFlammableNeighbor(instance, position);
+	}
 
-    private Block createFireBlock(Instance instance, Point position) {
-        var belowBlock = instance.getBlock(position.add(0, -1, 0));
-        if (this.isSoulFireBase(belowBlock)) return Block.SOUL_FIRE;
+	private Block createFireBlock(Instance instance, Point position) {
+		var belowBlock = instance.getBlock(position.add(0, -1, 0));
+		if (this.isSoulFireBase(belowBlock)) return Block.SOUL_FIRE;
 
-        var fire = Block.FIRE.withProperty("age", "0");
-        if (belowBlock.isSolid() || this.isFlammable(belowBlock)) return fire;
+		var fire = Block.FIRE.withProperty("age", "0");
+		if (belowBlock.isSolid() || this.isFlammable(belowBlock)) return fire;
 
-        return fire
-                .withProperty("north", String.valueOf(this.isFlammable(instance.getBlock(position.add(0, 0, -1)))))
-                .withProperty("east", String.valueOf(this.isFlammable(instance.getBlock(position.add(1, 0, 0)))))
-                .withProperty("south", String.valueOf(this.isFlammable(instance.getBlock(position.add(0, 0, 1)))))
-                .withProperty("west", String.valueOf(this.isFlammable(instance.getBlock(position.add(-1, 0, 0)))))
-                .withProperty("up", String.valueOf(this.isFlammable(instance.getBlock(position.add(0, 1, 0)))));
-    }
+		return fire
+				.withProperty("north", String.valueOf(this.isFlammable(instance.getBlock(position.add(0, 0, -1)))))
+				.withProperty("east", String.valueOf(this.isFlammable(instance.getBlock(position.add(1, 0, 0)))))
+				.withProperty("south", String.valueOf(this.isFlammable(instance.getBlock(position.add(0, 0, 1)))))
+				.withProperty("west", String.valueOf(this.isFlammable(instance.getBlock(position.add(-1, 0, 0)))))
+				.withProperty("up", String.valueOf(this.isFlammable(instance.getBlock(position.add(0, 1, 0)))));
+	}
 
-    private boolean hasFlammableNeighbor(Instance instance, Point position) {
-        return this.isFlammable(instance.getBlock(position.add(0, -1, 0)))
-                || this.isFlammable(instance.getBlock(position.add(0, 1, 0)))
-                || this.isFlammable(instance.getBlock(position.add(0, 0, -1)))
-                || this.isFlammable(instance.getBlock(position.add(0, 0, 1)))
-                || this.isFlammable(instance.getBlock(position.add(-1, 0, 0)))
-                || this.isFlammable(instance.getBlock(position.add(1, 0, 0)));
-    }
+	private boolean hasFlammableNeighbor(Instance instance, Point position) {
+		return this.isFlammable(instance.getBlock(position.add(0, -1, 0)))
+				|| this.isFlammable(instance.getBlock(position.add(0, 1, 0)))
+				|| this.isFlammable(instance.getBlock(position.add(0, 0, -1)))
+				|| this.isFlammable(instance.getBlock(position.add(0, 0, 1)))
+				|| this.isFlammable(instance.getBlock(position.add(-1, 0, 0)))
+				|| this.isFlammable(instance.getBlock(position.add(1, 0, 0)));
+	}
 
-    private boolean isSoulFireBase(Block block) {
-        return block.compare(Block.SOUL_SAND) || block.compare(Block.SOUL_SOIL);
-    }
+	private boolean isSoulFireBase(Block block) {
+		return block.compare(Block.SOUL_SAND) || block.compare(Block.SOUL_SOIL);
+	}
 
-    private boolean isFlammable(Block block) {
-        var blockKey = block.key().value();
-        if (FLAMMABLE_BLOCKS.contains(blockKey)) return true;
+	private boolean isFlammable(Block block) {
+		var blockKey = block.key().value();
+		if (FLAMMABLE_BLOCKS.contains(blockKey)) return true;
 
-        for (var woodType : WOOD_TYPES) {
+		for (var woodType : WOOD_TYPES) {
 
-            if (blockKey.equals(woodType + "_planks")
-                    || blockKey.equals(woodType + "_slab")
-                    || blockKey.equals(woodType + "_fence_gate")
-                    || blockKey.equals(woodType + "_fence")
-                    || blockKey.equals(woodType + "_stairs")
-                    || blockKey.equals(woodType + "_shelf")) {
-                return true;
-            }
-        }
+			if (blockKey.equals(woodType + "_planks")
+					|| blockKey.equals(woodType + "_slab")
+					|| blockKey.equals(woodType + "_fence_gate")
+					|| blockKey.equals(woodType + "_fence")
+					|| blockKey.equals(woodType + "_stairs")
+					|| blockKey.equals(woodType + "_shelf")) {
+				return true;
+			}
+		}
 
-        for (var woodType : LOG_WOOD_TYPES) {
+		for (var woodType : LOG_WOOD_TYPES) {
 
-            if (blockKey.equals(woodType + "_log")
-                    || blockKey.equals("stripped_" + woodType + "_log")
-                    || blockKey.equals(woodType + "_wood")
-                    || blockKey.equals("stripped_" + woodType + "_wood")
-                    || blockKey.equals(woodType + "_leaves")) {
-                return true;
-            }
-        }
+			if (blockKey.equals(woodType + "_log")
+					|| blockKey.equals("stripped_" + woodType + "_log")
+					|| blockKey.equals(woodType + "_wood")
+					|| blockKey.equals("stripped_" + woodType + "_wood")
+					|| blockKey.equals(woodType + "_leaves")) {
+				return true;
+			}
+		}
 
-        for (var color : COLORS) {
+		for (var color : COLORS) {
 
-            if (blockKey.equals(color + "_wool") || blockKey.equals(color + "_carpet")) {
-                return true;
-            }
-        }
+			if (blockKey.equals(color + "_wool") || blockKey.equals(color + "_carpet")) {
+				return true;
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    private void useIgnitionItem(Player player, PlayerHand hand, ItemStack stack) {
-        if (player.getGameMode() == GameMode.CREATIVE) return;
+	private void useIgnitionItem(Player player, PlayerHand hand, ItemStack stack) {
+		if (player.getGameMode() == GameMode.CREATIVE) return;
 
-        if (stack.material() == Material.FLINT_AND_STEEL) {
-            this.itemDamageFeature.damageEquipment(player, hand == PlayerHand.MAIN
-                    ? EquipmentSlot.MAIN_HAND : EquipmentSlot.OFF_HAND, 1);
-        } else {
-            player.setItemInHand(hand, stack.consume(1));
-        }
-    }
+		if (stack.material() == Material.FLINT_AND_STEEL) {
+			this.itemDamageFeature.damageEquipment(player, hand == PlayerHand.MAIN
+					? EquipmentSlot.MAIN_HAND : EquipmentSlot.OFF_HAND, 1);
+		} else {
+			player.setItemInHand(hand, stack.consume(1));
+		}
+	}
 
-    private void playIgnitionSound(Player player, Material material, Point position) {
-        var random = ThreadLocalRandom.current();
-        var soundEvent = material == Material.FLINT_AND_STEEL
-                ? SoundEvent.ITEM_FLINTANDSTEEL_USE : SoundEvent.ITEM_FIRECHARGE_USE;
-        var pitch = material == Material.FLINT_AND_STEEL
-                ? random.nextFloat() * 0.4F + 0.8F : (random.nextFloat() - random.nextFloat()) * 0.2F + 1.0F;
+	private void playIgnitionSound(Player player, Material material, Point position, Instance instance) {
+		var random = ThreadLocalRandom.current();
+		var soundEvent = material == Material.FLINT_AND_STEEL
+				? SoundEvent.ITEM_FLINTANDSTEEL_USE : SoundEvent.ITEM_FIRECHARGE_USE;
+		var pitch = material == Material.FLINT_AND_STEEL
+				? random.nextFloat() * 0.4F + 0.8F : (random.nextFloat() - random.nextFloat()) * 0.2F + 1.0F;
 
-        ViewUtil.packetGroup(player).playSound(Sound.sound(
-                soundEvent, Source.BLOCK,
-                1.0F, pitch
-        ), position);
-    }
+		Chunk chunk = instance.getChunkAt(position);
+		Audience audience = chunk == null ? player : chunk.getViewersAsAudience();
+		if (material == Material.FLINT_AND_STEEL) audience = audience.filterAudience(a -> a != player);
+		audience.playSound(Sound.sound(
+				soundEvent, Source.BLOCK,
+				1.0F, pitch
+		), position.x(), position.y(), position.z());
+	}
 
 	private boolean shouldSuppressBedUse(Player player) {
 		return (player.isSneaking() || player.inputs().shift())
