@@ -382,11 +382,11 @@ public final class VanillaExplosionSupplier implements ExplosionSupplier {
 
         var exposedCount = 0;
         var rayCount = 0;
-        var dx = 0;
+        var dx = 0.0;
         while (dx <= 1) {
-            var dy = 0;
+            var dy = 0.0;
             while (dy <= 1) {
-                var dz = 0;
+                var dz = 0.0;
                 while (dz <= 1) {
                     var rayX = box.minX() + dx * box.width();
                     var rayY = box.minY() + dy * box.height();

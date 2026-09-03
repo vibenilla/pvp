@@ -82,6 +82,16 @@ public final class VanillaExplosionSupplierTest {
     }
 
     @Test
+    public void exposureSamplingCompletesWithFractionalSteps(Env env) {
+        var instance = env.createFlatInstance();
+        var player = env.createPlayer(instance, new Pos(0.0, 40.0, 0.0));
+
+        var exposure = VanillaExplosionSupplier.getExposure(new Pos(2.0, 40.0, 0.0), player);
+
+        assertTrue(exposure > 0.0);
+    }
+
+    @Test
     public void anchorTouchingWaterBreaksNoBlocks(Env env) {
         var featureSet = CombatFeatures.empty()
                 .add(CombatFeatures.VANILLA_FALL)
