@@ -12,43 +12,43 @@ import org.jetbrains.annotations.Nullable;
 
 public class ThrownEgg extends CustomEntityProjectile implements ItemHoldingProjectile {
 
-	public ThrownEgg(@Nullable Entity shooter) {
-		super(shooter, EntityType.EGG);
-	}
+    public ThrownEgg(@Nullable Entity shooter) {
+        super(shooter, EntityType.EGG);
+    }
 
-	@Override
-	public boolean onHit(Entity entity) {
+    @Override
+    public boolean onHit(Entity entity) {
         this.triggerStatus((byte) 3); // Egg particles
 
-		((LivingEntity) entity).damage(new Damage(DamageType.THROWN, this, this.getShooter(), null, 0));
+        ((LivingEntity) entity).damage(new Damage(DamageType.THROWN, this, this.getShooter(), null, 0));
 
-		return true;
-	}
+        return true;
+    }
 
-	@Override
-	public boolean onStuck() {
+    @Override
+    public boolean onStuck() {
         this.triggerStatus((byte) 3); // Egg particles
 
-		return true;
-	}
+        return true;
+    }
 
-	@Override
-	protected boolean shouldUpdateVelocityBeforeMovement() {
-		return true;
-	}
+    @Override
+    protected boolean shouldUpdateVelocityBeforeMovement() {
+        return true;
+    }
 
-	@Override
-	protected double getWaterInertia() {
-		return 0.8;
-	}
+    @Override
+    protected double getWaterInertia() {
+        return 0.8;
+    }
 
-	@Override
-	public void setItem(@NotNull ItemStack item) {
-		((ThrownEggMeta) this.getEntityMeta()).setItem(item);
-	}
+    @Override
+    public void setItem(@NotNull ItemStack item) {
+        ((ThrownEggMeta) this.getEntityMeta()).setItem(item);
+    }
 
-	@Override
-	protected int getUpdateInterval() {
-		return 10;
-	}
+    @Override
+    protected int getUpdateInterval() {
+        return 10;
+    }
 }

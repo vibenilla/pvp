@@ -30,152 +30,152 @@ import java.util.List;
  * Vanilla implementation of {@link EquipmentFeature}
  */
 public class VanillaEquipmentFeature implements EquipmentFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaEquipmentFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.EQUIPMENT, VanillaEquipmentFeature::new
-	);
+    public static final DefinedFeature<VanillaEquipmentFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.EQUIPMENT, VanillaEquipmentFeature::new
+    );
 
-	public VanillaEquipmentFeature(FeatureConfiguration configuration) {
-	}
+    public VanillaEquipmentFeature(FeatureConfiguration configuration) {
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(InventoryPreClickEvent.class, this::onInventoryPreClick);
-		node.addListener(EntityEquipEvent.class, this::onEquip);
-		node.addListener(PlayerChangeHeldSlotEvent.class, event -> {
-			LivingEntity entity = event.getPlayer();
-			ItemStack oldItem = entity.getEquipment(EquipmentSlot.MAIN_HAND);
-			ItemStack newItem = event.getPlayer().getInventory().getItemStack(event.getNewSlot());
-			EnchantmentAttributes.updateEquipmentAttributes(entity, oldItem, newItem, EquipmentSlot.MAIN_HAND);
-		});
-	}
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(InventoryPreClickEvent.class, this::onInventoryPreClick);
+        node.addListener(EntityEquipEvent.class, this::onEquip);
+        node.addListener(PlayerChangeHeldSlotEvent.class, event -> {
+            var entity = event.getPlayer();
+            var oldItem = entity.getEquipment(EquipmentSlot.MAIN_HAND);
+            var newItem = event.getPlayer().getInventory().getItemStack(event.getNewSlot());
+            EnchantmentAttributes.updateEquipmentAttributes(entity, oldItem, newItem, EquipmentSlot.MAIN_HAND);
+        });
+    }
 
-	private void onInventoryPreClick(InventoryPreClickEvent event) {
-		var player = event.getPlayer();
+    private void onInventoryPreClick(InventoryPreClickEvent event) {
+        var player = event.getPlayer();
 
-		if (event.getInventory() != player.getInventory()) return;
+        if (event.getInventory() != player.getInventory()) return;
 
-		if (this.shouldCancelInvalidArmorPlacement(player, event.getClick())) {
-			event.setCancelled(true);
-			return;
-		}
+        if (this.shouldCancelInvalidArmorPlacement(player, event.getClick())) {
+            event.setCancelled(true);
+            return;
+        }
 
-		if (player.getGameMode() == GameMode.CREATIVE) return;
+        if (player.getGameMode() == GameMode.CREATIVE) return;
 
-		if (this.shouldCancelArmorRemoval(player, event.getClick())) {
-			event.setCancelled(true);
-		}
-	}
+        if (this.shouldCancelArmorRemoval(player, event.getClick())) {
+            event.setCancelled(true);
+        }
+    }
 
-	private boolean shouldCancelInvalidArmorPlacement(Player player, Click click) {
-		if (click instanceof Click.Left || click instanceof Click.Right) {
-			return this.shouldCancelInvalidArmorSlotPlacement(
-					click.slot(), player.getInventory().getCursorItem()
-			);
-		}
+    private boolean shouldCancelInvalidArmorPlacement(Player player, Click click) {
+        if (click instanceof Click.Left || click instanceof Click.Right) {
+            return this.shouldCancelInvalidArmorSlotPlacement(
+                    click.slot(), player.getInventory().getCursorItem()
+            );
+        }
 
-		if (click instanceof Click.HotbarSwap hotbarSwap) {
-			var incomingItem = player.getInventory().getItemStack(hotbarSwap.hotbarSlot());
-			return this.shouldCancelInvalidArmorSlotPlacement(hotbarSwap.slot(), incomingItem);
-		}
+        if (click instanceof Click.HotbarSwap hotbarSwap) {
+            var incomingItem = player.getInventory().getItemStack(hotbarSwap.hotbarSlot());
+            return this.shouldCancelInvalidArmorSlotPlacement(hotbarSwap.slot(), incomingItem);
+        }
 
-		if (click instanceof Click.OffhandSwap offhandSwap) {
-			var incomingItem = player.getInventory().getItemStack(PlayerInventoryUtils.OFFHAND_SLOT);
-			return this.shouldCancelInvalidArmorSlotPlacement(offhandSwap.slot(), incomingItem);
-		}
+        if (click instanceof Click.OffhandSwap offhandSwap) {
+            var incomingItem = player.getInventory().getItemStack(PlayerInventoryUtils.OFFHAND_SLOT);
+            return this.shouldCancelInvalidArmorSlotPlacement(offhandSwap.slot(), incomingItem);
+        }
 
-		if (click instanceof Click.Drag drag) {
-			return this.shouldCancelInvalidArmorSlotDrag(player, drag.slots());
-		}
+        if (click instanceof Click.Drag drag) {
+            return this.shouldCancelInvalidArmorSlotDrag(player, drag.slots());
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	private boolean shouldCancelInvalidArmorSlotPlacement(int slot, ItemStack incomingItem) {
-		var armorSlot = this.getArmorSlot(slot);
+    private boolean shouldCancelInvalidArmorSlotPlacement(int slot, ItemStack incomingItem) {
+        var armorSlot = this.getArmorSlot(slot);
 
-		if (armorSlot == null) {
-			return false;
-		}
+        if (armorSlot == null) {
+            return false;
+        }
 
-		return !incomingItem.isAir() && !this.canPlaceInArmorSlot(incomingItem, armorSlot);
-	}
+        return !incomingItem.isAir() && !this.canPlaceInArmorSlot(incomingItem, armorSlot);
+    }
 
-	private boolean shouldCancelInvalidArmorSlotDrag(Player player, List<Integer> slots) {
-		var incomingItem = player.getInventory().getCursorItem();
+    private boolean shouldCancelInvalidArmorSlotDrag(Player player, List<Integer> slots) {
+        var incomingItem = player.getInventory().getCursorItem();
 
-		if (incomingItem.isAir()) {
-			return false;
-		}
+        if (incomingItem.isAir()) {
+            return false;
+        }
 
-		for (var slot : slots) {
-			var armorSlot = this.getArmorSlot(slot);
+        for (var slot : slots) {
+            var armorSlot = this.getArmorSlot(slot);
 
-			if (armorSlot == null) {
-				continue;
-			}
+            if (armorSlot == null) {
+                continue;
+            }
 
-			if (!this.canPlaceInArmorSlot(incomingItem, armorSlot)) {
-				return true;
-			}
-		}
+            if (!this.canPlaceInArmorSlot(incomingItem, armorSlot)) {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	private boolean canPlaceInArmorSlot(ItemStack itemStack, EquipmentSlot slot) {
-		var equippable = itemStack.get(DataComponents.EQUIPPABLE);
+    private boolean canPlaceInArmorSlot(ItemStack itemStack, EquipmentSlot slot) {
+        var equippable = itemStack.get(DataComponents.EQUIPPABLE);
 
-		if (equippable == null) {
-			return false;
-		}
+        if (equippable == null) {
+            return false;
+        }
 
-		var allowedEntities = equippable.allowedEntities();
-		return equippable.slot() == slot
-				&& (allowedEntities == null || allowedEntities.contains(EntityType.PLAYER));
-	}
+        var allowedEntities = equippable.allowedEntities();
+        return equippable.slot() == slot
+                && (allowedEntities == null || allowedEntities.contains(EntityType.PLAYER));
+    }
 
-	private boolean shouldCancelArmorRemoval(Player player, Click click) {
-		var armorSlot = this.getArmorSlot(click.slot());
+    private boolean shouldCancelArmorRemoval(Player player, Click click) {
+        var armorSlot = this.getArmorSlot(click.slot());
 
-		if (armorSlot == null) {
-			return false;
-		}
+        if (armorSlot == null) {
+            return false;
+        }
 
-		var clickedItem = player.getInventory().getItemStack(click.slot());
-		return clickedItem.has(EffectComponent.PREVENT_ARMOR_CHANGE);
-	}
+        var clickedItem = player.getInventory().getItemStack(click.slot());
+        return clickedItem.has(EffectComponent.PREVENT_ARMOR_CHANGE);
+    }
 
-	private @Nullable EquipmentSlot getArmorSlot(int slot) {
-		return switch (slot) {
-			case PlayerInventoryUtils.HELMET_SLOT -> EquipmentSlot.HELMET;
-			case PlayerInventoryUtils.CHESTPLATE_SLOT -> EquipmentSlot.CHESTPLATE;
-			case PlayerInventoryUtils.LEGGINGS_SLOT -> EquipmentSlot.LEGGINGS;
-			case PlayerInventoryUtils.BOOTS_SLOT -> EquipmentSlot.BOOTS;
-			default -> null;
-		};
-	}
+    private @Nullable EquipmentSlot getArmorSlot(int slot) {
+        return switch (slot) {
+            case PlayerInventoryUtils.HELMET_SLOT -> EquipmentSlot.HELMET;
+            case PlayerInventoryUtils.CHESTPLATE_SLOT -> EquipmentSlot.CHESTPLATE;
+            case PlayerInventoryUtils.LEGGINGS_SLOT -> EquipmentSlot.LEGGINGS;
+            case PlayerInventoryUtils.BOOTS_SLOT -> EquipmentSlot.BOOTS;
+            default -> null;
+        };
+    }
 
-	protected void onEquip(EntityEquipEvent event) {
-		if (!(event.getEntity() instanceof LivingEntity entity)) return;
+    protected void onEquip(EntityEquipEvent event) {
+        if (!(event.getEntity() instanceof LivingEntity entity)) return;
 
-		EquipmentSlot slot = event.getSlot();
-		EnchantmentAttributes.updateEquipmentAttributes(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);
+        var slot = event.getSlot();
+        EnchantmentAttributes.updateEquipmentAttributes(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);
 
-		this.playEquipSound(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);
-	}
+        this.playEquipSound(entity, entity.getEquipment(slot), event.getEquippedItem(), slot);
+    }
 
-	private void playEquipSound(LivingEntity entity, ItemStack oldStack, ItemStack newStack, EquipmentSlot slot) {
-		if (entity.isSilent()) return;
-		if (entity.getAliveTicks() <= 0) return;
-		if (newStack.isSimilar(oldStack)) return;
+    private void playEquipSound(LivingEntity entity, ItemStack oldStack, ItemStack newStack, EquipmentSlot slot) {
+        if (entity.isSilent()) return;
+        if (entity.getAliveTicks() <= 0) return;
+        if (newStack.isSimilar(oldStack)) return;
 
-		var equippable = newStack.get(DataComponents.EQUIPPABLE);
-		if (equippable == null) return;
-		if (equippable.slot() != slot) return;
+        var equippable = newStack.get(DataComponents.EQUIPPABLE);
+        if (equippable == null) return;
+        if (equippable.slot() != slot) return;
 
-		ViewUtil.viewersAndSelf(entity).playSound(Sound.sound(
-				equippable.equipSound(), Sound.Source.PLAYER,
-				1.0F, 1.0F
-		), entity);
-	}
+        ViewUtil.viewersAndSelf(entity).playSound(Sound.sound(
+                equippable.equipSound(), Sound.Source.PLAYER,
+                1.0F, 1.0F
+        ), entity);
+    }
 }

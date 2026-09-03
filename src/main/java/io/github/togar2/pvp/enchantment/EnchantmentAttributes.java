@@ -13,32 +13,32 @@ import net.minestom.server.item.enchant.EffectComponent;
 import java.util.function.BiConsumer;
 
 public final class EnchantmentAttributes {
-	private EnchantmentAttributes() {
-	}
+    private EnchantmentAttributes() {
+    }
 
-	public static void forEachModifier(ItemStack stack, EquipmentSlot slot, BiConsumer<Attribute, AttributeModifier> consumer) {
-		var enchantments = stack.get(DataComponents.ENCHANTMENTS);
-		if (enchantments == null) return;
+    public static void forEachModifier(ItemStack stack, EquipmentSlot slot, BiConsumer<Attribute, AttributeModifier> consumer) {
+        var enchantments = stack.get(DataComponents.ENCHANTMENTS);
+        if (enchantments == null) return;
 
-		var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
+        var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
 
-		enchantments.enchantments().forEach((key, level) -> {
-			var enchantment = enchantmentRegistry.get(key);
-			if (enchantment == null) return;
-			if (enchantment.slots().stream().noneMatch(group -> group.contains(slot))) return;
+        enchantments.enchantments().forEach((key, level) -> {
+            var enchantment = enchantmentRegistry.get(key);
+            if (enchantment == null) return;
+            if (enchantment.slots().stream().noneMatch(group -> group.contains(slot))) return;
 
-			var effects = enchantment.effects().get(EffectComponent.ATTRIBUTES);
-			if (effects == null) return;
+            var effects = enchantment.effects().get(EffectComponent.ATTRIBUTES);
+            if (effects == null) return;
 
-			for (var effect : effects) {
-				var id = Key.key(effect.id().namespace(), effect.id().value() + "/" + slot.nbtName());
-				consumer.accept(effect.attribute(), new AttributeModifier(id, effect.amount().calc(level), effect.operation()));
-			}
-		});
-	}
+            for (var effect : effects) {
+                var id = Key.key(effect.id().namespace(), effect.id().value() + "/" + slot.nbtName());
+                consumer.accept(effect.attribute(), new AttributeModifier(id, effect.amount().calc(level), effect.operation()));
+            }
+        });
+    }
 
-	public static void updateEquipmentAttributes(LivingEntity entity, ItemStack oldStack, ItemStack newStack, EquipmentSlot slot) {
-		forEachModifier(oldStack, slot, (attribute, modifier) -> entity.getAttribute(attribute).removeModifier(modifier.id()));
-		forEachModifier(newStack, slot, (attribute, modifier) -> entity.getAttribute(attribute).addModifier(modifier));
-	}
+    public static void updateEquipmentAttributes(LivingEntity entity, ItemStack oldStack, ItemStack newStack, EquipmentSlot slot) {
+        forEachModifier(oldStack, slot, (attribute, modifier) -> entity.getAttribute(attribute).removeModifier(modifier.id()));
+        forEachModifier(newStack, slot, (attribute, modifier) -> entity.getAttribute(attribute).addModifier(modifier));
+    }
 }

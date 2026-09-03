@@ -9,33 +9,33 @@ import net.minestom.server.event.trait.EntityInstanceEvent;
  * A container for multiple {@link CombatFeature}s. Use {@link CombatFeatureSet#createNode()} to get an event node.
  */
 public class CombatFeatureSet extends FeatureConfiguration implements RegistrableFeature {
-	private boolean initialized = false;
+    private boolean initialized = false;
 
-	@Override
-	public EventNode<EntityInstanceEvent> createNode() {
-		CombatFeatureRegistry.attach();
-		return RegistrableFeature.super.createNode();
-	}
+    @Override
+    public EventNode<EntityInstanceEvent> createNode() {
+        CombatFeatureRegistry.attach();
+        return RegistrableFeature.super.createNode();
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		for (CombatFeature feature : this.listFeatures()) {
-			if (!(feature instanceof RegistrableFeature registrable)) continue;
-			node.addChild(registrable.createNode());
-		}
-	}
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        for (var feature : this.listFeatures()) {
+            if (!(feature instanceof RegistrableFeature registrable)) continue;
+            node.addChild(registrable.createNode());
+        }
+    }
 
-	@Override
-	public void initDependencies() {
-		for (CombatFeature feature : this.listFeatures()) {
-			feature.initDependencies();
-		}
+    @Override
+    public void initDependencies() {
+        for (var feature : this.listFeatures()) {
+            feature.initDependencies();
+        }
         this.initialized = true;
-	}
+    }
 
-	@Override
-	public FeatureConfiguration add(FeatureType<?> type, CombatFeature feature) {
-		if (this.initialized) throw new UnsupportedOperationException("Cannot add features after initialization");
-		return super.add(type, feature);
-	}
+    @Override
+    public FeatureConfiguration add(FeatureType<?> type, CombatFeature feature) {
+        if (this.initialized) throw new UnsupportedOperationException("Cannot add features after initialization");
+        return super.add(type, feature);
+    }
 }

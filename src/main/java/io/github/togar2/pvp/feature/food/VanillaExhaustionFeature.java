@@ -26,113 +26,113 @@ import java.util.Objects;
  * Vanilla implementation of {@link ExhaustionFeature}
  */
 public class VanillaExhaustionFeature implements ExhaustionFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaExhaustionFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.EXHAUSTION, VanillaExhaustionFeature::new,
-			VanillaExhaustionFeature::initPlayer,
-			FeatureType.DIFFICULTY, FeatureType.VERSION
-	);
+    public static final DefinedFeature<VanillaExhaustionFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.EXHAUSTION, VanillaExhaustionFeature::new,
+            VanillaExhaustionFeature::initPlayer,
+            FeatureType.DIFFICULTY, FeatureType.VERSION
+    );
 
-	public static final Tag<Float> EXHAUSTION = Tag.Float("exhaustion");
+    public static final Tag<Float> EXHAUSTION = Tag.Float("exhaustion");
 
-	private final FeatureConfiguration configuration;
+    private final FeatureConfiguration configuration;
 
-	private DifficultyProvider difficultyFeature;
-	private CombatVersion version;
+    private DifficultyProvider difficultyFeature;
+    private CombatVersion version;
 
-	public VanillaExhaustionFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-	}
+    public VanillaExhaustionFeature(FeatureConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
-	@Override
-	public void initDependencies() {
-		this.difficultyFeature = this.configuration.get(FeatureType.DIFFICULTY);
-		this.version = this.configuration.get(FeatureType.VERSION);
-	}
+    @Override
+    public void initDependencies() {
+        this.difficultyFeature = this.configuration.get(FeatureType.DIFFICULTY);
+        this.version = this.configuration.get(FeatureType.VERSION);
+    }
 
-	public static void initPlayer(Player player, PlayerInitReason reason) {
-		if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
+    public static void initPlayer(Player player, PlayerInitReason reason) {
+        if (reason == PlayerInitReason.INSTANCE_CHANGE) return;
 
-		player.setTag(EXHAUSTION, 0.0f);
-		if (reason == PlayerInitReason.RESPAWN) {
-			player.setFood(20);
-			player.setFoodSaturation(5.0f);
-		}
-	}
+        player.setTag(EXHAUSTION, 0.0F);
+        if (reason == PlayerInitReason.RESPAWN) {
+            player.setFood(20);
+            player.setFoodSaturation(5.0F);
+        }
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(PlayerTickEvent.class, event -> this.onTick(event.getPlayer()));
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(PlayerTickEvent.class, event -> this.onTick(event.getPlayer()));
 
-		node.addListener(PlayerBlockBreakEvent.class, event ->
-                this.addExhaustion(event.getPlayer(), this.version.legacy() ? 0.025f : 0.005f));
+        node.addListener(PlayerBlockBreakEvent.class, event ->
+                this.addExhaustion(event.getPlayer(), this.version.legacy() ? 0.025F : 0.005F));
 
-		node.addListener(PlayerMoveEvent.class, this::onMove);
-	}
+        node.addListener(PlayerMoveEvent.class, this::onMove);
+    }
 
-	protected void onTick(Player player) {
-		if (player.getGameMode().invulnerable()) return;
+    protected void onTick(Player player) {
+        if (player.getGameMode().invulnerable()) return;
 
-		float exhaustion = player.getTag(EXHAUSTION);
-		if (exhaustion > 4) {
-			player.setTag(EXHAUSTION, exhaustion - 4);
-			if (player.getFoodSaturation() > 0) {
-				player.setFoodSaturation(Math.max(player.getFoodSaturation() - 1, 0));
-			} else if (this.difficultyFeature.getValue(player) != Difficulty.PEACEFUL) {
-				player.setFood(Math.max(player.getFood() - 1, 0));
-			}
-		}
-	}
+        var exhaustion = player.getTag(EXHAUSTION);
+        if (exhaustion > 4) {
+            player.setTag(EXHAUSTION, exhaustion - 4);
+            if (player.getFoodSaturation() > 0) {
+                player.setFoodSaturation(Math.max(player.getFoodSaturation() - 1, 0));
+            } else if (this.difficultyFeature.getValue(player) != Difficulty.PEACEFUL) {
+                player.setFood(Math.max(player.getFood() - 1, 0));
+            }
+        }
+    }
 
-	protected void onMove(PlayerMoveEvent event) {
-		Player player = event.getPlayer();
+    protected void onMove(PlayerMoveEvent event) {
+        var player = event.getPlayer();
 
-		double xDiff = event.getNewPosition().x() - player.getPosition().x();
-		double yDiff = event.getNewPosition().y() - player.getPosition().y();
-		double zDiff = event.getNewPosition().z() - player.getPosition().z();
+        var xDiff = event.getNewPosition().x() - player.getPosition().x();
+        var yDiff = event.getNewPosition().y() - player.getPosition().y();
+        var zDiff = event.getNewPosition().z() - player.getPosition().z();
 
-		if (yDiff > 0.0D && player.isOnGround() && !event.isOnGround()) {
-			if (player.isSprinting()) {
-                this.addExhaustion(player, this.version.legacy() ? 0.8f : 0.2f);
-			} else {
-                this.addExhaustion(player, this.version.legacy() ? 0.2f : 0.05f);
-			}
-		}
+        if (yDiff > 0.0 && player.isOnGround() && !event.isOnGround()) {
+            if (player.isSprinting()) {
+                this.addExhaustion(player, this.version.legacy() ? 0.8F : 0.2F);
+            } else {
+                this.addExhaustion(player, this.version.legacy() ? 0.2F : 0.05F);
+            }
+        }
 
-		var instance = Objects.requireNonNull(player.getInstance());
-		if (FluidUtil.isTouchingWater(player, event.getNewPosition())) {
-			var eyePosition = event.getNewPosition().add(0.0, player.getEyeHeight(), 0.0);
-			var submerged = FluidUtil.isWater(instance.getBlock(eyePosition));
-			var distance = submerged
-					? Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff)
-					: Math.sqrt(xDiff * xDiff + zDiff * zDiff);
-			int l = (int) Math.round(distance * 100.0f);
-			if (l > 0) this.addExhaustion(player, 0.01f * (float) l * 0.01f);
-		} else if (player.isOnGround()) {
-			int l = (int) Math.round(Math.sqrt(xDiff * xDiff + zDiff * zDiff) * 100.0f);
-			if (l > 0) this.addExhaustion(player, (player.isSprinting() ? 0.1f : 0.0f) * (float) l * 0.01f);
-		}
-	}
+        var instance = Objects.requireNonNull(player.getInstance());
+        if (FluidUtil.isTouchingWater(player, event.getNewPosition())) {
+            var eyePosition = event.getNewPosition().add(0.0, player.getEyeHeight(), 0.0);
+            var submerged = FluidUtil.isWater(instance.getBlock(eyePosition));
+            var distance = submerged
+                    ? Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff)
+                    : Math.sqrt(xDiff * xDiff + zDiff * zDiff);
+            var distanceUnits = (int) Math.round(distance * 100.0F);
+            if (distanceUnits > 0) this.addExhaustion(player, 0.01F * (float) distanceUnits * 0.01F);
+        } else if (player.isOnGround()) {
+            var distanceUnits = (int) Math.round(Math.sqrt(xDiff * xDiff + zDiff * zDiff) * 100.0F);
+            if (distanceUnits > 0) this.addExhaustion(player, (player.isSprinting() ? 0.1F : 0.0F) * (float) distanceUnits * 0.01F);
+        }
+    }
 
-	@Override
-	public void addExhaustion(Player player, float exhaustion) {
-		if (player.getGameMode().invulnerable()) return;
-		PlayerExhaustEvent playerExhaustEvent = new PlayerExhaustEvent(player, exhaustion);
-		EventDispatcher.callCancellable(playerExhaustEvent, () -> player.setTag(EXHAUSTION,
-				Math.min(player.getTag(EXHAUSTION) + playerExhaustEvent.getAmount(), 40)));
-	}
+    @Override
+    public void addExhaustion(Player player, float exhaustion) {
+        if (player.getGameMode().invulnerable()) return;
+        var playerExhaustEvent = new PlayerExhaustEvent(player, exhaustion);
+        EventDispatcher.callCancellable(playerExhaustEvent, () -> player.setTag(EXHAUSTION,
+                Math.min(player.getTag(EXHAUSTION) + playerExhaustEvent.getAmount(), 40)));
+    }
 
-	@Override
-	public void addAttackExhaustion(Player player) {
-        this.addExhaustion(player, this.version.legacy() ? 0.3f: 0.1f);
-	}
+    @Override
+    public void addAttackExhaustion(Player player) {
+        this.addExhaustion(player, this.version.legacy() ? 0.3F: 0.1F);
+    }
 
-	@Override
-	public void addDamageExhaustion(Player player, DamageType type) {
+    @Override
+    public void addDamageExhaustion(Player player, DamageType type) {
         this.addExhaustion(player, type.exhaustion() * (this.version.legacy() ? 3 : 1));
-	}
+    }
 
-	@Override
-	public void applyHungerEffect(Player player, int amplifier) {
-        this.addExhaustion(player, (this.version.legacy() ? 0.025f : 0.005f) * (float) (amplifier + 1));
-	}
+    @Override
+    public void applyHungerEffect(Player player, int amplifier) {
+        this.addExhaustion(player, (this.version.legacy() ? 0.025F : 0.005F) * (float) (amplifier + 1));
+    }
 }

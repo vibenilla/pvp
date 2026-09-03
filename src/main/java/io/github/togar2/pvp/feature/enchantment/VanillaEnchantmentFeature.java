@@ -45,299 +45,299 @@ import org.jetbrains.annotations.Nullable;
  * Utilizes the enchantment classes in the {@link io.github.togar2.pvp.enchantment} package.
  */
 public class VanillaEnchantmentFeature implements EnchantmentFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaEnchantmentFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.ENCHANTMENT, VanillaEnchantmentFeature::new,
-			CombatEnchantments.getAllFeatureDependencies()
-	);
-	public static final Tag<Boolean> FIRE_DURATION_ALREADY_SCALED = Tag.Transient("fireDurationAlreadyScaled");
-
-	private final FeatureConfiguration configuration;
-
-	public VanillaEnchantmentFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-		CombatEnchantments.registerAll();
-	}
-
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(EntitySetFireEvent.class, event -> {
-			if (event.getEntity() instanceof LivingEntity living) {
-				var fireTicks = event.getFireTicks();
-
-				if (living.hasTag(FIRE_DURATION_ALREADY_SCALED)) {
-					living.removeTag(FIRE_DURATION_ALREADY_SCALED);
-				} else {
-					fireTicks = this.getFireDuration(living, fireTicks);
-				}
-
-				if (living instanceof Player player && player.getGameMode().invulnerable()) {
-					fireTicks = Math.min(fireTicks, 1);
-				}
-
-				event.setFireTicks(fireTicks);
-			}
-		});
-	}
-
-	public static void forEachEnchantment(Iterable<ItemStack> stacks, BiConsumer<CombatEnchantment, Integer> consumer) {
-		for (ItemStack itemStack : stacks) {
-			EnchantmentList enchantmentList = itemStack.get(DataComponents.ENCHANTMENTS);
-			Set<RegistryKey<Enchantment>> enchantments = enchantmentList.enchantments().keySet();
-
-			for (RegistryKey<Enchantment> enchantment : enchantments) {
-				CombatEnchantment combatEnchantment = CombatEnchantments.get(enchantment);
-				if (combatEnchantment == null) continue;
-
-				consumer.accept(combatEnchantment, enchantmentList.level(enchantment));
-			}
-		}
-	}
-
-	@Override
-	public int getEquipmentLevel(LivingEntity entity, RegistryKey<Enchantment> enchantment) {
-		var combatEnchantment = CombatEnchantments.get(enchantment);
-		if (combatEnchantment == null) return 0;
-
-		var iterator = combatEnchantment.getEquipment(entity).values().iterator();
-
-		int total = 0;
-		while (iterator.hasNext()) {
-			ItemStack itemStack = iterator.next();
-			total += itemStack.get(DataComponents.ENCHANTMENTS).level(enchantment);
-		}
-
-		return total;
-	}
-
-	@Override
-	public Map.Entry<EquipmentSlot, ItemStack> pickRandom(LivingEntity entity, RegistryKey<Enchantment> enchantment) {
-		var combatEnchantment = CombatEnchantments.get(enchantment);
-		if (combatEnchantment == null) return null;
-
-		var equipmentMap = combatEnchantment.getEquipment(entity);
-		if (equipmentMap.isEmpty()) return null;
-
-		List<Map.Entry<EquipmentSlot, ItemStack>> possibleStacks = new ArrayList<>();
-
-		for (Map.Entry<EquipmentSlot, ItemStack> entry : equipmentMap.entrySet()) {
-			ItemStack itemStack = entry.getValue();
-
-			if (!itemStack.isAir() && itemStack.get(DataComponents.ENCHANTMENTS).level(enchantment) > 0) {
-				possibleStacks.add(entry);
-			}
-		}
-
-		return possibleStacks.isEmpty() ? null :
-				possibleStacks.get(ThreadLocalRandom.current().nextInt(possibleStacks.size()));
-	}
-
-	@Override
-	public int getProtectionAmount(LivingEntity entity, DamageType damageType) {
-		AtomicInteger result = new AtomicInteger();
-
-		List<ItemStack> armorItems = new ArrayList<>();
-		for (EquipmentSlot slot : EquipmentSlot.armors()) {
-			if (slot.isArmor() && !entity.getEquipment(slot).isAir()) {
-				armorItems.add(entity.getEquipment(slot));
-			}
-		}
-
-		forEachEnchantment(armorItems, (enchantment, level) ->
-				result.addAndGet(enchantment.getProtectionAmount(level, damageType, this, this.configuration)));
-		return result.get();
-	}
-
-	@Override
-	public float getAttackDamage(ItemStack stack, @Nullable Entity target) {
-		AtomicReference<Float> result = new AtomicReference<>((float) 0);
-		stack.get(DataComponents.ENCHANTMENTS).enchantments().forEach((enchantment, level) -> {
-			CombatEnchantment combatEnchantment = CombatEnchantments.get(enchantment);
-			if (combatEnchantment == null) return;
-
-			result.updateAndGet(v -> v + combatEnchantment.getAttackDamage(level, target, this, this.configuration));
-		});
-
-		return result.get();
-	}
-
-	@Override
-	public double getExplosionKnockback(LivingEntity entity, double strength) {
-		return strength;
-	}
+    public static final DefinedFeature<VanillaEnchantmentFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.ENCHANTMENT, VanillaEnchantmentFeature::new,
+            CombatEnchantments.getAllFeatureDependencies()
+    );
+    public static final Tag<Boolean> FIRE_DURATION_ALREADY_SCALED = Tag.Transient("fireDurationAlreadyScaled");
+
+    private final FeatureConfiguration configuration;
+
+    public VanillaEnchantmentFeature(FeatureConfiguration configuration) {
+        this.configuration = configuration;
+        CombatEnchantments.registerAll();
+    }
+
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(EntitySetFireEvent.class, event -> {
+            if (event.getEntity() instanceof LivingEntity living) {
+                var fireTicks = event.getFireTicks();
+
+                if (living.hasTag(FIRE_DURATION_ALREADY_SCALED)) {
+                    living.removeTag(FIRE_DURATION_ALREADY_SCALED);
+                } else {
+                    fireTicks = this.getFireDuration(living, fireTicks);
+                }
+
+                if (living instanceof Player player && player.getGameMode().invulnerable()) {
+                    fireTicks = Math.min(fireTicks, 1);
+                }
+
+                event.setFireTicks(fireTicks);
+            }
+        });
+    }
+
+    public static void forEachEnchantment(Iterable<ItemStack> stacks, BiConsumer<CombatEnchantment, Integer> consumer) {
+        for (var itemStack : stacks) {
+            var enchantmentList = itemStack.get(DataComponents.ENCHANTMENTS);
+            var enchantments = enchantmentList.enchantments().keySet();
+
+            for (var enchantment : enchantments) {
+                var combatEnchantment = CombatEnchantments.get(enchantment);
+                if (combatEnchantment == null) continue;
+
+                consumer.accept(combatEnchantment, enchantmentList.level(enchantment));
+            }
+        }
+    }
+
+    @Override
+    public int getEquipmentLevel(LivingEntity entity, RegistryKey<Enchantment> enchantment) {
+        var combatEnchantment = CombatEnchantments.get(enchantment);
+        if (combatEnchantment == null) return 0;
+
+        var iterator = combatEnchantment.getEquipment(entity).values().iterator();
+
+        var total = 0;
+        while (iterator.hasNext()) {
+            var itemStack = iterator.next();
+            total += itemStack.get(DataComponents.ENCHANTMENTS).level(enchantment);
+        }
+
+        return total;
+    }
+
+    @Override
+    public Map.Entry<EquipmentSlot, ItemStack> pickRandom(LivingEntity entity, RegistryKey<Enchantment> enchantment) {
+        var combatEnchantment = CombatEnchantments.get(enchantment);
+        if (combatEnchantment == null) return null;
+
+        var equipmentMap = combatEnchantment.getEquipment(entity);
+        if (equipmentMap.isEmpty()) return null;
+
+        var possibleStacks = new ArrayList<Map.Entry<EquipmentSlot, ItemStack>>();
+
+        for (var entry : equipmentMap.entrySet()) {
+            var itemStack = entry.getValue();
+
+            if (!itemStack.isAir() && itemStack.get(DataComponents.ENCHANTMENTS).level(enchantment) > 0) {
+                possibleStacks.add(entry);
+            }
+        }
+
+        return possibleStacks.isEmpty() ? null :
+                possibleStacks.get(ThreadLocalRandom.current().nextInt(possibleStacks.size()));
+    }
+
+    @Override
+    public int getProtectionAmount(LivingEntity entity, DamageType damageType) {
+        var result = new AtomicInteger();
+
+        var armorItems = new ArrayList<ItemStack>();
+        for (var slot : EquipmentSlot.armors()) {
+            if (slot.isArmor() && !entity.getEquipment(slot).isAir()) {
+                armorItems.add(entity.getEquipment(slot));
+            }
+        }
+
+        forEachEnchantment(armorItems, (enchantment, level) ->
+                result.addAndGet(enchantment.getProtectionAmount(level, damageType, this, this.configuration)));
+        return result.get();
+    }
+
+    @Override
+    public float getAttackDamage(ItemStack stack, @Nullable Entity target) {
+        var result = new AtomicReference<>((float) 0);
+        stack.get(DataComponents.ENCHANTMENTS).enchantments().forEach((enchantment, level) -> {
+            var combatEnchantment = CombatEnchantments.get(enchantment);
+            if (combatEnchantment == null) return;
+
+            result.updateAndGet(v -> v + combatEnchantment.getAttackDamage(level, target, this, this.configuration));
+        });
+
+        return result.get();
+    }
+
+    @Override
+    public double getExplosionKnockback(LivingEntity entity, double strength) {
+        return strength;
+    }
 
-	@Override
-	public int getFireDuration(LivingEntity entity, int duration) {
-		var burningTime = Math.max(entity.getAttributeValue(Attribute.BURNING_TIME), 0.0);
+    @Override
+    public int getFireDuration(LivingEntity entity, int duration) {
+        var burningTime = Math.max(entity.getAttributeValue(Attribute.BURNING_TIME), 0.0);
 
-		return (int) Math.ceil(duration * burningTime);
-	}
+        return (int) Math.ceil(duration * burningTime);
+    }
 
-	@Override
-	public double getKnockback(LivingEntity entity) {
-		return this.getKnockback(entity, entity.getItemInMainHand());
-	}
+    @Override
+    public double getKnockback(LivingEntity entity) {
+        return this.getKnockback(entity, entity.getItemInMainHand());
+    }
 
-	@Override
-	public double getKnockback(LivingEntity entity, ItemStack weapon) {
-		var baseKnockback = (float) entity.getAttributeValue(Attribute.ATTACK_KNOCKBACK);
+    @Override
+    public double getKnockback(LivingEntity entity, ItemStack weapon) {
+        var baseKnockback = (float) entity.getAttributeValue(Attribute.ATTACK_KNOCKBACK);
 
-		return this.modifyConditionalValue(
-				weapon, EffectComponent.KNOCKBACK, baseKnockback
-		) / 2.0;
-	}
+        return this.modifyConditionalValue(
+                weapon, EffectComponent.KNOCKBACK, baseKnockback
+        ) / 2.0;
+    }
 
-	@Override
-	public int getSweeping(LivingEntity entity) {
-		return this.getEquipmentLevel(entity, Enchantment.SWEEPING_EDGE);
-	}
+    @Override
+    public int getSweeping(LivingEntity entity) {
+        return this.getEquipmentLevel(entity, Enchantment.SWEEPING_EDGE);
+    }
 
-	@Override
-	public int getFireAspect(LivingEntity entity) {
-		return this.getEquipmentLevel(entity, Enchantment.FIRE_ASPECT);
-	}
+    @Override
+    public int getFireAspect(LivingEntity entity) {
+        return this.getEquipmentLevel(entity, Enchantment.FIRE_ASPECT);
+    }
 
-	@Override
-	public float modifyConditionalValue(ItemStack stack, DataComponent<List<ConditionalEffect<ValueEffect>>> component, float base) {
-		return this.modifyConditionalValue(stack, component, base, false);
-	}
+    @Override
+    public float modifyConditionalValue(ItemStack stack, DataComponent<List<ConditionalEffect<ValueEffect>>> component, float base) {
+        return this.modifyConditionalValue(stack, component, base, false);
+    }
 
-	@Override
-	public float modifyConditionalValue(ItemStack stack, DataComponent<List<ConditionalEffect<ValueEffect>>> component,
-	                                    float base, boolean includeConditionalEffects) {
-		var value = base;
-		var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
+    @Override
+    public float modifyConditionalValue(ItemStack stack, DataComponent<List<ConditionalEffect<ValueEffect>>> component,
+                                        float base, boolean includeConditionalEffects) {
+        var value = base;
+        var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
 
-		for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
-			var enchantment = enchantmentRegistry.get(entry.getKey());
-			if (enchantment == null) continue;
+        for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
+            var enchantment = enchantmentRegistry.get(entry.getKey());
+            if (enchantment == null) continue;
 
-			var effects = enchantment.effects().get(component);
-			if (effects == null) continue;
+            var effects = enchantment.effects().get(component);
+            if (effects == null) continue;
 
-			for (var effect : effects) {
-				if (!includeConditionalEffects && effect.requirements() != null) continue;
+            for (var effect : effects) {
+                if (!includeConditionalEffects && effect.requirements() != null) continue;
 
-				value = effect.effect().apply(value, entry.getValue());
-			}
-		}
+                value = effect.effect().apply(value, entry.getValue());
+            }
+        }
 
-		return value;
-	}
+        return value;
+    }
 
-	@Override
-	public float modifyValue(ItemStack stack, DataComponent<ValueEffect> component, float base) {
-		var value = base;
-		var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
+    @Override
+    public float modifyValue(ItemStack stack, DataComponent<ValueEffect> component, float base) {
+        var value = base;
+        var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
 
-		for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
-			var enchantment = enchantmentRegistry.get(entry.getKey());
-			if (enchantment == null) continue;
+        for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
+            var enchantment = enchantmentRegistry.get(entry.getKey());
+            if (enchantment == null) continue;
 
-			var effect = enchantment.effects().get(component);
-			if (effect == null) continue;
+            var effect = enchantment.effects().get(component);
+            if (effect == null) continue;
 
-			value = effect.apply(value, entry.getValue());
-		}
-
-		return value;
-	}
-
-	@Override
-	public <T> T pickHighestLevel(ItemStack stack, DataComponent<List<T>> component, T fallback) {
-		List<T> pickedEffects = null;
-		var pickedLevel = 0;
-		var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
-
-		for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
-			if (pickedEffects != null && pickedLevel >= entry.getValue()) continue;
-
-			var enchantment = enchantmentRegistry.get(entry.getKey());
-			if (enchantment == null) continue;
-
-			var effects = enchantment.effects().get(component);
-			if (effects == null) continue;
-
-			pickedEffects = effects;
-			pickedLevel = entry.getValue();
-		}
-
-		if (pickedEffects == null) return fallback;
-
-		return pickedEffects.get(Math.min(pickedLevel, pickedEffects.size()) - 1);
-	}
-
-	@Override
-	public int getProjectileIgniteTicks(ItemStack stack) {
-		var ticks = 0;
-		var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
-
-		for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
-			var enchantment = enchantmentRegistry.get(entry.getKey());
-			if (enchantment == null) continue;
-
-			var effects = enchantment.effects().get(EffectComponent.PROJECTILE_SPAWNED);
-			if (effects == null) continue;
-
-			for (var effect : effects) {
-				if (effect.requirements() != null) continue;
-
-				ticks = Math.max(ticks, this.getProjectileIgniteTicks(effect.effect(), entry.getValue()));
-			}
-		}
-
-		return ticks;
-	}
-
-	private int getProjectileIgniteTicks(EntityEffect effect, int level) {
-		if (effect instanceof EntityEffect.Ignite ignite) {
-			return (int) Math.floor(ignite.duration().calc(level) * ServerFlag.SERVER_TICKS_PER_SECOND);
-		}
-
-		if (effect instanceof EntityEffect.AllOf allOf) {
-			var ticks = 0;
-
-			for (var nestedEffect : allOf.effect()) {
-				ticks = Math.max(ticks, this.getProjectileIgniteTicks(nestedEffect, level));
-			}
-
-			return ticks;
-		}
-
-		return 0;
-	}
-
-	@Override
-	public boolean shouldUnbreakingPreventDamage(ItemStack stack) {
-		int unbreakingLevel = stack.get(DataComponents.ENCHANTMENTS).level(Enchantment.UNBREAKING);
-		if (unbreakingLevel <= 0) return false;
-
-		var chance = isArmorItem(stack.material())
-				? (2.0 * unbreakingLevel) / (10.0 + 5.0 * (unbreakingLevel - 1))
-				: (double) unbreakingLevel / (2.0 + (unbreakingLevel - 1));
-
-		return ThreadLocalRandom.current().nextDouble() < chance;
-	}
-
-	private static boolean isArmorItem(Material material) {
-		return RegistryTags.contains(RegistryTags.ENCHANTABLE_ARMOR, material);
-	}
-
-	@Override
-	public void onUserDamaged(LivingEntity user, LivingEntity attacker) {
-		for (var slot : EquipmentSlot.values()) {
-			forEachEnchantment(List.of(user.getEquipment(slot)), (enchantment, level) ->
-					enchantment.onUserDamaged(user, attacker, level, slot, this, this.configuration));
-		}
-	}
-
-	@Override
-	public void onTargetDamaged(LivingEntity user, Entity target) {
-		this.onTargetDamaged(user, target, user.getItemInMainHand());
-	}
-
-	@Override
-	public void onTargetDamaged(LivingEntity user, Entity target, ItemStack weapon) {
-		forEachEnchantment(List.of(weapon), (enchantment, level) ->
-				enchantment.onTargetDamaged(user, target, level, this, this.configuration));
-	}
+            value = effect.apply(value, entry.getValue());
+        }
+
+        return value;
+    }
+
+    @Override
+    public <T> T pickHighestLevel(ItemStack stack, DataComponent<List<T>> component, T fallback) {
+        List<T> pickedEffects = null;
+        var pickedLevel = 0;
+        var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
+
+        for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
+            if (pickedEffects != null && pickedLevel >= entry.getValue()) continue;
+
+            var enchantment = enchantmentRegistry.get(entry.getKey());
+            if (enchantment == null) continue;
+
+            var effects = enchantment.effects().get(component);
+            if (effects == null) continue;
+
+            pickedEffects = effects;
+            pickedLevel = entry.getValue();
+        }
+
+        if (pickedEffects == null) return fallback;
+
+        return pickedEffects.get(Math.min(pickedLevel, pickedEffects.size()) - 1);
+    }
+
+    @Override
+    public int getProjectileIgniteTicks(ItemStack stack) {
+        var ticks = 0;
+        var enchantmentRegistry = MinecraftServer.getEnchantmentRegistry();
+
+        for (var entry : stack.get(DataComponents.ENCHANTMENTS).enchantments().entrySet()) {
+            var enchantment = enchantmentRegistry.get(entry.getKey());
+            if (enchantment == null) continue;
+
+            var effects = enchantment.effects().get(EffectComponent.PROJECTILE_SPAWNED);
+            if (effects == null) continue;
+
+            for (var effect : effects) {
+                if (effect.requirements() != null) continue;
+
+                ticks = Math.max(ticks, this.getProjectileIgniteTicks(effect.effect(), entry.getValue()));
+            }
+        }
+
+        return ticks;
+    }
+
+    private int getProjectileIgniteTicks(EntityEffect effect, int level) {
+        if (effect instanceof EntityEffect.Ignite ignite) {
+            return (int) Math.floor(ignite.duration().calc(level) * ServerFlag.SERVER_TICKS_PER_SECOND);
+        }
+
+        if (effect instanceof EntityEffect.AllOf allOf) {
+            var ticks = 0;
+
+            for (var nestedEffect : allOf.effect()) {
+                ticks = Math.max(ticks, this.getProjectileIgniteTicks(nestedEffect, level));
+            }
+
+            return ticks;
+        }
+
+        return 0;
+    }
+
+    @Override
+    public boolean shouldUnbreakingPreventDamage(ItemStack stack) {
+        var unbreakingLevel = stack.get(DataComponents.ENCHANTMENTS).level(Enchantment.UNBREAKING);
+        if (unbreakingLevel <= 0) return false;
+
+        var chance = isArmorItem(stack.material())
+                ? (2.0 * unbreakingLevel) / (10.0 + 5.0 * (unbreakingLevel - 1))
+                : (double) unbreakingLevel / (2.0 + (unbreakingLevel - 1));
+
+        return ThreadLocalRandom.current().nextDouble() < chance;
+    }
+
+    private static boolean isArmorItem(Material material) {
+        return RegistryTags.contains(RegistryTags.ENCHANTABLE_ARMOR, material);
+    }
+
+    @Override
+    public void onUserDamaged(LivingEntity user, LivingEntity attacker) {
+        for (var slot : EquipmentSlot.values()) {
+            forEachEnchantment(List.of(user.getEquipment(slot)), (enchantment, level) ->
+                    enchantment.onUserDamaged(user, attacker, level, slot, this, this.configuration));
+        }
+    }
+
+    @Override
+    public void onTargetDamaged(LivingEntity user, Entity target) {
+        this.onTargetDamaged(user, target, user.getItemInMainHand());
+    }
+
+    @Override
+    public void onTargetDamaged(LivingEntity user, Entity target, ItemStack weapon) {
+        forEachEnchantment(List.of(weapon), (enchantment, level) ->
+                enchantment.onTargetDamaged(user, target, level, this, this.configuration));
+    }
 }

@@ -16,76 +16,75 @@ import net.minestom.server.world.DimensionType;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ChorusFruitUtil {
-	private static boolean randomTeleport(Entity entity, Pos to) {
-		Instance instance = entity.getInstance();
-		assert instance != null;
-		if (!instance.isChunkLoaded(to)) return false;
+    private static boolean randomTeleport(Entity entity, Pos to) {
+        var instance = entity.getInstance();
+        assert instance != null;
+        if (!instance.isChunkLoaded(to)) return false;
 
-		var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
-		int minY = MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType()).minY();
+        var blockGetter = new ChunkBlockGetter(instance, null, Block.AIR);
+        var minY = MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType()).minY();
 
-		double y = to.y();
-		int blockY = to.blockY();
-		boolean landed = false;
-		while (!landed && blockY > minY) {
-			if (blockGetter.getBlock(to.blockX(), blockY - 1, to.blockZ()).blocksMotion()) {
-				landed = true;
-			} else {
-				y--;
-				blockY--;
-			}
-		}
+        var y = to.y();
+        var blockY = to.blockY();
+        var landed = false;
+        while (!landed && blockY > minY) {
+            if (blockGetter.getBlock(to.blockX(), blockY - 1, to.blockZ()).blocksMotion()) {
+                landed = true;
+            } else {
+                y--;
+                blockY--;
+            }
+        }
 
-		if (!landed) return false;
+        if (!landed) return false;
 
-		Pos target = to.withY(y);
-		BoundingBox boundingBox = entity.getBoundingBox();
-		if (BlockUtil.hasCollision(blockGetter, target, boundingBox)
-				|| BlockUtil.containsLiquid(blockGetter, target, boundingBox)) {
-			return false;
-		}
+        var target = to.withY(y);
+        var boundingBox = entity.getBoundingBox();
+        if (BlockUtil.hasCollision(blockGetter, target, boundingBox)
+                || BlockUtil.containsLiquid(blockGetter, target, boundingBox)) {
+            return false;
+        }
 
-		entity.teleport(target);
-		entity.triggerStatus((byte) 46);
+        entity.teleport(target);
+        entity.triggerStatus((byte) 46);
 
-		return true;
-	}
+        return true;
+    }
 
-	public static void tryChorusTeleport(Entity entity, float diameter) {
-		ThreadLocalRandom random = ThreadLocalRandom.current();
-		Instance instance = entity.getInstance();
-		assert instance != null;
-		Pos prevPosition = entity.getPosition();
-		double prevX = prevPosition.x();
-		double prevY = prevPosition.y();
-		double prevZ = prevPosition.z();
+    public static void tryChorusTeleport(Entity entity, float diameter) {
+        var random = ThreadLocalRandom.current();
+        var instance = entity.getInstance();
+        assert instance != null;
+        var prevPosition = entity.getPosition();
+        var prevX = prevPosition.x();
+        var prevY = prevPosition.y();
+        var prevZ = prevPosition.z();
 
-		float pitch = prevPosition.pitch();
-		float yaw = prevPosition.yaw();
+        var pitch = prevPosition.pitch();
+        var yaw = prevPosition.yaw();
 
-		DimensionType dimensionType = MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType());
-		assert dimensionType != null;
+        var dimensionType = MinecraftServer.getDimensionTypeRegistry().get(instance.getDimensionType());
+        assert dimensionType != null;
 
-		// Max 16 tries
-		for (int i = 0; i < 16; i++) {
-			double x = prevX + (random.nextDouble() - 0.5) * diameter;
-			double y = Math.clamp(prevY + (random.nextDouble() - 0.5) * diameter,
-					dimensionType.minY(), dimensionType.minY()
-							+ dimensionType.logicalHeight() - 1);
-			double z = prevZ + (random.nextDouble() - 0.5) * diameter;
+        for (var index = 0; index < 16; index++) {
+            var x = prevX + (random.nextDouble() - 0.5) * diameter;
+            var y = Math.clamp(prevY + (random.nextDouble() - 0.5) * diameter,
+                    dimensionType.minY(), dimensionType.minY()
+                            + dimensionType.logicalHeight() - 1);
+            var z = prevZ + (random.nextDouble() - 0.5) * diameter;
 
-			if (entity.getVehicle() != null) {
-				entity.getVehicle().removePassenger(entity);
-			}
+            if (entity.getVehicle() != null) {
+                entity.getVehicle().removePassenger(entity);
+            }
 
-			if (randomTeleport(entity, new Pos(x, y, z, yaw, pitch))) {
-				ViewUtil.viewersAndSelf(entity).playSound(Sound.sound(
-						SoundEvent.ITEM_CHORUS_FRUIT_TELEPORT, Sound.Source.PLAYER,
-						1.0f, 1.0f
-				), entity);
+            if (randomTeleport(entity, new Pos(x, y, z, yaw, pitch))) {
+                ViewUtil.viewersAndSelf(entity).playSound(Sound.sound(
+                        SoundEvent.ITEM_CHORUS_FRUIT_TELEPORT, Sound.Source.PLAYER,
+                        1.0F, 1.0F
+                ), entity);
 
-				break;
-			}
-		}
-	}
+                break;
+            }
+        }
+    }
 }

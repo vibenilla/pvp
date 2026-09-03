@@ -28,111 +28,109 @@ import java.util.List;
  * Vanilla implementation of {@link SweepingFeature}
  */
 public class VanillaSweepingFeature implements SweepingFeature {
-	public static final DefinedFeature<VanillaSweepingFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.SWEEPING, VanillaSweepingFeature::new,
-			FeatureType.ENCHANTMENT, FeatureType.KNOCKBACK
-	);
+    public static final DefinedFeature<VanillaSweepingFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.SWEEPING, VanillaSweepingFeature::new,
+            FeatureType.ENCHANTMENT, FeatureType.KNOCKBACK
+    );
 
-	private final FeatureConfiguration configuration;
+    private final FeatureConfiguration configuration;
 
-	private EnchantmentFeature enchantmentFeature;
-	private KnockbackFeature knockbackFeature;
+    private EnchantmentFeature enchantmentFeature;
+    private KnockbackFeature knockbackFeature;
 
-	public VanillaSweepingFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-	}
+    public VanillaSweepingFeature(FeatureConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
-	@Override
-	public void initDependencies() {
-		this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
-		this.knockbackFeature = this.configuration.get(FeatureType.KNOCKBACK);
-	}
+    @Override
+    public void initDependencies() {
+        this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
+        this.knockbackFeature = this.configuration.get(FeatureType.KNOCKBACK);
+    }
 
-	@Override
-	public boolean shouldSweep(LivingEntity attacker, AttackValues.PreSweeping values) {
-		if (!values.strong() || values.critical() || values.sprint() || !attacker.isOnGround()) return false;
+    @Override
+    public boolean shouldSweep(LivingEntity attacker, AttackValues.PreSweeping values) {
+        if (!values.strong() || values.critical() || values.sprint() || !attacker.isOnGround()) return false;
 
-		var previousPosition = attacker.getPreviousPosition();
-		var currentPosition = attacker.getPosition();
-		var movementX = currentPosition.x() - previousPosition.x();
-		var movementZ = currentPosition.z() - previousPosition.z();
-		var horizontalMovementSquared = movementX * movementX + movementZ * movementZ;
-		var maxMovement = attacker.getAttributeValue(Attribute.MOVEMENT_SPEED) * 2.5;
-		if (horizontalMovementSquared >= maxMovement * maxMovement) return false;
+        var previousPosition = attacker.getPreviousPosition();
+        var currentPosition = attacker.getPosition();
+        var movementX = currentPosition.x() - previousPosition.x();
+        var movementZ = currentPosition.z() - previousPosition.z();
+        var horizontalMovementSquared = movementX * movementX + movementZ * movementZ;
+        var maxMovement = attacker.getAttributeValue(Attribute.MOVEMENT_SPEED) * 2.5;
+        if (horizontalMovementSquared >= maxMovement * maxMovement) return false;
 
-		return RegistryTags.contains(RegistryTags.SWORDS, attacker.getItemInMainHand().material());
-	}
+        return RegistryTags.contains(RegistryTags.SWORDS, attacker.getItemInMainHand().material());
+    }
 
-	@Override
-	public float getSweepingDamage(LivingEntity attacker, float damage) {
-		return 1.0f + (float) attacker.getAttributeValue(Attribute.SWEEPING_DAMAGE_RATIO) * damage;
-	}
+    @Override
+    public float getSweepingDamage(LivingEntity attacker, float damage) {
+        return 1.0F + (float) attacker.getAttributeValue(Attribute.SWEEPING_DAMAGE_RATIO) * damage;
+    }
 
-	@Override
-	public Collection<LivingEntity> applySweeping(LivingEntity attacker, LivingEntity target, float damage) {
-		return this.applySweeping(attacker, target, damage, 1.0);
-	}
+    @Override
+    public Collection<LivingEntity> applySweeping(LivingEntity attacker, LivingEntity target, float damage) {
+        return this.applySweeping(attacker, target, damage, 1.0);
+    }
 
-	@Override
-	public Collection<LivingEntity> applySweeping(LivingEntity attacker, LivingEntity target, float damage,
-	                                              double cooldownProgress) {
-		float sweepingDamage = this.getSweepingDamage(attacker, damage);
+    @Override
+    public Collection<LivingEntity> applySweeping(LivingEntity attacker, LivingEntity target, float damage,
+                                                  double cooldownProgress) {
+        var sweepingDamage = this.getSweepingDamage(attacker, damage);
 
-		// Loop and check for colliding entities
-		List<LivingEntity> affectedEntities = new ArrayList<>();
-		BoundingBox boundingBox = target.getBoundingBox().growSymmetrically(1.0, 0.25, 1.0);
-		assert target.getInstance() != null;
-		for (Entity nearbyEntity : target.getInstance().getNearbyEntities(target.getPosition(), 3)) {
-			var affectedEntity = this.applySweepingToEntity(attacker, target, sweepingDamage, cooldownProgress,
-					boundingBox, nearbyEntity);
+        var affectedEntities = new ArrayList<LivingEntity>();
+        var boundingBox = target.getBoundingBox().growSymmetrically(1.0, 0.25, 1.0);
+        assert target.getInstance() != null;
+        for (var nearbyEntity : target.getInstance().getNearbyEntities(target.getPosition(), 3)) {
+            var affectedEntity = this.applySweepingToEntity(attacker, target, sweepingDamage, cooldownProgress,
+                    boundingBox, nearbyEntity);
 
-			if (affectedEntity != null) {
-				affectedEntities.add(affectedEntity);
-			}
-		}
+            if (affectedEntity != null) {
+                affectedEntities.add(affectedEntity);
+            }
+        }
 
-		// Spawn sweeping particles
-		Pos pos = attacker.getPosition();
-		double x = -Math.sin(Math.toRadians(pos.yaw()));
-		double z = Math.cos(Math.toRadians(pos.yaw()));
+        var position = attacker.getPosition();
+        var x = -Math.sin(Math.toRadians(position.yaw()));
+        var z = Math.cos(Math.toRadians(position.yaw()));
 
-		attacker.sendPacketToViewersAndSelf(new ParticlePacket(
-				Particle.SWEEP_ATTACK, false,false,
-				pos.x() + x, pos.y() + attacker.getBoundingBox().height() * 0.5, pos.z() + z,
-				(float) x, 0, (float) z,
-				0, 0
-		));
+        attacker.sendPacketToViewersAndSelf(new ParticlePacket(
+                Particle.SWEEP_ATTACK, false,false,
+                position.x() + x, position.y() + attacker.getBoundingBox().height() * 0.5, position.z() + z,
+                (float) x, 0, (float) z,
+                0, 0
+        ));
 
-		return affectedEntities;
-	}
+        return affectedEntities;
+    }
 
-	private LivingEntity applySweepingToEntity(LivingEntity attacker, LivingEntity target, float sweepingDamage,
-	                                           double cooldownProgress, BoundingBox boundingBox, Entity nearbyEntity) {
-		if (nearbyEntity == target || nearbyEntity == attacker) return null;
-		if (!(nearbyEntity instanceof LivingEntity living)) return null;
-		if (this.isMarkerArmorStand(nearbyEntity)) return null;
-		if (!boundingBox.intersectEntity(target.getPosition(), nearbyEntity)) return null;
-		if (attacker.getPosition().distanceSquared(nearbyEntity.getPosition()) >= 9.0) return null;
+    private LivingEntity applySweepingToEntity(LivingEntity attacker, LivingEntity target, float sweepingDamage,
+                                               double cooldownProgress, BoundingBox boundingBox, Entity nearbyEntity) {
+        if (nearbyEntity == target || nearbyEntity == attacker) return null;
+        if (!(nearbyEntity instanceof LivingEntity living)) return null;
+        if (this.isMarkerArmorStand(nearbyEntity)) return null;
+        if (!boundingBox.intersectEntity(target.getPosition(), nearbyEntity)) return null;
+        if (attacker.getPosition().distanceSquared(nearbyEntity.getPosition()) >= 9.0) return null;
 
-		float currentDamage = (sweepingDamage + this.enchantmentFeature.getAttackDamage(
-				attacker.getItemInMainHand(), living)) * (float) cooldownProgress;
+        var currentDamage = (sweepingDamage + this.enchantmentFeature.getAttackDamage(
+                attacker.getItemInMainHand(), living)) * (float) cooldownProgress;
 
-		var damaged = living.damage(new Damage(
-				attacker instanceof Player ? DamageType.PLAYER_ATTACK : DamageType.MOB_ATTACK,
-				attacker, attacker,
-				null, currentDamage
-		));
+        var damaged = living.damage(new Damage(
+                attacker instanceof Player ? DamageType.PLAYER_ATTACK : DamageType.MOB_ATTACK,
+                attacker, attacker,
+                null, currentDamage
+        ));
 
-		if (!damaged) return null;
+        if (!damaged) return null;
 
-		this.knockbackFeature.applySweepingKnockback(attacker, living);
+        this.knockbackFeature.applySweepingKnockback(attacker, living);
 
-		return living;
-	}
+        return living;
+    }
 
-	private boolean isMarkerArmorStand(Entity entity) {
-		return entity.getEntityType() == EntityType.ARMOR_STAND
-				&& entity.getEntityMeta() instanceof ArmorStandMeta armorStandMeta
-				&& armorStandMeta.isMarker();
-	}
+    private boolean isMarkerArmorStand(Entity entity) {
+        return entity.getEntityType() == EntityType.ARMOR_STAND
+                && entity.getEntityMeta() instanceof ArmorStandMeta armorStandMeta
+                && armorStandMeta.isMarker();
+    }
 }

@@ -65,13 +65,13 @@ public final class CombatFeatureRegistryTest {
             var player = env.createPlayer(env.createFlatInstance(), SPAWN);
             player.setRespawnPoint(SPAWN);
             player.setFood(3);
-            player.setFoodSaturation(0.0f);
+            player.setFoodSaturation(0.0F);
 
             player.kill();
             player.respawn();
 
             assertEquals(20, player.getFood());
-            assertEquals(5.0f, player.getFoodSaturation());
+            assertEquals(5.0F, player.getFoodSaturation());
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }

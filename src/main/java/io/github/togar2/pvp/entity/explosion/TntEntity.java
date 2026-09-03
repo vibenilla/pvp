@@ -14,60 +14,60 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TntEntity extends Entity {
-	private final Entity causingEntity;
-	private boolean exploded;
+    private final Entity causingEntity;
+    private boolean exploded;
 
-	public TntEntity(@Nullable Entity causingEntity) {
-		super(EntityType.TNT);
-		this.causingEntity = causingEntity;
+    public TntEntity(@Nullable Entity causingEntity) {
+        super(EntityType.TNT);
+        this.causingEntity = causingEntity;
 
-		double angle = ThreadLocalRandom.current().nextDouble() * 2 * Math.PI;
-        this.setVelocity(new Vec(-Math.sin(angle) * 0.02, 0.2f, -Math.cos(angle) * 0.02)
-				.mul(ServerFlag.SERVER_TICKS_PER_SECOND));
-	}
+        var angle = ThreadLocalRandom.current().nextDouble() * 2 * Math.PI;
+        this.setVelocity(new Vec(-Math.sin(angle) * 0.02, 0.2F, -Math.cos(angle) * 0.02)
+                .mul(ServerFlag.SERVER_TICKS_PER_SECOND));
+    }
 
-	public int getFuse() {
-		return ((PrimedTntMeta) this.getEntityMeta()).getFuseTime();
-	}
+    public int getFuse() {
+        return ((PrimedTntMeta) this.getEntityMeta()).getFuseTime();
+    }
 
-	public void setFuse(int fuse) {
-		((PrimedTntMeta) this.getEntityMeta()).setFuseTime(fuse);
-	}
+    public void setFuse(int fuse) {
+        ((PrimedTntMeta) this.getEntityMeta()).setFuseTime(fuse);
+    }
 
-	@Override
-	public void update(long time) {
-		if (this.onGround) this.velocity = this.velocity.mul(0.7, -0.5, 0.7);
-		int newFuse = this.getFuse() - 1;
-		this.setFuse(newFuse);
-		if (newFuse <= 0 && !this.exploded) {
-			this.exploded = true;
-			Instance instance = this.instance;
-			Pos position = this.position;
-			BoundingBox boundingBox = this.boundingBox;
+    @Override
+    public void update(long time) {
+        if (this.onGround) this.velocity = this.velocity.mul(0.7, -0.5, 0.7);
+        var newFuse = this.getFuse() - 1;
+        this.setFuse(newFuse);
+        if (newFuse <= 0 && !this.exploded) {
+            this.exploded = true;
+            var instance = this.instance;
+            var position = this.position;
+            var boundingBox = this.boundingBox;
 
-			if (instance.getExplosionSupplier() != null) {
-				var additionalData = CompoundBinaryTag.builder()
-						.putString("sourceEntity", this.getUuid().toString());
+            if (instance.getExplosionSupplier() != null) {
+                var additionalData = CompoundBinaryTag.builder()
+                        .putString("sourceEntity", this.getUuid().toString());
 
-				if (this.causingEntity != null) {
-					additionalData.putString("causingEntity", this.causingEntity.getUuid().toString());
-				}
+                if (this.causingEntity != null) {
+                    additionalData.putString("causingEntity", this.causingEntity.getUuid().toString());
+                }
 
-				instance.explode(
-						(float) position.x(),
-						(float) (position.y() + boundingBox.height() * 0.0625),
-						(float) position.z(),
-						4.0f,
-						additionalData.build()
-				);
-			}
+                instance.explode(
+                        (float) position.x(),
+                        (float) (position.y() + boundingBox.height() * 0.0625),
+                        (float) position.z(),
+                        4.0F,
+                        additionalData.build()
+                );
+            }
 
-			this.remove();
-		}
-	}
+            this.remove();
+        }
+    }
 
-	@Override
-	public double getEyeHeight() {
-		return 0.15;
-	}
+    @Override
+    public double getEyeHeight() {
+        return 0.15;
+    }
 }

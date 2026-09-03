@@ -35,143 +35,141 @@ import java.util.concurrent.ThreadLocalRandom;
  * Vanilla implementation of {@link BowFeature}
  */
 public class VanillaBowFeature implements BowFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaBowFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.BOW, VanillaBowFeature::new,
-			FeatureType.ITEM_DAMAGE, FeatureType.EFFECT, FeatureType.ENCHANTMENT, FeatureType.PROJECTILE_ITEM,
-			FeatureType.PLAYER_STATE
-	);
+    public static final DefinedFeature<VanillaBowFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.BOW, VanillaBowFeature::new,
+            FeatureType.ITEM_DAMAGE, FeatureType.EFFECT, FeatureType.ENCHANTMENT, FeatureType.PROJECTILE_ITEM,
+            FeatureType.PLAYER_STATE
+    );
 
-	private final FeatureConfiguration configuration;
+    private final FeatureConfiguration configuration;
 
-	private PlayerStateFeature playerStateFeature;
+    private PlayerStateFeature playerStateFeature;
 
-	private ItemDamageFeature itemDamageFeature;
-	private EffectFeature effectFeature;
-	private EnchantmentFeature enchantmentFeature;
-	private ProjectileItemFeature projectileItemFeature;
+    private ItemDamageFeature itemDamageFeature;
+    private EffectFeature effectFeature;
+    private EnchantmentFeature enchantmentFeature;
+    private ProjectileItemFeature projectileItemFeature;
 
-	public VanillaBowFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-	}
+    public VanillaBowFeature(FeatureConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
-	@Override
-	public void initDependencies() {
-		this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
-		this.itemDamageFeature = this.configuration.get(FeatureType.ITEM_DAMAGE);
-		this.effectFeature = this.configuration.get(FeatureType.EFFECT);
-		this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
-		this.projectileItemFeature = this.configuration.get(FeatureType.PROJECTILE_ITEM);
-	}
+    @Override
+    public void initDependencies() {
+        this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
+        this.itemDamageFeature = this.configuration.get(FeatureType.ITEM_DAMAGE);
+        this.effectFeature = this.configuration.get(FeatureType.EFFECT);
+        this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
+        this.projectileItemFeature = this.configuration.get(FeatureType.PROJECTILE_ITEM);
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(PlayerBeginItemUseEvent.class, event -> {
-			if (event.getAnimation() == ItemAnimation.BOW) {
-				if (event.getPlayer().getGameMode() != GameMode.CREATIVE
-						&& this.projectileItemFeature.getBowProjectile(event.getPlayer()) == null) {
-					event.setCancelled(true);
-				}
-			}
-		});
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(PlayerBeginItemUseEvent.class, event -> {
+            if (event.getAnimation() == ItemAnimation.BOW) {
+                if (event.getPlayer().getGameMode() != GameMode.CREATIVE
+                        && this.projectileItemFeature.getBowProjectile(event.getPlayer()) == null) {
+                    event.setCancelled(true);
+                }
+            }
+        });
 
-		node.addListener(PlayerCancelItemUseEvent.class, event -> {
-			Player player = event.getPlayer();
-			ItemStack stack = event.getItemStack();
-			if (stack.material() != Material.BOW) return;
+        node.addListener(PlayerCancelItemUseEvent.class, event -> {
+            var player = event.getPlayer();
+            var stack = event.getItemStack();
+            if (stack.material() != Material.BOW) return;
 
-			ItemStack projectileItem;
-			int projectileSlot;
+            ItemStack projectileItem;
+            int projectileSlot;
 
-			ProjectileItemFeature.ProjectileItem projectile = this.projectileItemFeature.getBowProjectile(player);
-			if (projectile == null) {
-				if (player.getGameMode() != GameMode.CREATIVE) return;
+            ProjectileItemFeature.ProjectileItem projectile = this.projectileItemFeature.getBowProjectile(player);
+            if (projectile == null) {
+                if (player.getGameMode() != GameMode.CREATIVE) return;
 
-				projectileItem = Arrow.DEFAULT_ARROW;
-				projectileSlot = -1;
-			} else {
-				projectileItem = projectile.stack();
-				projectileSlot = projectile.slot();
-			}
+                projectileItem = Arrow.DEFAULT_ARROW;
+                projectileSlot = -1;
+            } else {
+                projectileItem = projectile.stack();
+                projectileSlot = projectile.slot();
+            }
 
-			long useTicks = player.getCurrentItemUseTime();
-			double power = this.getBowPower(useTicks);
-			if (power < 0.1) return;
+            var useTicks = player.getCurrentItemUseTime();
+            var power = this.getBowPower(useTicks);
+            if (power < 0.1) return;
 
-			var ammoUse = projectileItem.material() == Material.ARROW
-					? (int) this.enchantmentFeature.modifyConditionalValue(
-							stack, EffectComponent.AMMO_USE, 1.0F, true)
-					: 1;
-			if (player.getGameMode() != GameMode.CREATIVE && ammoUse > projectileItem.amount()) return;
+            var ammoUse = projectileItem.material() == Material.ARROW
+                    ? (int) this.enchantmentFeature.modifyConditionalValue(
+                            stack, EffectComponent.AMMO_USE, 1.0F, true)
+                    : 1;
+            if (player.getGameMode() != GameMode.CREATIVE && ammoUse > projectileItem.amount()) return;
 
-			// Arrow creation
-			AbstractArrow arrow = this.createArrow(projectileItem.withAmount(1), player);
-			arrow.setWeaponItem(stack);
+            var arrow = this.createArrow(projectileItem.withAmount(1), player);
+            arrow.setWeaponItem(stack);
 
-			if (power >= 1) arrow.setCritical(true);
+            if (power >= 1) arrow.setCritical(true);
 
-			var arrowDamage = this.enchantmentFeature.modifyConditionalValue(
-					stack, EffectComponent.DAMAGE, (float) arrow.getBaseDamage(), true
-			);
-			arrow.setBaseDamage(arrowDamage);
+            var arrowDamage = this.enchantmentFeature.modifyConditionalValue(
+                    stack, EffectComponent.DAMAGE, (float) arrow.getBaseDamage(), true
+            );
+            arrow.setBaseDamage(arrowDamage);
 
-			var punchKnockback = this.enchantmentFeature.modifyConditionalValue(
-					stack, EffectComponent.KNOCKBACK, 0.0F, true
-			);
-			if (punchKnockback > 0.0F) arrow.setKnockback(punchKnockback);
+            var punchKnockback = this.enchantmentFeature.modifyConditionalValue(
+                    stack, EffectComponent.KNOCKBACK, 0.0F, true
+            );
+            if (punchKnockback > 0.0F) arrow.setKnockback(punchKnockback);
 
-			var projectileFireTicks = this.enchantmentFeature.getProjectileIgniteTicks(stack);
-			if (projectileFireTicks > 0) {
-				arrow.setFireTicksLeft(projectileFireTicks);
-			}
+            var projectileFireTicks = this.enchantmentFeature.getProjectileIgniteTicks(stack);
+            if (projectileFireTicks > 0) {
+                arrow.setFireTicksLeft(projectileFireTicks);
+            }
 
             this.itemDamageFeature.damageEquipment(player, event.getHand() == PlayerHand.MAIN ?
-					EquipmentSlot.MAIN_HAND : EquipmentSlot.OFF_HAND, 1);
+                    EquipmentSlot.MAIN_HAND : EquipmentSlot.OFF_HAND, 1);
 
-			boolean reallyInfinite = player.getGameMode() == GameMode.CREATIVE || ammoUse <= 0;
-			if (reallyInfinite || player.getGameMode() == GameMode.CREATIVE
-					&& (projectileItem.material() == Material.SPECTRAL_ARROW
-					|| projectileItem.material() == Material.TIPPED_ARROW)) {
-				arrow.setPickupMode(AbstractArrow.PickupMode.CREATIVE_ONLY);
-			}
+            var reallyInfinite = player.getGameMode() == GameMode.CREATIVE || ammoUse <= 0;
+            if (reallyInfinite || player.getGameMode() == GameMode.CREATIVE
+                    && (projectileItem.material() == Material.SPECTRAL_ARROW
+                    || projectileItem.material() == Material.TIPPED_ARROW)) {
+                arrow.setPickupMode(AbstractArrow.PickupMode.CREATIVE_ONLY);
+            }
 
-			// Arrow shooting
-			Pos position = player.getPosition().add(0D, player.getEyeHeight() - 0.1, 0D);
-			arrow.shootFromRotation(position.pitch(), position.yaw(), 0 , power * 3, 1.0);
-			Vec playerVel = this.playerStateFeature.getKnownMovement(player);
-			arrow.setVelocity(arrow.getVelocity().add(playerVel.x(),
-					player.isOnGround() ? 0.0D : playerVel.y(), playerVel.z()));
-			arrow.setInstance(Objects.requireNonNull(player.getInstance()), position.withView(arrow.getPosition()));
+            var position = player.getPosition().add(0, player.getEyeHeight() - 0.1, 0);
+            arrow.shootFromRotation(position.pitch(), position.yaw(), 0 , power * 3, 1.0);
+            var playerVel = this.playerStateFeature.getKnownMovement(player);
+            arrow.setVelocity(arrow.getVelocity().add(playerVel.x(),
+                    player.isOnGround() ? 0.0 : playerVel.y(), playerVel.z()));
+            arrow.setInstance(Objects.requireNonNull(player.getInstance()), position.withView(arrow.getPosition()));
 
-			ThreadLocalRandom random = ThreadLocalRandom.current();
-			ViewUtil.viewersAndSelf(player).playSound(Sound.sound(
-					SoundEvent.ENTITY_ARROW_SHOOT, Sound.Source.PLAYER,
-					1.0f, 1.0f / (random.nextFloat() * 0.4f + 1.2f) + (float) power * 0.5f
-			), player);
+            var random = ThreadLocalRandom.current();
+            ViewUtil.viewersAndSelf(player).playSound(Sound.sound(
+                    SoundEvent.ENTITY_ARROW_SHOOT, Sound.Source.PLAYER,
+                    1.0F, 1.0F / (random.nextFloat() * 0.4F + 1.2F) + (float) power * 0.5F
+            ), player);
 
-			if (!reallyInfinite && player.getGameMode() != GameMode.CREATIVE && projectileSlot >= 0) {
-				player.getInventory().setItemStack(projectileSlot,
-						projectileItem.withAmount(projectileItem.amount() - ammoUse));
-			}
-		});
-	}
+            if (!reallyInfinite && player.getGameMode() != GameMode.CREATIVE && projectileSlot >= 0) {
+                player.getInventory().setItemStack(projectileSlot,
+                        projectileItem.withAmount(projectileItem.amount() - ammoUse));
+            }
+        });
+    }
 
-	protected double getBowPower(long ticks) {
-		double seconds = ticks / (double) ServerFlag.SERVER_TICKS_PER_SECOND;
-		double power = (seconds * seconds + seconds * 2.0) / 3.0;
-		if (power > 1) {
-			power = 1;
-		}
+    protected double getBowPower(long ticks) {
+        var seconds = ticks / (double) ServerFlag.SERVER_TICKS_PER_SECOND;
+        var power = (seconds * seconds + seconds * 2.0) / 3.0;
+        if (power > 1) {
+            power = 1;
+        }
 
-		return power;
-	}
+        return power;
+    }
 
-	protected AbstractArrow createArrow(ItemStack stack, @Nullable Entity shooter) {
-		if (stack.material() == Material.SPECTRAL_ARROW) {
-			return new SpectralArrow(shooter, this.enchantmentFeature);
-		} else {
-			Arrow arrow = new Arrow(shooter, this.effectFeature, this.enchantmentFeature);
-			arrow.setItemStack(stack);
-			return arrow;
-		}
-	}
+    protected AbstractArrow createArrow(ItemStack stack, @Nullable Entity shooter) {
+        if (stack.material() == Material.SPECTRAL_ARROW) {
+            return new SpectralArrow(shooter, this.enchantmentFeature);
+        } else {
+            var arrow = new Arrow(shooter, this.effectFeature, this.enchantmentFeature);
+            arrow.setItemStack(stack);
+            return arrow;
+        }
+    }
 }

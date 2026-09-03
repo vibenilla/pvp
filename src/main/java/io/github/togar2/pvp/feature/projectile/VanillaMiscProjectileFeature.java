@@ -29,128 +29,128 @@ import java.util.concurrent.ThreadLocalRandom;
  * Vanilla implementation of {@link MiscProjectileFeature}
  */
 public class VanillaMiscProjectileFeature implements MiscProjectileFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaMiscProjectileFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.MISC_PROJECTILE, VanillaMiscProjectileFeature::new,
-			FeatureType.ITEM_COOLDOWN, FeatureType.FALL, FeatureType.PLAYER_STATE
-	);
+    public static final DefinedFeature<VanillaMiscProjectileFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.MISC_PROJECTILE, VanillaMiscProjectileFeature::new,
+            FeatureType.ITEM_COOLDOWN, FeatureType.FALL, FeatureType.PLAYER_STATE
+    );
 
-	private final FeatureConfiguration configuration;
+    private final FeatureConfiguration configuration;
 
-	private PlayerStateFeature playerStateFeature;
+    private PlayerStateFeature playerStateFeature;
 
-	private ItemCooldownFeature itemCooldownFeature;
-	private FallFeature fallFeature;
+    private ItemCooldownFeature itemCooldownFeature;
+    private FallFeature fallFeature;
 
-	public VanillaMiscProjectileFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-	}
+    public VanillaMiscProjectileFeature(FeatureConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
-	@Override
-	public void initDependencies() {
-		this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
-		this.itemCooldownFeature = this.configuration.get(FeatureType.ITEM_COOLDOWN);
-		this.fallFeature = this.configuration.get(FeatureType.FALL);
-	}
+    @Override
+    public void initDependencies() {
+        this.playerStateFeature = this.configuration.get(FeatureType.PLAYER_STATE);
+        this.itemCooldownFeature = this.configuration.get(FeatureType.ITEM_COOLDOWN);
+        this.fallFeature = this.configuration.get(FeatureType.FALL);
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(PlayerUseItemOnBlockEvent.class, event -> {
-			if (event.getItemStack().material() != Material.FIREWORK_ROCKET) return;
-			if (event.getPlayer().isFlyingWithElytra()) return;
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(PlayerUseItemOnBlockEvent.class, event -> {
+            if (event.getItemStack().material() != Material.FIREWORK_ROCKET) return;
+            if (event.getPlayer().isFlyingWithElytra()) return;
 
-			this.useFireworkRocketOnBlock(event);
-		});
+            this.useFireworkRocketOnBlock(event);
+        });
 
-		node.addListener(PlayerUseItemEvent.class, event -> {
-			if (event.getItemStack().material() == Material.FIREWORK_ROCKET
-					&& event.getPlayer().isFlyingWithElytra()) {
-				this.useFireworkRocket(event);
-				return;
-			}
+        node.addListener(PlayerUseItemEvent.class, event -> {
+            if (event.getItemStack().material() == Material.FIREWORK_ROCKET
+                    && event.getPlayer().isFlyingWithElytra()) {
+                this.useFireworkRocket(event);
+                return;
+            }
 
-			if (event.getItemStack().material() != Material.SNOWBALL
-					&& event.getItemStack().material() != Material.EGG
-					&& event.getItemStack().material() != Material.ENDER_PEARL
-					&& event.getItemStack().material() != Material.WIND_CHARGE)
-				return;
+            if (event.getItemStack().material() != Material.SNOWBALL
+                    && event.getItemStack().material() != Material.EGG
+                    && event.getItemStack().material() != Material.ENDER_PEARL
+                    && event.getItemStack().material() != Material.WIND_CHARGE)
+                return;
 
-			Player player = event.getPlayer();
-			ItemStack stack = event.getItemStack();
+            var player = event.getPlayer();
+            var stack = event.getItemStack();
 
-			boolean snowball = stack.material() == Material.SNOWBALL;
-			boolean enderpearl = stack.material() == Material.ENDER_PEARL;
-			boolean windCharge = stack.material() == Material.WIND_CHARGE;
+            var snowball = stack.material() == Material.SNOWBALL;
+            var enderpearl = stack.material() == Material.ENDER_PEARL;
+            var windCharge = stack.material() == Material.WIND_CHARGE;
 
-			SoundEvent soundEvent;
-			CustomEntityProjectile projectile;
-			if (snowball) {
-				soundEvent = SoundEvent.ENTITY_SNOWBALL_THROW;
-				projectile = new Snowball(player);
-			} else if (enderpearl) {
-				soundEvent = SoundEvent.ENTITY_ENDER_PEARL_THROW;
-				projectile = new ThrownEnderpearl(player, this.fallFeature);
-			} else if (windCharge) {
-				soundEvent = SoundEvent.ENTITY_WIND_CHARGE_THROW;
-				projectile = new WindCharge(player, this.fallFeature);
-			} else {
-				soundEvent = SoundEvent.ENTITY_EGG_THROW;
-				projectile = new ThrownEgg(player);
-			}
+            SoundEvent soundEvent;
+            CustomEntityProjectile projectile;
+            if (snowball) {
+                soundEvent = SoundEvent.ENTITY_SNOWBALL_THROW;
+                projectile = new Snowball(player);
+            } else if (enderpearl) {
+                soundEvent = SoundEvent.ENTITY_ENDER_PEARL_THROW;
+                projectile = new ThrownEnderpearl(player, this.fallFeature);
+            } else if (windCharge) {
+                soundEvent = SoundEvent.ENTITY_WIND_CHARGE_THROW;
+                projectile = new WindCharge(player, this.fallFeature);
+            } else {
+                soundEvent = SoundEvent.ENTITY_EGG_THROW;
+                projectile = new ThrownEgg(player);
+            }
 
-			if (projectile instanceof ItemHoldingProjectile itemHoldingProjectile) {
-				itemHoldingProjectile.setItem(stack);
-			}
+            if (projectile instanceof ItemHoldingProjectile itemHoldingProjectile) {
+                itemHoldingProjectile.setItem(stack);
+            }
 
-			ThreadLocalRandom random = ThreadLocalRandom.current();
-			ViewUtil.viewersAndSelf(player).playSound(Sound.sound(
-					soundEvent,
-					snowball || enderpearl || windCharge ? Sound.Source.NEUTRAL : Sound.Source.PLAYER,
-					0.5f, 0.4f / (random.nextFloat() * 0.4f + 0.8f)
-			), player);
+            var random = ThreadLocalRandom.current();
+            ViewUtil.viewersAndSelf(player).playSound(Sound.sound(
+                    soundEvent,
+                    snowball || enderpearl || windCharge ? Sound.Source.NEUTRAL : Sound.Source.PLAYER,
+                    0.5F, 0.4F / (random.nextFloat() * 0.4F + 0.8F)
+            ), player);
 
-			if (enderpearl || windCharge) {
-				this.itemCooldownFeature.setCooldown(player, stack);
-			}
+            if (enderpearl || windCharge) {
+                this.itemCooldownFeature.setCooldown(player, stack);
+            }
 
-			Pos position = player.getPosition().add(0, player.getEyeHeight() - 0.1D, 0);
-			projectile.shootFromRotation(position.pitch(), position.yaw(), 0, 1.5, 1.0);
+            var position = player.getPosition().add(0, player.getEyeHeight() - 0.1, 0);
+            projectile.shootFromRotation(position.pitch(), position.yaw(), 0, 1.5, 1.0);
 
-			Vec playerVel = this.playerStateFeature.getKnownMovement(player);
-			projectile.setVelocity(projectile.getVelocity().add(playerVel.x(),
-					player.isOnGround() ? 0.0D : playerVel.y(), playerVel.z()));
-			projectile.setInstance(Objects.requireNonNull(player.getInstance()), position.withView(projectile.getPosition()))
-					.thenRun(() -> projectile.setVelocity(projectile.getVelocity()));
+            var playerVel = this.playerStateFeature.getKnownMovement(player);
+            projectile.setVelocity(projectile.getVelocity().add(playerVel.x(),
+                    player.isOnGround() ? 0.0 : playerVel.y(), playerVel.z()));
+            projectile.setInstance(Objects.requireNonNull(player.getInstance()), position.withView(projectile.getPosition()))
+                    .thenRun(() -> projectile.setVelocity(projectile.getVelocity()));
 
-			if (player.getGameMode() != GameMode.CREATIVE) {
-				player.setItemInHand(event.getHand(), stack.withAmount(stack.amount() - 1));
-			}
-		});
-	}
+            if (player.getGameMode() != GameMode.CREATIVE) {
+                player.setItemInHand(event.getHand(), stack.withAmount(stack.amount() - 1));
+            }
+        });
+    }
 
-	private void useFireworkRocket(PlayerUseItemEvent event) {
-		var player = event.getPlayer();
-		var stack = event.getItemStack();
-		var rocket = new FireworkRocket(player, stack);
+    private void useFireworkRocket(PlayerUseItemEvent event) {
+        var player = event.getPlayer();
+        var stack = event.getItemStack();
+        var rocket = new FireworkRocket(player, stack);
 
-		rocket.setInstance(Objects.requireNonNull(player.getInstance()), player.getPosition());
+        rocket.setInstance(Objects.requireNonNull(player.getInstance()), player.getPosition());
 
-		if (player.getGameMode() != GameMode.CREATIVE) {
-			player.setItemInHand(event.getHand(), stack.withAmount(stack.amount() - 1));
-		}
-	}
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            player.setItemInHand(event.getHand(), stack.withAmount(stack.amount() - 1));
+        }
+    }
 
-	private void useFireworkRocketOnBlock(PlayerUseItemOnBlockEvent event) {
-		var player = event.getPlayer();
-		var stack = event.getItemStack();
-		var direction = event.getBlockFace().toDirection();
-		var clickPosition = event.getPosition().add(event.getCursorPosition());
-		var rocketPosition = clickPosition.add(direction.mul(0.15));
-		var rocket = new FireworkRocket(player, stack, false);
+    private void useFireworkRocketOnBlock(PlayerUseItemOnBlockEvent event) {
+        var player = event.getPlayer();
+        var stack = event.getItemStack();
+        var direction = event.getBlockFace().toDirection();
+        var clickPosition = event.getPosition().add(event.getCursorPosition());
+        var rocketPosition = clickPosition.add(direction.mul(0.15));
+        var rocket = new FireworkRocket(player, stack, false);
 
-		rocket.setInstance(Objects.requireNonNull(player.getInstance()), rocketPosition);
+        rocket.setInstance(Objects.requireNonNull(player.getInstance()), rocketPosition);
 
-		if (player.getGameMode() != GameMode.CREATIVE) {
-			player.setItemInHand(event.getHand(), stack.withAmount(stack.amount() - 1));
-		}
-	}
+        if (player.getGameMode() != GameMode.CREATIVE) {
+            player.setItemInHand(event.getHand(), stack.withAmount(stack.amount() - 1));
+        }
+    }
 }

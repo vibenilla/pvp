@@ -19,70 +19,41 @@ import net.minestom.server.event.trait.EntityInstanceEvent;
  * It can also be used to set legacy attack for a player, see {@link MinestomPvP#setLegacyAttack(Player, boolean)}.
  */
 public class MinestomPvP {
-	/**
-	 * Equivalent to creating a new event node from {@link CombatFeatures#modernVanilla()}
-	 *
-	 * @return the event node with all modern vanilla feature listeners attached
-	 */
-	public static EventNode<EntityInstanceEvent> events() {
-		return CombatFeatures.modernVanilla().createNode();
-	}
+    public static EventNode<EntityInstanceEvent> events() {
+        return CombatFeatures.modernVanilla().createNode();
+    }
 
-	/**
-	 * Equivalent to creating a new event node from {@link CombatFeatures#legacyVanilla()}
-	 *
-	 * @return the event node with all legacy (pre-1.9) vanilla feature listeners attached
-	 */
-	public static EventNode<EntityInstanceEvent> legacyEvents() {
-		return CombatFeatures.legacyVanilla().createNode();
-	}
+    public static EventNode<EntityInstanceEvent> legacyEvents() {
+        return CombatFeatures.legacyVanilla().createNode();
+    }
 
-	/**
-	 * Disables or enables legacy attack for a player.
-	 * With legacy attack, the player has no attack speed.
-	 *
-	 * @param player the player
-	 * @param legacyAttack {@code true} if legacy attack should be enabled
-	 */
-	public static void setLegacyAttack(Player player, boolean legacyAttack) {
-		AttributeInstance speed = player.getAttribute(Attribute.ATTACK_SPEED);
-		if (legacyAttack) {
-			speed.setBaseValue(100);
-		} else {
-			speed.setBaseValue(speed.attribute().defaultValue());
-		}
-	}
+    public static void setLegacyAttack(Player player, boolean legacyAttack) {
+        var speed = player.getAttribute(Attribute.ATTACK_SPEED);
+        if (legacyAttack) {
+            speed.setBaseValue(100);
+        } else {
+            speed.setBaseValue(speed.attribute().defaultValue());
+        }
+    }
 
-	/**
-	 * Initializes the PvP library. This has a few side effects, for more details see {@link #init(boolean)}.
-	 */
-	public static void init() {
-		init(true);
-	}
+    public static void init() {
+        init(true);
+    }
 
-	/**
-	 * Initializes the PvP library.
-	 * This method always initializes the registries and registers some global event handlers.
-	 * Depending on the value of the parameter, it also registers a custom player implementation.
-	 * <p>
-	 * Player latency comes from Minestom's own keep alive handling, which measures the round trip in nanoseconds.
-	 *
-	 * @param player When set to true, the custom player implementation will be registered
-	 */
-	public static void init(boolean player) {
-		CombatEnchantments.registerAll();
-		CombatPotionEffects.registerAll();
-		CombatPotionTypes.registerAll();
+    public static void init(boolean player) {
+        CombatEnchantments.registerAll();
+        CombatPotionEffects.registerAll();
+        CombatPotionTypes.registerAll();
 
-		CombatPlayer.init(MinecraftServer.getGlobalEventHandler());
+        CombatPlayer.init(MinecraftServer.getGlobalEventHandler());
 
-		if (player) {
-			MinecraftServer.getConnectionManager().setPlayerProvider(CombatPlayerImpl::new);
-		}
-	}
+        if (player) {
+            MinecraftServer.getConnectionManager().setPlayerProvider(CombatPlayerImpl::new);
+        }
+    }
 
-	@Deprecated(forRemoval = true)
-	public static void init(boolean player, boolean keepAlive) {
-		init(player);
-	}
+    @Deprecated(forRemoval = true)
+    public static void init(boolean player, boolean keepAlive) {
+        init(player);
+    }
 }

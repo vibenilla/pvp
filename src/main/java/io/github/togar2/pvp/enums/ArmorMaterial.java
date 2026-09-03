@@ -9,69 +9,69 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum ArmorMaterial {
-	LEATHER(new int[]{1, 2, 3, 1}, new int[]{1, 3, 2, 1}, SoundEvent.ITEM_ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, Material.LEATHER_BOOTS, Material.LEATHER_LEGGINGS, Material.LEATHER_CHESTPLATE, Material.LEATHER_HELMET),
-	COPPER(new int[]{1, 3, 4, 2}, new int[]{1, 3, 4, 2}, SoundEvent.ITEM_ARMOR_EQUIP_COPPER, 0.0F, 0.0F, Material.COPPER_BOOTS, Material.COPPER_LEGGINGS, Material.COPPER_CHESTPLATE, Material.COPPER_HELMET),
-	CHAIN(new int[]{1, 4, 5, 2}, new int[]{2, 5, 4, 1}, SoundEvent.ITEM_ARMOR_EQUIP_CHAIN, 0.0F, 0.0F, Material.CHAINMAIL_BOOTS, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_HELMET),
-	IRON(new int[]{2, 5, 6, 2}, new int[]{2, 6, 5, 2}, SoundEvent.ITEM_ARMOR_EQUIP_IRON, 0.0F, 0.0F, Material.IRON_BOOTS, Material.IRON_LEGGINGS, Material.IRON_CHESTPLATE, Material.IRON_HELMET),
-	GOLD(new int[]{1, 3, 5, 2}, new int[]{2, 5, 3, 1}, SoundEvent.ITEM_ARMOR_EQUIP_GOLD, 0.0F, 0.0F, Material.GOLDEN_BOOTS, Material.GOLDEN_LEGGINGS, Material.GOLDEN_CHESTPLATE, Material.GOLDEN_HELMET),
-	DIAMOND(new int[]{3, 6, 8, 3}, new int[]{3, 8, 6, 3}, SoundEvent.ITEM_ARMOR_EQUIP_DIAMOND, 2.0F, 0.0F, Material.DIAMOND_BOOTS, Material.DIAMOND_LEGGINGS, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_HELMET),
-	TURTLE(new int[]{2, 5, 6, 2}, new int[]{2, 6, 5, 2}, SoundEvent.ITEM_ARMOR_EQUIP_TURTLE, 0.0F, 0.0F, Material.TURTLE_HELMET),
-	NETHERITE(new int[]{3, 6, 8, 3}, new int[]{3, 8, 6, 3}, SoundEvent.ITEM_ARMOR_EQUIP_NETHERITE, 3.0F, 0.1F, Material.NETHERITE_BOOTS, Material.NETHERITE_LEGGINGS, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_HELMET);
+    LEATHER(new int[]{1, 2, 3, 1}, new int[]{1, 3, 2, 1}, SoundEvent.ITEM_ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, Material.LEATHER_BOOTS, Material.LEATHER_LEGGINGS, Material.LEATHER_CHESTPLATE, Material.LEATHER_HELMET),
+    COPPER(new int[]{1, 3, 4, 2}, new int[]{1, 3, 4, 2}, SoundEvent.ITEM_ARMOR_EQUIP_COPPER, 0.0F, 0.0F, Material.COPPER_BOOTS, Material.COPPER_LEGGINGS, Material.COPPER_CHESTPLATE, Material.COPPER_HELMET),
+    CHAIN(new int[]{1, 4, 5, 2}, new int[]{2, 5, 4, 1}, SoundEvent.ITEM_ARMOR_EQUIP_CHAIN, 0.0F, 0.0F, Material.CHAINMAIL_BOOTS, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_HELMET),
+    IRON(new int[]{2, 5, 6, 2}, new int[]{2, 6, 5, 2}, SoundEvent.ITEM_ARMOR_EQUIP_IRON, 0.0F, 0.0F, Material.IRON_BOOTS, Material.IRON_LEGGINGS, Material.IRON_CHESTPLATE, Material.IRON_HELMET),
+    GOLD(new int[]{1, 3, 5, 2}, new int[]{2, 5, 3, 1}, SoundEvent.ITEM_ARMOR_EQUIP_GOLD, 0.0F, 0.0F, Material.GOLDEN_BOOTS, Material.GOLDEN_LEGGINGS, Material.GOLDEN_CHESTPLATE, Material.GOLDEN_HELMET),
+    DIAMOND(new int[]{3, 6, 8, 3}, new int[]{3, 8, 6, 3}, SoundEvent.ITEM_ARMOR_EQUIP_DIAMOND, 2.0F, 0.0F, Material.DIAMOND_BOOTS, Material.DIAMOND_LEGGINGS, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_HELMET),
+    TURTLE(new int[]{2, 5, 6, 2}, new int[]{2, 6, 5, 2}, SoundEvent.ITEM_ARMOR_EQUIP_TURTLE, 0.0F, 0.0F, Material.TURTLE_HELMET),
+    NETHERITE(new int[]{3, 6, 8, 3}, new int[]{3, 8, 6, 3}, SoundEvent.ITEM_ARMOR_EQUIP_NETHERITE, 3.0F, 0.1F, Material.NETHERITE_BOOTS, Material.NETHERITE_LEGGINGS, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_HELMET);
 
-	private final int[] protectionAmounts;
-	private final int[] legacyProtectionAmounts;
-	private final SoundEvent equipSound;
-	private final float toughness;
-	private final float knockbackResistance;
-	private final Material[] items;
+    private final int[] protectionAmounts;
+    private final int[] legacyProtectionAmounts;
+    private final SoundEvent equipSound;
+    private final float toughness;
+    private final float knockbackResistance;
+    private final Material[] items;
 
-	ArmorMaterial(int[] protectionAmounts, int[] legacyProtectionAmounts, SoundEvent equipSound, float toughness, float knockbackResistance, Material... items) {
-		this.protectionAmounts = protectionAmounts;
-		this.legacyProtectionAmounts = legacyProtectionAmounts;
-		this.equipSound = equipSound;
-		this.toughness = toughness;
-		this.knockbackResistance = knockbackResistance;
-		this.items = items;
-	}
+    ArmorMaterial(int[] protectionAmounts, int[] legacyProtectionAmounts, SoundEvent equipSound, float toughness, float knockbackResistance, Material... items) {
+        this.protectionAmounts = protectionAmounts;
+        this.legacyProtectionAmounts = legacyProtectionAmounts;
+        this.equipSound = equipSound;
+        this.toughness = toughness;
+        this.knockbackResistance = knockbackResistance;
+        this.items = items;
+    }
 
-	public int getProtectionAmount(EquipmentSlot slot, CombatVersion version) {
-		int id;
-		switch (slot) {
-			case HELMET -> id = 3;
-			case CHESTPLATE -> id = 2;
-			case LEGGINGS -> id = 1;
-			case BOOTS -> id = 0;
-			default -> {
-				return 0;
-			}
-		}
+    public int getProtectionAmount(EquipmentSlot slot, CombatVersion version) {
+        int id;
+        switch (slot) {
+            case HELMET -> id = 3;
+            case CHESTPLATE -> id = 2;
+            case LEGGINGS -> id = 1;
+            case BOOTS -> id = 0;
+            default -> {
+                return 0;
+            }
+        }
 
-		return version.legacy() ? this.legacyProtectionAmounts[id] : this.protectionAmounts[id];
-	}
+        return version.legacy() ? this.legacyProtectionAmounts[id] : this.protectionAmounts[id];
+    }
 
-	public SoundEvent getEquipSound() {
-		return this.equipSound;
-	}
+    public SoundEvent getEquipSound() {
+        return this.equipSound;
+    }
 
-	public float getToughness() {
-		return this.toughness;
-	}
+    public float getToughness() {
+        return this.toughness;
+    }
 
-	public float getKnockbackResistance() {
-		return this.knockbackResistance;
-	}
+    public float getKnockbackResistance() {
+        return this.knockbackResistance;
+    }
 
-	private static final Map<Material, ArmorMaterial> MATERIAL_TO_ARMOR_MATERIAL = new HashMap<>();
+    private static final Map<Material, ArmorMaterial> MATERIAL_TO_ARMOR_MATERIAL = new HashMap<>();
 
-	public static ArmorMaterial fromMaterial(Material material) {
-		return MATERIAL_TO_ARMOR_MATERIAL.get(material);
-	}
+    public static ArmorMaterial fromMaterial(Material material) {
+        return MATERIAL_TO_ARMOR_MATERIAL.get(material);
+    }
 
-	static {
-		for (ArmorMaterial armorMaterial : values()) {
-			for (Material material : armorMaterial.items) {
-				MATERIAL_TO_ARMOR_MATERIAL.put(material, armorMaterial);
-			}
-		}
-	}
+    static {
+        for (var armorMaterial : values()) {
+            for (var material : armorMaterial.items) {
+                MATERIAL_TO_ARMOR_MATERIAL.put(material, armorMaterial);
+            }
+        }
+    }
 }

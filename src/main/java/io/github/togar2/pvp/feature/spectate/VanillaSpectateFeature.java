@@ -19,56 +19,51 @@ import net.minestom.server.tag.Tag;
  * Vanilla implementation of {@link SpectateFeature}
  */
 public class VanillaSpectateFeature implements SpectateFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaSpectateFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.SPECTATE, configuration -> new VanillaSpectateFeature()
-	);
+    public static final DefinedFeature<VanillaSpectateFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.SPECTATE, configuration -> new VanillaSpectateFeature()
+    );
 
-	public static final Tag<Entity> SPECTATING = Tag.Transient("spectating");
+    public static final Tag<Entity> SPECTATING = Tag.Transient("spectating");
 
-	@Override
-	public int getPriority() {
-		// Make sure events are called on this node before on VanillaAttackFeature
-		// This seems to be the only way to have 'dependencies' without overcomplicating
-		return -1;
-	}
+    @Override
+    public int getPriority() {
+        return -1;
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(EntityAttackEvent.class, event -> {
-			if (event.getEntity() instanceof Player player && player.getGameMode() == GameMode.SPECTATOR)
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(EntityAttackEvent.class, event -> {
+            if (event.getEntity() instanceof Player player && player.getGameMode() == GameMode.SPECTATOR)
                 this.makeSpectate(player, event.getTarget());
-		});
+        });
 
-		node.addListener(PlayerTickEvent.class, event -> this.spectateTick(event.getPlayer()));
-	}
+        node.addListener(PlayerTickEvent.class, event -> this.spectateTick(event.getPlayer()));
+    }
 
-	protected void spectateTick(Player player) {
-		Entity spectating = player.getTag(SPECTATING);
-		if (spectating == null || spectating == player) return;
+    protected void spectateTick(Player player) {
+        var spectating = player.getTag(SPECTATING);
+        if (spectating == null || spectating == player) return;
 
-		// This is to make sure other players don't see the player standing still while spectating
-		// And when the player stops spectating,
-		// they are at the entities position instead of their position before spectating
-		player.refreshPosition(spectating.getPosition());
+        player.refreshPosition(spectating.getPosition());
 
-		if (player.getEntityMeta().isSneaking() || spectating.isRemoved()
-				|| (spectating instanceof LivingEntity livingSpectating && livingSpectating.isDead())) {
+        if (player.getEntityMeta().isSneaking() || spectating.isRemoved()
+                || (spectating instanceof LivingEntity livingSpectating && livingSpectating.isDead())) {
             this.stopSpectating(player);
-		}
-	}
+        }
+    }
 
-	@Override
-	public void makeSpectate(Player player, Entity target) {
-		PlayerSpectateEvent playerSpectateEvent = new PlayerSpectateEvent(player, target);
-		EventDispatcher.callCancellable(playerSpectateEvent, () -> {
-			player.spectate(target);
-			player.setTag(SPECTATING, target);
-		});
-	}
+    @Override
+    public void makeSpectate(Player player, Entity target) {
+        var playerSpectateEvent = new PlayerSpectateEvent(player, target);
+        EventDispatcher.callCancellable(playerSpectateEvent, () -> {
+            player.spectate(target);
+            player.setTag(SPECTATING, target);
+        });
+    }
 
-	@Override
-	public void stopSpectating(Player player) {
-		player.stopSpectating();
-		player.removeTag(SPECTATING);
-	}
+    @Override
+    public void stopSpectating(Player player) {
+        player.stopSpectating();
+        player.removeTag(SPECTATING);
+    }
 }

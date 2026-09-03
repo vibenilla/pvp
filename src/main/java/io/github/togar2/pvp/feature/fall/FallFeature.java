@@ -8,54 +8,54 @@ import net.minestom.server.entity.LivingEntity;
  * It may also apply this damage when needed.
  */
 public interface FallFeature extends CombatFeature {
-	FallFeature NO_OP = new FallFeature() {
-		@Override
-		public int getFallDamage(LivingEntity entity, double fallDistance) {
-			return 0;
-		}
+    FallFeature NO_OP = new FallFeature() {
+        @Override
+        public int getFallDamage(LivingEntity entity, double fallDistance) {
+            return 0;
+        }
 
-		@Override
-		public double getFallDistance(LivingEntity entity) {
-			return 0;
-		}
+        @Override
+        public double getFallDistance(LivingEntity entity) {
+            return 0;
+        }
 
-		@Override
-		public void resetFallDistance(LivingEntity entity) {}
+        @Override
+        public void resetFallDistance(LivingEntity entity) {}
 
-		@Override
-		public void setExtraFallParticles(LivingEntity entity, boolean extraFallParticles) {}
+        @Override
+        public void setExtraFallParticles(LivingEntity entity, boolean extraFallParticles) {}
 
-		@Override
-		public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity) {}
+        @Override
+        public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity) {}
 
-		@Override
-		public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity, double impactY) {}
+        @Override
+        public void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity, double impactY) {}
 
-		@Override
-		public void clearCurrentImpulseContext(LivingEntity entity) {}
+        @Override
+        public void clearCurrentImpulseContext(LivingEntity entity) {}
 
-		@Override
-		public void resetPostImpulseGraceTime(LivingEntity entity) {}
+        @Override
+        public void resetPostImpulseGraceTime(LivingEntity entity) {}
 
-		@Override
-		public void applyPostImpulseGraceTime(LivingEntity entity, int ticks) {}
-	};
+        @Override
+        public void applyPostImpulseGraceTime(LivingEntity entity, int ticks) {}
+    };
 
-	int getFallDamage(LivingEntity entity, double fallDistance);
+    int getFallDamage(LivingEntity entity, double fallDistance);
 
-	double getFallDistance(LivingEntity entity);
+    double getFallDistance(LivingEntity entity);
 
-	void resetFallDistance(LivingEntity entity);
+    void resetFallDistance(LivingEntity entity);
 
-	void setExtraFallParticles(LivingEntity entity, boolean extraFallParticles);
+    void setExtraFallParticles(LivingEntity entity, boolean extraFallParticles);
 
-	void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity);
+    void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity);
 
-	void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity, double impactY);
+    void setIgnoreFallDamageFromCurrentImpulse(LivingEntity entity, double impactY);
 
-	void clearCurrentImpulseContext(LivingEntity entity);
+    void clearCurrentImpulseContext(LivingEntity entity);
 
-	void resetPostImpulseGraceTime(LivingEntity entity);
+    void resetPostImpulseGraceTime(LivingEntity entity);
 
-	void applyPostImpulseGraceTime(LivingEntity entity, int ticks);
+    void applyPostImpulseGraceTime(LivingEntity entity, int ticks);
 }

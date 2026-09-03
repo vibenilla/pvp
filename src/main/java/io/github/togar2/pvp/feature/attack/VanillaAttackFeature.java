@@ -17,6 +17,7 @@ import io.github.togar2.pvp.feature.knockback.KnockbackFeature;
 import io.github.togar2.pvp.player.CombatPlayer;
 import io.github.togar2.pvp.utils.CombatVersion;
 import io.github.togar2.pvp.utils.ViewUtil;
+import java.util.ArrayList;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.ServerFlag;
@@ -51,344 +52,332 @@ import java.util.List;
  * Listens on {@link EntityAttackEvent}
  */
 public class VanillaAttackFeature implements AttackFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaAttackFeature> DEFINED = new DefinedFeature<>(
-		FeatureType.ATTACK, VanillaAttackFeature::new,
-		FeatureType.ATTACK_COOLDOWN, FeatureType.EXHAUSTION, FeatureType.ITEM_DAMAGE,
-		FeatureType.ENCHANTMENT, FeatureType.CRITICAL, FeatureType.SWEEPING, FeatureType.KNOCKBACK,
-		FeatureType.SMASH_ATTACK, FeatureType.VERSION
-	);
+    public static final DefinedFeature<VanillaAttackFeature> DEFINED = new DefinedFeature<>(
+        FeatureType.ATTACK, VanillaAttackFeature::new,
+        FeatureType.ATTACK_COOLDOWN, FeatureType.EXHAUSTION, FeatureType.ITEM_DAMAGE,
+        FeatureType.ENCHANTMENT, FeatureType.CRITICAL, FeatureType.SWEEPING, FeatureType.KNOCKBACK,
+        FeatureType.SMASH_ATTACK, FeatureType.VERSION
+    );
 
-	private static final double ATTACK_RANGE_MARGIN = 3.0;
-	private static final double ATTACK_CHARGE_TOLERANCE_TICKS = 5.0;
-	private static final Tag<Boolean> SPRINT_ATTACK_RESET = Tag.Boolean("sprintAttackReset");
+    private static final double ATTACK_RANGE_MARGIN = 3.0;
+    private static final double ATTACK_CHARGE_TOLERANCE_TICKS = 5.0;
+    private static final Tag<Boolean> SPRINT_ATTACK_RESET = Tag.Boolean("sprintAttackReset");
 
-	private final FeatureConfiguration configuration;
+    private final FeatureConfiguration configuration;
 
-	private AttackCooldownFeature cooldownFeature;
-	private ExhaustionFeature exhaustionFeature;
-	private ItemDamageFeature itemDamageFeature;
-	private EnchantmentFeature enchantmentFeature;
+    private AttackCooldownFeature cooldownFeature;
+    private ExhaustionFeature exhaustionFeature;
+    private ItemDamageFeature itemDamageFeature;
+    private EnchantmentFeature enchantmentFeature;
 
-	private CriticalFeature criticalFeature;
-	private SweepingFeature sweepingFeature;
-	private KnockbackFeature knockbackFeature;
-	private SmashAttackFeature smashAttackFeature;
+    private CriticalFeature criticalFeature;
+    private SweepingFeature sweepingFeature;
+    private KnockbackFeature knockbackFeature;
+    private SmashAttackFeature smashAttackFeature;
 
-	private CombatVersion version;
+    private CombatVersion version;
 
-	public VanillaAttackFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-	}
+    public VanillaAttackFeature(FeatureConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
-	@Override
-	public void initDependencies() {
-		this.cooldownFeature = this.configuration.get(FeatureType.ATTACK_COOLDOWN);
-		this.exhaustionFeature = this.configuration.get(FeatureType.EXHAUSTION);
-		this.itemDamageFeature = this.configuration.get(FeatureType.ITEM_DAMAGE);
-		this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
-		this.criticalFeature = this.configuration.get(FeatureType.CRITICAL);
-		this.sweepingFeature = this.configuration.get(FeatureType.SWEEPING);
-		this.knockbackFeature = this.configuration.get(FeatureType.KNOCKBACK);
-		this.smashAttackFeature = this.configuration.get(FeatureType.SMASH_ATTACK);
-		this.version = this.configuration.get(FeatureType.VERSION);
-	}
+    @Override
+    public void initDependencies() {
+        this.cooldownFeature = this.configuration.get(FeatureType.ATTACK_COOLDOWN);
+        this.exhaustionFeature = this.configuration.get(FeatureType.EXHAUSTION);
+        this.itemDamageFeature = this.configuration.get(FeatureType.ITEM_DAMAGE);
+        this.enchantmentFeature = this.configuration.get(FeatureType.ENCHANTMENT);
+        this.criticalFeature = this.configuration.get(FeatureType.CRITICAL);
+        this.sweepingFeature = this.configuration.get(FeatureType.SWEEPING);
+        this.knockbackFeature = this.configuration.get(FeatureType.KNOCKBACK);
+        this.smashAttackFeature = this.configuration.get(FeatureType.SMASH_ATTACK);
+        this.version = this.configuration.get(FeatureType.VERSION);
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(PlayerPacketEvent.class, this::handleSprintAction);
-		node.addListener(EntityAttackEvent.class, event -> {
-			if (event.getEntity() instanceof Player player && player.getGameMode() != GameMode.SPECTATOR && !player.isDead()) {
-				ItemStack mainHand = player.getItemInMainHand();
-				if (mainHand.has(DataComponents.PIERCING_WEAPON)) return;
-				if (this.cooldownFeature.cannotAttackWith(player, mainHand, ATTACK_CHARGE_TOLERANCE_TICKS)) return;
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(PlayerPacketEvent.class, this::handleSprintAction);
+        node.addListener(EntityAttackEvent.class, event -> {
+            if (event.getEntity() instanceof Player player && player.getGameMode() != GameMode.SPECTATOR && !player.isDead()) {
+                var mainHand = player.getItemInMainHand();
+                if (mainHand.has(DataComponents.PIERCING_WEAPON)) return;
+                if (this.cooldownFeature.cannotAttackWith(player, mainHand, ATTACK_CHARGE_TOLERANCE_TICKS)) return;
 
-				Entity target = event.getTarget();
-				var maxDistanceSquared = Math.pow(player.getAttributeValue(Attribute.ENTITY_INTERACTION_RANGE) + ATTACK_RANGE_MARGIN, 2);
-				var eyePosition = player.getPosition().add(0.0, player.getEyeHeight(), 0.0);
-				if (this.distanceSquaredToBox(eyePosition, target.getBoundingBox(), target.getPosition()) < maxDistanceSquared)
-					this.performAttack(player, target);
-			}
-		});
-	}
+                var target = event.getTarget();
+                var maxDistanceSquared = Math.pow(player.getAttributeValue(Attribute.ENTITY_INTERACTION_RANGE) + ATTACK_RANGE_MARGIN, 2);
+                var eyePosition = player.getPosition().add(0.0, player.getEyeHeight(), 0.0);
+                if (this.distanceSquaredToBox(eyePosition, target.getBoundingBox(), target.getPosition()) < maxDistanceSquared)
+                    this.performAttack(player, target);
+            }
+        });
+    }
 
-	private void handleSprintAction(PlayerPacketEvent event) {
-		if (!(event.getPacket() instanceof ClientEntityActionPacket packet)) {
-			return;
-		}
+    private void handleSprintAction(PlayerPacketEvent event) {
+        if (!(event.getPacket() instanceof ClientEntityActionPacket packet)) {
+            return;
+        }
 
-		if (packet.action() == ClientEntityActionPacket.Action.STOP_SPRINTING) {
-			event.getPlayer().removeTag(SPRINT_ATTACK_RESET);
-			return;
-		}
+        if (packet.action() == ClientEntityActionPacket.Action.STOP_SPRINTING) {
+            event.getPlayer().removeTag(SPRINT_ATTACK_RESET);
+            return;
+        }
 
-		if (packet.action() != ClientEntityActionPacket.Action.START_SPRINTING) {
-			return;
-		}
+        if (packet.action() != ClientEntityActionPacket.Action.START_SPRINTING) {
+            return;
+        }
 
-		if (!Boolean.TRUE.equals(event.getPlayer().getTag(SPRINT_ATTACK_RESET))) {
-			return;
-		}
+        if (!Boolean.TRUE.equals(event.getPlayer().getTag(SPRINT_ATTACK_RESET))) {
+            return;
+        }
 
-		event.setCancelled(true);
-		event.getPlayer().setSprinting(false);
-	}
+        event.setCancelled(true);
+        event.getPlayer().setSprinting(false);
+    }
 
-	private double distanceSquaredToBox(Point point, BoundingBox boundingBox, Point position) {
-		var minX = position.x() + boundingBox.minX();
-		var maxX = position.x() + boundingBox.maxX();
-		var minY = position.y() + boundingBox.minY();
-		var maxY = position.y() + boundingBox.maxY();
-		var minZ = position.z() + boundingBox.minZ();
-		var maxZ = position.z() + boundingBox.maxZ();
-		var distanceX = point.x() < minX ? minX - point.x() : Math.max(point.x() - maxX, 0.0);
-		var distanceY = point.y() < minY ? minY - point.y() : Math.max(point.y() - maxY, 0.0);
-		var distanceZ = point.z() < minZ ? minZ - point.z() : Math.max(point.z() - maxZ, 0.0);
+    private double distanceSquaredToBox(Point point, BoundingBox boundingBox, Point position) {
+        var minX = position.x() + boundingBox.minX();
+        var maxX = position.x() + boundingBox.maxX();
+        var minY = position.y() + boundingBox.minY();
+        var maxY = position.y() + boundingBox.maxY();
+        var minZ = position.z() + boundingBox.minZ();
+        var maxZ = position.z() + boundingBox.maxZ();
+        var distanceX = point.x() < minX ? minX - point.x() : Math.max(point.x() - maxX, 0.0);
+        var distanceY = point.y() < minY ? minY - point.y() : Math.max(point.y() - maxY, 0.0);
+        var distanceZ = point.z() < minZ ? minZ - point.z() : Math.max(point.z() - maxZ, 0.0);
 
-		return distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
-	}
+        return distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ;
+    }
 
-	@Override
-	public boolean performAttack(LivingEntity attacker, Entity target) {
-		PrepareAttackEvent prepareAttackEvent = new PrepareAttackEvent(attacker, target);
-		EventDispatcher.call(prepareAttackEvent);
-		if (prepareAttackEvent.isCancelled()) return false;
-		AttackValues.Final attack = this.prepareAttack(attacker, target);
-		if (attack == null) return false; // Event canceled
+    @Override
+    public boolean performAttack(LivingEntity attacker, Entity target) {
+        var prepareAttackEvent = new PrepareAttackEvent(attacker, target);
+        EventDispatcher.call(prepareAttackEvent);
+        if (prepareAttackEvent.isCancelled()) return false;
+        AttackValues.Final attack = this.prepareAttack(attacker, target);
+        if (attack == null) return false;
 
-		if (target instanceof WindCharge windCharge && windCharge.deflect(attacker)) {
-			if (attack.sounds() && attack.playSoundsOnFail()) {
-				ViewUtil.viewersAndSelf(attacker).playSound(Sound.sound(
-						SoundEvent.ENTITY_PLAYER_ATTACK_NODAMAGE, Sound.Source.PLAYER,
-						1.0f, 1.0f
-				), attacker);
-			}
+        if (target instanceof WindCharge windCharge && windCharge.deflect(attacker)) {
+            if (attack.sounds() && attack.playSoundsOnFail()) {
+                ViewUtil.viewersAndSelf(attacker).playSound(Sound.sound(
+                        SoundEvent.ENTITY_PLAYER_ATTACK_NODAMAGE, Sound.Source.PLAYER,
+                        1.0F, 1.0F
+                ), attacker);
+            }
 
-			return true;
-		}
+            return true;
+        }
 
-		boolean smashAttack = target instanceof LivingEntity
-				&& this.smashAttackFeature.canSmashAttack(attacker);
+        var smashAttack = target instanceof LivingEntity
+                && this.smashAttackFeature.canSmashAttack(attacker);
 
-		float originalHealth = 0;
-		boolean damageSucceeded = false;
-		if (target instanceof CrystalEntity crystal) {
-			damageSucceeded = crystal.damage(new Damage(
-					attacker instanceof Player ? DamageType.PLAYER_ATTACK : DamageType.MOB_ATTACK,
-					attacker, attacker,
-					null, attack.damage()
-			));
-		} else if (target instanceof LivingEntity livingTarget) {
-			originalHealth = livingTarget.getHealth();
-			damageSucceeded = livingTarget.damage(new Damage(
-				smashAttack ? DamageType.MACE_SMASH :
-						(attacker instanceof Player ? DamageType.PLAYER_ATTACK : DamageType.MOB_ATTACK),
-				attacker, attacker,
-				null, attack.damage()
-			));
-		}
+        var originalHealth = 0.0F;
+        var damageSucceeded = false;
+        if (target instanceof CrystalEntity crystal) {
+            damageSucceeded = crystal.damage(new Damage(
+                    attacker instanceof Player ? DamageType.PLAYER_ATTACK : DamageType.MOB_ATTACK,
+                    attacker, attacker,
+                    null, attack.damage()
+            ));
+        } else if (target instanceof LivingEntity livingTarget) {
+            originalHealth = livingTarget.getHealth();
+            damageSucceeded = livingTarget.damage(new Damage(
+                smashAttack ? DamageType.MACE_SMASH :
+                        (attacker instanceof Player ? DamageType.PLAYER_ATTACK : DamageType.MOB_ATTACK),
+                attacker, attacker,
+                null, attack.damage()
+            ));
+        }
 
-		if (!damageSucceeded) {
-			// No damage sound
-			if (attack.sounds() && attack.playSoundsOnFail()) {
-				ViewUtil.viewersAndSelf(attacker).playSound(Sound.sound(
-					SoundEvent.ENTITY_PLAYER_ATTACK_NODAMAGE, Sound.Source.PLAYER,
-					1.0f, 1.0f
-				), attacker);
-			}
-			return false;
-		}
+        if (!damageSucceeded) {
+            if (attack.sounds() && attack.playSoundsOnFail()) {
+                ViewUtil.viewersAndSelf(attacker).playSound(Sound.sound(
+                    SoundEvent.ENTITY_PLAYER_ATTACK_NODAMAGE, Sound.Source.PLAYER,
+                    1.0F, 1.0F
+                ), attacker);
+            }
+            return false;
+        }
 
-		if (target instanceof CrystalEntity) {
-			this.playAttackSounds(attacker, attack);
+        if (target instanceof CrystalEntity) {
+            this.playAttackSounds(attacker, attack);
 
-			if (attacker instanceof Player player)
-				this.exhaustionFeature.addAttackExhaustion(player);
+            if (attacker instanceof Player player)
+                this.exhaustionFeature.addAttackExhaustion(player);
 
-			return true;
-		}
+            return true;
+        }
 
-		// Target is always living now, because the damage would not have succeeded if it wasn't
-		LivingEntity living = (LivingEntity) target;
-		Collection<LivingEntity> affectedEntities = List.of(living);
+        var living = (LivingEntity) target;
+        Collection<LivingEntity> affectedEntities = new ArrayList<>(List.of(living));
 
-		// Knockback and sweeping
-		var appliedKnockback = this.knockbackFeature.applyAttackKnockback(attacker, living, attack.knockback());
+        var appliedKnockback = this.knockbackFeature.applyAttackKnockback(attacker, living, attack.knockback());
 
-		if (appliedKnockback && attack.sprint() && attacker instanceof Player player) {
-			player.setTag(SPRINT_ATTACK_RESET, true);
-		}
+        if (appliedKnockback && attack.sprint() && attacker instanceof Player player) {
+            player.setTag(SPRINT_ATTACK_RESET, true);
+        }
 
-		if (attack.sweeping()) {
-			affectedEntities = this.sweepingFeature.applySweeping(
-					attacker, living, attack.baseDamage(), attack.cooldownProgress());
-			affectedEntities.add(living);
-		}
+        if (attack.sweeping()) {
+            affectedEntities = this.sweepingFeature.applySweeping(
+                    attacker, living, attack.baseDamage(), attack.cooldownProgress());
+            affectedEntities.add(living);
+        }
 
-		if (smashAttack) {
-			this.smashAttackFeature.applySmashAttack(attacker, living);
-		} else {
-			this.smashAttackFeature.applyWindBurst(attacker);
-		}
+        if (smashAttack) {
+            this.smashAttackFeature.applySmashAttack(attacker, living);
+        } else {
+            this.smashAttackFeature.applyWindBurst(attacker);
+        }
 
-		if (target instanceof CombatPlayer custom)
-			custom.sendImmediateVelocityUpdate();
+        if (target instanceof CombatPlayer custom)
+            custom.sendImmediateVelocityUpdate();
 
-		this.playAttackSounds(attacker, attack);
+        this.playAttackSounds(attacker, attack);
 
-		// Play attack effects
-		if (attack.critical()) attacker.sendPacketToViewersAndSelf(new EntityAnimationPacket(
-			target.getEntityId(),
-			EntityAnimationPacket.Animation.CRITICAL_EFFECT
-		));
-		if (attack.magical()) attacker.sendPacketToViewersAndSelf(new EntityAnimationPacket(
-			target.getEntityId(),
-			EntityAnimationPacket.Animation.MAGICAL_CRITICAL_EFFECT
-		));
+        if (attack.critical()) attacker.sendPacketToViewersAndSelf(new EntityAnimationPacket(
+            target.getEntityId(),
+            EntityAnimationPacket.Animation.CRITICAL_EFFECT
+        ));
+        if (attack.magical()) attacker.sendPacketToViewersAndSelf(new EntityAnimationPacket(
+            target.getEntityId(),
+            EntityAnimationPacket.Animation.MAGICAL_CRITICAL_EFFECT
+        ));
 
-		for (LivingEntity affectedEntity : affectedEntities) {
-			// Thorns
-			this.enchantmentFeature.onUserDamaged(affectedEntity, attacker);
-			this.enchantmentFeature.onTargetDamaged(attacker, affectedEntity);
+        for (var affectedEntity : affectedEntities) {
+            this.enchantmentFeature.onUserDamaged(affectedEntity, attacker);
+            this.enchantmentFeature.onTargetDamaged(attacker, affectedEntity);
 
-			if (attack.fireAspect() > 0) {
-				var fireTicks = attack.fireAspect() * 4 * ServerFlag.SERVER_TICKS_PER_SECOND;
-				var adjustedFireTicks = this.enchantmentFeature.getFireDuration(affectedEntity, fireTicks);
+            if (attack.fireAspect() > 0) {
+                var fireTicks = attack.fireAspect() * 4 * ServerFlag.SERVER_TICKS_PER_SECOND;
+                var adjustedFireTicks = this.enchantmentFeature.getFireDuration(affectedEntity, fireTicks);
 
-				if (affectedEntity.getFireTicks() < adjustedFireTicks) {
-					affectedEntity.setTag(VanillaEnchantmentFeature.FIRE_DURATION_ALREADY_SCALED, true);
-					affectedEntity.setFireTicks(adjustedFireTicks);
-				}
-			}
-		}
+                if (affectedEntity.getFireTicks() < adjustedFireTicks) {
+                    affectedEntity.setTag(VanillaEnchantmentFeature.FIRE_DURATION_ALREADY_SCALED, true);
+                    affectedEntity.setFireTicks(adjustedFireTicks);
+                }
+            }
+        }
 
-		// Damage item
-		var weapon = attacker.getItemInMainHand().get(DataComponents.WEAPON);
-		if (weapon != null) {
-			this.itemDamageFeature.damageEquipment(attacker, EquipmentSlot.MAIN_HAND, weapon.itemDamagePerAttack());
-		}
+        var weapon = attacker.getItemInMainHand().get(DataComponents.WEAPON);
+        if (weapon != null) {
+            this.itemDamageFeature.damageEquipment(attacker, EquipmentSlot.MAIN_HAND, weapon.itemDamagePerAttack());
+        }
 
-		// Damage indicator particles
-		float damageDone = originalHealth - living.getHealth();
-		if (damageDone > 2) {
-			int particleCount = (int) (damageDone * 0.5);
-			Pos targetPosition = target.getPosition();
-			target.sendPacketToViewersAndSelf(new ParticlePacket(
-				Particle.DAMAGE_INDICATOR, false, false,
-				targetPosition.x(), targetPosition.y() + target.getBoundingBox().height() * 0.5, targetPosition.z(),
-				0.1f, 0, 0.1f,
-				0.2F, particleCount
-			));
-		}
+        var damageDone = originalHealth - living.getHealth();
+        if (damageDone > 2) {
+            var particleCount = (int) (damageDone * 0.5);
+            var targetPosition = target.getPosition();
+            target.sendPacketToViewersAndSelf(new ParticlePacket(
+                Particle.DAMAGE_INDICATOR, false, false,
+                targetPosition.x(), targetPosition.y() + target.getBoundingBox().height() * 0.5, targetPosition.z(),
+                0.1F, 0, 0.1F,
+                0.2F, particleCount
+            ));
+        }
 
-		if (attacker instanceof Player player)
+        if (attacker instanceof Player player)
             this.exhaustionFeature.addAttackExhaustion(player);
 
-		return true;
-	}
+        return true;
+    }
 
-	private void playAttackSounds(LivingEntity attacker, AttackValues.Final attack) {
-		if (!attack.sounds()) return;
+    private void playAttackSounds(LivingEntity attacker, AttackValues.Final attack) {
+        if (!attack.sounds()) return;
 
-		Audience audience = attacker.getViewersAsAudience();
-		if (attacker instanceof Player player)
-			audience = Audience.audience(audience, player);
+        var audience = attacker.getViewersAsAudience();
+        if (attacker instanceof Player player)
+            audience = Audience.audience(audience, player);
 
-		if (attack.sprint()) audience.playSound(Sound.sound(
-				SoundEvent.ENTITY_PLAYER_ATTACK_KNOCKBACK, Sound.Source.PLAYER,
-				1.0f, 1.0f
-		), attacker);
+        if (attack.sprint()) audience.playSound(Sound.sound(
+                SoundEvent.ENTITY_PLAYER_ATTACK_KNOCKBACK, Sound.Source.PLAYER,
+                1.0F, 1.0F
+        ), attacker);
 
-		if (attack.sweeping()) audience.playSound(Sound.sound(
-				SoundEvent.ENTITY_PLAYER_ATTACK_SWEEP, Sound.Source.PLAYER,
-				1.0f, 1.0f
-		), attacker);
+        if (attack.sweeping()) audience.playSound(Sound.sound(
+                SoundEvent.ENTITY_PLAYER_ATTACK_SWEEP, Sound.Source.PLAYER,
+                1.0F, 1.0F
+        ), attacker);
 
-		if (attack.critical()) audience.playSound(Sound.sound(
-				SoundEvent.ENTITY_PLAYER_ATTACK_CRIT, Sound.Source.PLAYER,
-				1.0f, 1.0f
-		), attacker);
+        if (attack.critical()) audience.playSound(Sound.sound(
+                SoundEvent.ENTITY_PLAYER_ATTACK_CRIT, Sound.Source.PLAYER,
+                1.0F, 1.0F
+        ), attacker);
 
-		if (!attack.critical() && !attack.sweeping()) audience.playSound(Sound.sound(
-				attack.strong() ?
-						SoundEvent.ENTITY_PLAYER_ATTACK_STRONG :
-						SoundEvent.ENTITY_PLAYER_ATTACK_WEAK,
-				Sound.Source.PLAYER, 1.0f, 1.0f
-		), attacker);
-	}
+        if (!attack.critical() && !attack.sweeping()) audience.playSound(Sound.sound(
+                attack.strong() ?
+                        SoundEvent.ENTITY_PLAYER_ATTACK_STRONG :
+                        SoundEvent.ENTITY_PLAYER_ATTACK_WEAK,
+                Sound.Source.PLAYER, 1.0F, 1.0F
+        ), attacker);
+    }
 
-	protected @Nullable AttackValues.Final prepareAttack(LivingEntity attacker, Entity target) {
-		float damage = (float) attacker.getAttributeValue(Attribute.ATTACK_DAMAGE);
-		float magicalDamage = this.enchantmentFeature.getAttackDamage(attacker.getItemInMainHand(), target);
+    protected @Nullable AttackValues.Final prepareAttack(LivingEntity attacker, Entity target) {
+        var damage = (float) attacker.getAttributeValue(Attribute.ATTACK_DAMAGE);
+        var magicalDamage = this.enchantmentFeature.getAttackDamage(attacker.getItemInMainHand(), target);
 
-		double cooldownProgress = 1;
-		if (attacker instanceof Player player) {
-			cooldownProgress = this.cooldownFeature.getAttackCooldownProgress(player);
+        var cooldownProgress = 1.0;
+        if (attacker instanceof Player player) {
+            cooldownProgress = this.cooldownFeature.getAttackCooldownProgress(player);
             this.cooldownFeature.resetCooldownProgress(player);
-		}
+        }
 
-		// Apply cooldownProgress to damage
-		damage *= (float) (0.2 + cooldownProgress * cooldownProgress * 0.8);
-		magicalDamage *= (float) cooldownProgress;
+        damage *= (float) (0.2 + cooldownProgress * cooldownProgress * 0.8);
+        magicalDamage *= (float) cooldownProgress;
 
-		if (target instanceof LivingEntity livingTarget) {
-			damage += this.smashAttackFeature.getDamageBonus(attacker, livingTarget);
-		}
+        if (target instanceof LivingEntity livingTarget) {
+            damage += this.smashAttackFeature.getDamageBonus(attacker, livingTarget);
+        }
 
-		// Calculate attacks
-		boolean strongAttack = cooldownProgress > 0.9;
-		boolean sprintAttack = attacker.isSprinting() && strongAttack && !this.isSprintAttackReset(attacker);
-		double knockback = this.enchantmentFeature.getKnockback(attacker);
-		int fireAspect = this.enchantmentFeature.getFireAspect(attacker);
+        var strongAttack = cooldownProgress > 0.9;
+        var sprintAttack = attacker.isSprinting() && strongAttack && !this.isSprintAttackReset(attacker);
+        var knockback = this.enchantmentFeature.getKnockback(attacker);
+        var fireAspect = this.enchantmentFeature.getFireAspect(attacker);
 
-		// Use features to determine critical and sweeping
-		AttackValues.PreCritical preCritical = new AttackValues.PreCritical(
-			damage, magicalDamage, cooldownProgress,
-			strongAttack, sprintAttack, knockback, fireAspect
-		);
-		AttackValues.PreSweeping preSweeping = preCritical.withCritical(
-				target instanceof LivingEntity && this.criticalFeature.shouldCrit(attacker, preCritical)
-		);
-		AttackValues.PreSounds preSounds = preSweeping.withSweeping(this.sweepingFeature.shouldSweep(attacker, preSweeping));
+        AttackValues.PreCritical preCritical = new AttackValues.PreCritical(
+            damage, magicalDamage, cooldownProgress,
+            strongAttack, sprintAttack, knockback, fireAspect
+        );
+        AttackValues.PreSweeping preSweeping = preCritical.withCritical(
+                target instanceof LivingEntity && this.criticalFeature.shouldCrit(attacker, preCritical)
+        );
+        AttackValues.PreSounds preSounds = preSweeping.withSweeping(this.sweepingFeature.shouldSweep(attacker, preSweeping));
 
-		boolean critical = preSounds.critical();
-		boolean sweeping = preSounds.sweeping();
+        var critical = preSounds.critical();
+        var sweeping = preSounds.sweeping();
 
-		boolean sounds = this.version.modern();
+        var sounds = this.version.modern();
 
-		// Call event which can modify attack values
-		FinalAttackEvent finalAttackEvent = new FinalAttackEvent(
-			attacker, target, sprintAttack, critical, sweeping, damage,
-			magicalDamage, sounds, sounds
-		);
-		EventDispatcher.call(finalAttackEvent);
-		if (finalAttackEvent.isCancelled()) return null;
+        var finalAttackEvent = new FinalAttackEvent(
+            attacker, target, sprintAttack, critical, sweeping, damage,
+            magicalDamage, sounds, sounds
+        );
+        EventDispatcher.call(finalAttackEvent);
+        if (finalAttackEvent.isCancelled()) return null;
 
-		sprintAttack = finalAttackEvent.isSprint();
-		critical = finalAttackEvent.isCritical();
-		sweeping = finalAttackEvent.isSweeping();
-		damage = finalAttackEvent.getBaseDamage();
-		magicalDamage = finalAttackEvent.getEnchantsExtraDamage();
+        sprintAttack = finalAttackEvent.isSprint();
+        critical = finalAttackEvent.isCritical();
+        sweeping = finalAttackEvent.isSweeping();
+        damage = finalAttackEvent.getBaseDamage();
+        magicalDamage = finalAttackEvent.getEnchantsExtraDamage();
 
-		// Apply critical damage and knockback
-		if (critical) damage = this.criticalFeature.applyToDamage(damage);
-		var baseDamage = damage;
-		damage += magicalDamage;
+        if (critical) damage = this.criticalFeature.applyToDamage(damage);
+        var baseDamage = damage;
+        damage += magicalDamage;
 
-		if (sprintAttack) knockback += this.version.legacy() ? 1.0 : 0.5;
+        if (sprintAttack) knockback += this.version.legacy() ? 1.0 : 0.5;
 
-		return new AttackValues.Final(
-			damage, baseDamage, cooldownProgress, strongAttack, sprintAttack, knockback, critical,
-			magicalDamage > 0, fireAspect, sweeping,
-			finalAttackEvent.hasAttackSounds(),
-			finalAttackEvent.playSoundsOnFail()
-		);
-	}
+        return new AttackValues.Final(
+            damage, baseDamage, cooldownProgress, strongAttack, sprintAttack, knockback, critical,
+            magicalDamage > 0, fireAspect, sweeping,
+            finalAttackEvent.hasAttackSounds(),
+            finalAttackEvent.playSoundsOnFail()
+        );
+    }
 
-	private boolean isSprintAttackReset(LivingEntity attacker) {
-		if (!(attacker instanceof Player player)) {
-			return false;
-		}
+    private boolean isSprintAttackReset(LivingEntity attacker) {
+        if (!(attacker instanceof Player player)) {
+            return false;
+        }
 
-		return Boolean.TRUE.equals(player.getTag(SPRINT_ATTACK_RESET));
-	}
+        return Boolean.TRUE.equals(player.getTag(SPRINT_ATTACK_RESET));
+    }
 }

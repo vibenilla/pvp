@@ -5,37 +5,17 @@ import net.minestom.server.coordinate.Point;
 import net.minestom.server.coordinate.Pos;
 import net.minestom.server.coordinate.Vec;
 
-/**
- * The result of a physics simulation.
- * <p>
- * A world border collision records a collision axis and point without a shape. The corresponding
- * {@code collisionShapes} and {@code collisionShapePositions} entries stay null even though the
- * axis flag is set and the {@code collisionPoints} entry is present.
- *
- * @param newPosition             the new position of the entity
- * @param newVelocity             the new velocity of the entity
- * @param isOnGround              if the entity is on the ground
- * @param collisionX              if the entity collided on the X axis
- * @param collisionY              if the entity collided on the Y axis
- * @param collisionZ              if the entity collided on the Z axis
- * @param originalDelta           the velocity delta of the entity
- * @param collisionPoints         the points where the entity collided
- * @param collisionShapes         the shapes the entity collided with
- * @param collisionShapePositions the block positions of the shapes the entity collided with
- * @param hasCollision            if the entity collided
- * @param collisionFraction       fraction accepted by the final collision sweep
- */
 public record PhysicsResult(
-		Pos newPosition,
-		Vec newVelocity,
-		boolean isOnGround,
-		boolean collisionX,
-		boolean collisionY,
-		boolean collisionZ,
-		Vec originalDelta,
-		Point[] collisionPoints,
-		Shape[] collisionShapes,
-		Point[] collisionShapePositions,
-		boolean hasCollision,
-		double collisionFraction
+        Pos newPosition,
+        Vec newVelocity,
+        boolean isOnGround,
+        boolean collisionX,
+        boolean collisionY,
+        boolean collisionZ,
+        Vec originalDelta,
+        Point[] collisionPoints,
+        Shape[] collisionShapes,
+        Point[] collisionShapePositions,
+        boolean hasCollision,
+        double collisionFraction
 ) {}

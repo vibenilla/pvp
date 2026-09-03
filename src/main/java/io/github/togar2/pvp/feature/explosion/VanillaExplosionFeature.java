@@ -23,55 +23,55 @@ import org.jetbrains.annotations.NotNull;
  * see {@link VanillaExplosionFeature#getExplosionSupplier()}.
  */
 public class VanillaExplosionFeature implements ExplosionFeature, RegistrableFeature {
-	public static final DefinedFeature<VanillaExplosionFeature> DEFINED = new DefinedFeature<>(
-			FeatureType.EXPLOSION, VanillaExplosionFeature::new,
-			FeatureType.ENCHANTMENT, FeatureType.FALL
-	);
+    public static final DefinedFeature<VanillaExplosionFeature> DEFINED = new DefinedFeature<>(
+            FeatureType.EXPLOSION, VanillaExplosionFeature::new,
+            FeatureType.ENCHANTMENT, FeatureType.FALL
+    );
 
-	private final FeatureConfiguration configuration;
+    private final FeatureConfiguration configuration;
 
-	private VanillaExplosionSupplier explosionSupplier;
+    private VanillaExplosionSupplier explosionSupplier;
 
-	public VanillaExplosionFeature(FeatureConfiguration configuration) {
-		this.configuration = configuration;
-	}
+    public VanillaExplosionFeature(FeatureConfiguration configuration) {
+        this.configuration = configuration;
+    }
 
-	@Override
-	public void initDependencies() {
-		this.explosionSupplier = new VanillaExplosionSupplier(
-				this, this.configuration.get(FeatureType.ENCHANTMENT), this.configuration.get(FeatureType.FALL)
-		);
-	}
+    @Override
+    public void initDependencies() {
+        this.explosionSupplier = new VanillaExplosionSupplier(
+                this, this.configuration.get(FeatureType.ENCHANTMENT), this.configuration.get(FeatureType.FALL)
+        );
+    }
 
-	@Override
-	public VanillaExplosionSupplier getExplosionSupplier() {
-		return this.explosionSupplier;
-	}
+    @Override
+    public VanillaExplosionSupplier getExplosionSupplier() {
+        return this.explosionSupplier;
+    }
 
-	@Override
-	public void init(EventNode<EntityInstanceEvent> node) {
-		node.addListener(EntitySpawnEvent.class, event -> this.installExplosionSupplier(event.getSpawnInstance()));
-	}
+    @Override
+    public void init(EventNode<EntityInstanceEvent> node) {
+        node.addListener(EntitySpawnEvent.class, event -> this.installExplosionSupplier(event.getSpawnInstance()));
+    }
 
-	public void installExplosionSupplier(Instance instance) {
-		if (instance.getExplosionSupplier() != null) return;
+    public void installExplosionSupplier(Instance instance) {
+        if (instance.getExplosionSupplier() != null) return;
 
-		instance.setExplosionSupplier(this.explosionSupplier);
-	}
+        instance.setExplosionSupplier(this.explosionSupplier);
+    }
 
-	@Override
-	public void primeExplosive(Instance instance, Point blockPosition, @NotNull IgnitionCause cause, int fuse) {
-		this.installExplosionSupplier(instance);
+    @Override
+    public void primeExplosive(Instance instance, Point blockPosition, @NotNull IgnitionCause cause, int fuse) {
+        this.installExplosionSupplier(instance);
 
-		ExplosivePrimeEvent event = new ExplosivePrimeEvent(instance, blockPosition, cause, fuse);
-		EventDispatcher.callCancellable(event, () -> {
-			TntEntity entity = new TntEntity(cause.causingEntity());
-			entity.setFuse(event.getFuse());
-			entity.setInstance(instance, blockPosition.add(0.5, 0, 0.5));
-			entity.getViewersAsAudience().playSound(Sound.sound(
-					SoundEvent.ENTITY_TNT_PRIMED, Sound.Source.BLOCK,
-					1.0f, 1.0f
-			), entity);
-		});
-	}
+        var event = new ExplosivePrimeEvent(instance, blockPosition, cause, fuse);
+        EventDispatcher.callCancellable(event, () -> {
+            var entity = new TntEntity(cause.causingEntity());
+            entity.setFuse(event.getFuse());
+            entity.setInstance(instance, blockPosition.add(0.5, 0, 0.5));
+            entity.getViewersAsAudience().playSound(Sound.sound(
+                    SoundEvent.ENTITY_TNT_PRIMED, Sound.Source.BLOCK,
+                    1.0F, 1.0F
+            ), entity);
+        });
+    }
 }
