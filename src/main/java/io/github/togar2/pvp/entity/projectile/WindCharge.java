@@ -2,8 +2,7 @@ package io.github.togar2.pvp.entity.projectile;
 
 import io.github.togar2.pvp.feature.explosion.VanillaExplosionSupplier;
 import io.github.togar2.pvp.feature.fall.FallFeature;
-import io.github.togar2.pvp.utils.ViewUtil;
-import net.kyori.adventure.sound.Sound;
+import io.github.togar2.pvp.player.CombatPlayer;
 import net.minestom.server.ServerFlag;
 import net.minestom.server.collision.Aerodynamics;
 import net.minestom.server.coordinate.Point;
@@ -16,10 +15,14 @@ import net.minestom.server.entity.Player;
 import net.minestom.server.entity.attribute.Attribute;
 import net.minestom.server.entity.damage.Damage;
 import net.minestom.server.entity.damage.DamageType;
-import net.minestom.server.network.packet.server.play.ParticlePacket;
+import net.minestom.server.network.packet.server.play.ExplosionPacket;
 import net.minestom.server.particle.Particle;
 import net.minestom.server.sound.SoundEvent;
+import net.minestom.server.utils.WeightedList;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public final class WindCharge extends CustomEntityProjectile {
 	private static final double RADIUS = 1.2;
@@ -98,25 +101,6 @@ public final class WindCharge extends CustomEntityProjectile {
 
 		if (instance == null) return;
 
-		this.sendPacketToViewersAndSelf(new ParticlePacket(
-				Particle.GUST_EMITTER_SMALL, false, false,
-				center.x(), center.y(), center.z(),
-				0.0F, 0.0F, 0.0F,
-				0.0F, 1
-		));
-		this.sendPacketToViewersAndSelf(new ParticlePacket(
-				Particle.GUST_EMITTER_LARGE, false, false,
-				center.x(), center.y(), center.z(),
-				0.0F, 0.0F, 0.0F,
-				0.0F, 1
-		));
-		ViewUtil.viewersAndSelf(this).playSound(Sound.sound(
-				SoundEvent.ENTITY_WIND_CHARGE_WIND_BURST,
-				Sound.Source.NEUTRAL,
-				1.0F,
-				1.0F
-		), center.x(), center.y(), center.z());
-
 		var doubleRadius = RADIUS * 2.0;
 		var centerVector = center.asVec();
 		var ticksPerSecond = ServerFlag.SERVER_TICKS_PER_SECOND;
@@ -126,19 +110,27 @@ public final class WindCharge extends CustomEntityProjectile {
 
 			this.applyExplosionKnockback(center, centerVector, doubleRadius, ticksPerSecond, entity);
 		}
+		Set<Player> receivedKb = new HashSet<>();
 		for (var player : instance.getPlayers()) {
-			this.applyExplosionKnockback(center, centerVector, doubleRadius, ticksPerSecond, player);
+			if (this.applyExplosionKnockback(center, centerVector, doubleRadius, ticksPerSecond, player)) receivedKb.add(player);
+		}
+
+		for (Player viewer : getViewers()) {
+			if (receivedKb.contains(viewer)) continue;
+			viewer.sendPacket(new ExplosionPacket(center, 1.2f, 0, Vec.ZERO, Particle.GUST_EMITTER_LARGE,
+				SoundEvent.ENTITY_WIND_CHARGE_WIND_BURST, WeightedList.of()));
 		}
 	}
 
-	private void applyExplosionKnockback(Point center, Vec centerVector, double doubleRadius, int ticksPerSecond, Entity entity) {
-		if (entity == this) return;
+	/**
+	 * @return whether or not knockback was actually applied
+	 */
+	private boolean applyExplosionKnockback(Point center, Vec centerVector, double doubleRadius, int ticksPerSecond, Entity entity) {
+		if (entity == this) return false;
 
 		var distanceStrength = entity.getPosition().distance(center) / doubleRadius;
 
-		if (distanceStrength > 1.0) {
-			return;
-		}
+		if (distanceStrength > 1.0) return false;
 
 		var originY = entity.getPosition().y() + entity.getEyeHeight();
 		var direction = new Vec(
@@ -148,9 +140,7 @@ public final class WindCharge extends CustomEntityProjectile {
 		);
 		var directionLength = direction.length();
 
-		if (directionLength == 0.0) {
-			return;
-		}
+		if (directionLength == 0.0) return false;
 
 		var exposure = this.hasLineOfSight(centerVector, entity) ? 1.0 : 0.0;
 		var knockback = (1.0 - distanceStrength) * exposure * KNOCKBACK_MULTIPLIER;
@@ -159,24 +149,21 @@ public final class WindCharge extends CustomEntityProjectile {
 			knockback *= 1.0 - livingEntity.getAttributeValue(Attribute.EXPLOSION_KNOCKBACK_RESISTANCE);
 		}
 
-		if (knockback <= 0.0) {
-			return;
-		}
+		if (knockback <= 0.0) return false;
 
-		var knockbackVelocity = direction.normalize().mul(knockback * ticksPerSecond);
+		var knockbackVelocity = direction.normalize().mul(knockback);
 
 		if (entity instanceof Player player) {
-			if (player.getGameMode() == GameMode.SPECTATOR) return;
-			if (player.getGameMode() == GameMode.CREATIVE && player.isFlying()) return;
-
-			player.setVelocity(player.getVelocity().add(knockbackVelocity));
-		} else {
-			entity.setVelocity(entity.getVelocity().add(knockbackVelocity));
-		}
-
-		if (entity instanceof Player player) {
+			if (player.getGameMode() == GameMode.SPECTATOR) return false;
+			if (player.getGameMode() == GameMode.CREATIVE && player.isFlying()) return false;
 			this.fallFeature.setIgnoreFallDamageFromCurrentImpulse(player);
+			player.sendPacket(new ExplosionPacket(center, 1.2f, 0, knockbackVelocity, Particle.GUST_EMITTER_LARGE,
+				SoundEvent.ENTITY_WIND_CHARGE_WIND_BURST, WeightedList.of()));
+			if (player instanceof CombatPlayer combatPlayer) combatPlayer.setVelocityNoUpdate(vel -> vel.add(knockbackVelocity.mul(ticksPerSecond)));
+		} else {
+			entity.setVelocity(entity.getVelocity().add(knockbackVelocity.mul(ticksPerSecond)));
 		}
+		return true;
 	}
 
 	private boolean hasLineOfSight(Vec center, Entity entity) {
