@@ -15,6 +15,8 @@ import net.minestom.server.instance.Instance;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
 import net.minestom.server.item.component.BlocksAttacks;
+import net.minestom.server.network.packet.server.play.SoundEffectPacket;
+import net.minestom.server.sound.SoundEvent;
 import net.minestom.testing.Env;
 import net.minestom.testing.EnvTest;
 import org.junit.jupiter.api.Test;
@@ -101,6 +103,26 @@ public final class VanillaDamageFeatureTest {
             assertTrue(target.damage(this.createDamage(attacker, 5.0F)));
             assertTrue(target.getHealth() < 10.0F);
             assertTrue(target.getHealth() > 0.0F);
+        } finally {
+            MinecraftServer.getGlobalEventHandler().removeChild(node);
+        }
+    }
+
+    @Test
+    public void damageEmitsOneHurtSound(Env env) {
+        var node = this.addDamageFeature();
+
+        try {
+            var instance = this.createFlatInstance(env);
+            var connection = env.createConnection();
+            var target = connection.connect(instance, new Pos(0.0, 40.0, 0.0));
+            var attacker = this.createEntity(instance, new Pos(0.0, 40.0, 1.0));
+            var sounds = connection.trackIncoming(SoundEffectPacket.class);
+
+            assertTrue(target.damage(this.createDamage(attacker, 1.0F)));
+            assertEquals(1, sounds.collect().stream()
+                    .filter(packet -> packet.soundEvent() == SoundEvent.ENTITY_PLAYER_HURT)
+                    .count());
         } finally {
             MinecraftServer.getGlobalEventHandler().removeChild(node);
         }
