@@ -68,3 +68,10 @@ jobs:
           files: build/libs/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update installation versions
+        uses: vibenilla/actions/update-version-numbers@main
+        with:
+          artifact: pvp
+          version: ${{ steps.version.outputs.version }}
+          docs_token: ${{ secrets.DOCS_REPO_TOKEN }}
