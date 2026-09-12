@@ -8,6 +8,7 @@ import io.github.togar2.pvp.feature.config.FeatureConfiguration;
 import io.github.togar2.pvp.feature.cooldown.ItemCooldownFeature;
 import io.github.togar2.pvp.feature.fall.FallFeature;
 import io.github.togar2.pvp.feature.state.PlayerStateFeature;
+import io.github.togar2.pvp.utils.RegistryTags;
 import io.github.togar2.pvp.utils.ViewUtil;
 import net.kyori.adventure.sound.Sound;
 import net.minestom.server.coordinate.Pos;
@@ -20,6 +21,7 @@ import net.minestom.server.event.player.PlayerUseItemEvent;
 import net.minestom.server.event.trait.EntityInstanceEvent;
 import net.minestom.server.item.ItemStack;
 import net.minestom.server.item.Material;
+import net.minestom.server.item.MaterialTags;
 import net.minestom.server.sound.SoundEvent;
 
 import java.util.Objects;
@@ -61,25 +63,26 @@ public class VanillaMiscProjectileFeature implements MiscProjectileFeature, Regi
             this.useFireworkRocketOnBlock(event);
         });
 
-        node.addListener(PlayerUseItemEvent.class, event -> {
-            if (event.getItemStack().material() == Material.FIREWORK_ROCKET
-                    && event.getPlayer().isFlyingWithElytra()) {
-                this.useFireworkRocket(event);
-                return;
-            }
+		node.addListener(PlayerUseItemEvent.class, event -> {
+			Material material = event.getItemStack().material();
+			if (material == Material.FIREWORK_ROCKET
+					&& event.getPlayer().isFlyingWithElytra()) {
+				this.useFireworkRocket(event);
+				return;
+			}
 
-            if (event.getItemStack().material() != Material.SNOWBALL
-                    && event.getItemStack().material() != Material.EGG
-                    && event.getItemStack().material() != Material.ENDER_PEARL
-                    && event.getItemStack().material() != Material.WIND_CHARGE)
-                return;
+			if (material != Material.SNOWBALL
+					&& !isEgg(material)
+					&& material != Material.ENDER_PEARL
+					&& material != Material.WIND_CHARGE)
+				return;
 
             var player = event.getPlayer();
             var stack = event.getItemStack();
 
-            var snowball = stack.material() == Material.SNOWBALL;
-            var enderpearl = stack.material() == Material.ENDER_PEARL;
-            var windCharge = stack.material() == Material.WIND_CHARGE;
+			boolean snowball = material == Material.SNOWBALL;
+			boolean enderpearl = material == Material.ENDER_PEARL;
+			boolean windCharge = material == Material.WIND_CHARGE;
 
             SoundEvent soundEvent;
             CustomEntityProjectile projectile;
@@ -153,4 +156,8 @@ public class VanillaMiscProjectileFeature implements MiscProjectileFeature, Regi
             player.setItemInHand(event.getHand(), stack.withAmount(stack.amount() - 1));
         }
     }
+
+	private boolean isEgg(Material material) {
+		return RegistryTags.contains(RegistryTags.EGGS, material);
+	}
 }

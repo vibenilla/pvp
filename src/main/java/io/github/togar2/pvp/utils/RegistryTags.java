@@ -17,6 +17,7 @@ public final class RegistryTags {
     public static final @Nullable RegistryTag<Block> TRAPDOORS = block("minecraft:trapdoors");
 
     public static final @Nullable RegistryTag<Material> SWORDS = material("minecraft:swords");
+    public static final @Nullable RegistryTag<Material> EGGS = material("minecraft:eggs");
     public static final @Nullable RegistryTag<Material> ENCHANTABLE_ARMOR = material("minecraft:enchantable/armor");
     public static final @Nullable RegistryTag<Material> FREEZE_IMMUNE_WEARABLES = material("minecraft:freeze_immune_wearables");
 
