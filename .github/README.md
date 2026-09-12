@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation("rocks.minestom:pvp:2026.09.10-26.2")
+    implementation("rocks.minestom:pvp:2026.09.12-26.2")
 }
 ```
 
@@ -31,7 +31,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'rocks.minestom:pvp:2026.09.10-26.2'
+    implementation 'rocks.minestom:pvp:2026.09.12-26.2'
 }
 ```
 
@@ -53,7 +53,7 @@ dependencies {
     <dependency>
         <groupId>rocks.minestom</groupId>
         <artifactId>pvp</artifactId>
-        <version>2026.09.10-26.2</version>
+        <version>2026.09.12-26.2</version>
     </dependency>
 </dependencies>
 ```
